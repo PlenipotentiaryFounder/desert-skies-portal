@@ -29,43 +29,11 @@ interface FlightSession {
 }
 
 interface UpcomingInstructorSessionsProps {
-  instructorId: string
-  initialSessions?: FlightSession[]
+  sessions: FlightSession[]
 }
 
-export function UpcomingInstructorSessions({ instructorId, initialSessions = [] }: UpcomingInstructorSessionsProps) {
-  const [sessions, setSessions] = useState<FlightSession[]>([])
-  const [loading, setLoading] = useState(!initialSessions.length)
-
-  useEffect(() => {
-    if (initialSessions.length > 0) {
-      setSessions(initialSessions)
-      setLoading(false)
-      return
-    }
-    const fetchSessions = async () => {
-      try {
-        const res = await fetch(`/api/instructor/sessions?instructorId=${instructorId}`)
-        const data = await res.json()
-        setSessions(data.sessions || [])
-      } catch (error) {
-        console.error("Error fetching upcoming sessions:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchSessions()
-  }, [instructorId, initialSessions])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[300px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (sessions.length === 0) {
+export function UpcomingInstructorSessions({ sessions }: UpcomingInstructorSessionsProps) {
+  if (!sessions || sessions.length === 0) {
     return (
       <Card className="flex flex-col items-center justify-center p-6 text-center">
         <p className="text-muted-foreground mb-4">No upcoming flight sessions scheduled</p>

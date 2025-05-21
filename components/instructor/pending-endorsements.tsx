@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -9,6 +8,7 @@ import { formatDate } from "@/lib/utils"
 import { CheckCircle, XCircle } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { WithApprovalCheck } from "@/components/instructor/with-approval-check"
+import { useState } from "react"
 
 interface Endorsement {
   id: string
@@ -23,54 +23,18 @@ interface Endorsement {
 }
 
 interface PendingEndorsementsProps {
+  endorsements: Endorsement[]
+  instructorStatus: string | null
   instructorId: string
-  initialEndorsements?: Endorsement[]
 }
 
-export function PendingEndorsements({ instructorId, initialEndorsements = [] }: PendingEndorsementsProps) {
-  const [endorsements, setEndorsements] = useState<Endorsement[]>([])
-  const [loading, setLoading] = useState(!initialEndorsements.length)
+const supabase = createClient()
+
+export function PendingEndorsements({ endorsements, instructorStatus, instructorId }: PendingEndorsementsProps) {
   const [processingIds, setProcessingIds] = useState<string[]>([])
-  const [instructorStatus, setInstructorStatus] = useState<string | null>(null)
-  const supabase = createClient()
-
-  useEffect(() => {
-    // Check instructor status
-    async function checkInstructorStatus() {
-      try {
-        const { data, error } = await supabase.from("profiles").select("status").eq("id", instructorId).single()
-        if (error) throw error
-        setInstructorStatus(data?.status || null)
-      } catch (error) {
-        console.error("Error checking instructor status:", error)
-      }
-    }
-    checkInstructorStatus()
-
-    // Use initial data if available
-    if (initialEndorsements.length > 0) {
-      setEndorsements(initialEndorsements)
-      setLoading(false)
-      return
-    }
-
-    // Fetch endorsements from API
-    const fetchEndorsements = async () => {
-      try {
-        const res = await fetch(`/api/instructor/endorsements?instructorId=${instructorId}`)
-        const data = await res.json()
-        setEndorsements(data.endorsements || [])
-      } catch (error) {
-        console.error("Error fetching pending endorsements:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchEndorsements()
-  }, [instructorId, initialEndorsements, supabase])
+  const [localEndorsements, setLocalEndorsements] = useState(endorsements)
 
   const handleApprove = async (id: string) => {
-    // Check if instructor is approved
     if (instructorStatus !== "active") {
       toast({
         title: "Action not allowed",
@@ -79,38 +43,24 @@ export function PendingEndorsements({ instructorId, initialEndorsements = [] }: 
       })
       return
     }
-
     setProcessingIds((prev) => [...prev, id])
     try {
       const { error } = await supabase
         .from("endorsements")
         .update({ status: "approved", updated_at: new Date().toISOString() })
         .eq("id", id)
-
-      if (error) {
-        throw error
-      }
-
-      // Update local state
-      setEndorsements((prev) => prev.filter((endorsement) => endorsement.id !== id))
-      toast({
-        title: "Endorsement approved",
-        description: "The endorsement has been successfully approved.",
-      })
+      if (error) throw error
+      setLocalEndorsements((prev) => prev.filter((endorsement) => endorsement.id !== id))
+      toast({ title: "Endorsement approved", description: "The endorsement has been successfully approved." })
     } catch (error) {
       console.error("Error approving endorsement:", error)
-      toast({
-        title: "Error",
-        description: "Failed to approve the endorsement. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "Failed to approve the endorsement. Please try again.", variant: "destructive" })
     } finally {
       setProcessingIds((prev) => prev.filter((item) => item !== id))
     }
   }
 
   const handleReject = async (id: string) => {
-    // Check if instructor is approved
     if (instructorStatus !== "active") {
       toast({
         title: "Action not allowed",
@@ -119,45 +69,24 @@ export function PendingEndorsements({ instructorId, initialEndorsements = [] }: 
       })
       return
     }
-
     setProcessingIds((prev) => [...prev, id])
     try {
       const { error } = await supabase
         .from("endorsements")
         .update({ status: "rejected", updated_at: new Date().toISOString() })
         .eq("id", id)
-
-      if (error) {
-        throw error
-      }
-
-      // Update local state
-      setEndorsements((prev) => prev.filter((endorsement) => endorsement.id !== id))
-      toast({
-        title: "Endorsement rejected",
-        description: "The endorsement has been rejected.",
-      })
+      if (error) throw error
+      setLocalEndorsements((prev) => prev.filter((endorsement) => endorsement.id !== id))
+      toast({ title: "Endorsement rejected", description: "The endorsement has been rejected." })
     } catch (error) {
       console.error("Error rejecting endorsement:", error)
-      toast({
-        title: "Error",
-        description: "Failed to reject the endorsement. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "Failed to reject the endorsement. Please try again.", variant: "destructive" })
     } finally {
       setProcessingIds((prev) => prev.filter((item) => item !== id))
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[300px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (endorsements.length === 0) {
+  if (!localEndorsements || localEndorsements.length === 0) {
     return (
       <Card className="flex flex-col items-center justify-center p-6 text-center">
         <p className="text-muted-foreground">No pending endorsements</p>
@@ -167,7 +96,7 @@ export function PendingEndorsements({ instructorId, initialEndorsements = [] }: 
 
   return (
     <div className="space-y-4">
-      {endorsements.map((endorsement) => (
+      {localEndorsements.map((endorsement) => (
         <div key={endorsement.id} className="border rounded-md p-4">
           <div className="space-y-2">
             <div className="flex justify-between items-start">
@@ -181,7 +110,6 @@ export function PendingEndorsements({ instructorId, initialEndorsements = [] }: 
                 : "Unknown Student"}
             </p>
             <p className="text-xs text-muted-foreground">Requested on {formatDate(endorsement.created_at)}</p>
-
             <WithApprovalCheck
               userId={instructorId}
               fallback={

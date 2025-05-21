@@ -11,80 +11,50 @@ import { InstructorStatsCards } from "@/components/instructor/instructor-stats-c
 import { PendingEndorsements } from "@/components/instructor/pending-endorsements"
 import { ApprovalStatusBanner } from "@/components/instructor/approval-status-banner"
 import { RoleSwitcher } from "@/components/shared/role-switcher"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { getCurrentInstructor } from '@/lib/user-service'
+import { getInstructorFlightSessions } from '@/lib/flight-session-service'
+import { getInstructorEnrollments } from '@/lib/enrollment-service'
 
 export default async function InstructorDashboardPage() {
-  const user = await getUserFromSession()
+  // Get instructor profile
+  const instructor = await getCurrentInstructor()
+  if (!instructor) return <div>Not authorized</div>
 
-  // If not authenticated, redirect to login
-  if (!user) {
-    redirect("/login")
-  }
+  // Get all enrollments for this instructor
+  const enrollments = await getInstructorEnrollments(instructor.id)
 
-  // Always await createServerSupabaseClient!
+  // Get all sessions for this instructor
+  const sessions = await getInstructorFlightSessions(instructor.id)
+
+  // Get pending endorsements for this instructor
   const supabase = await createServerSupabaseClient()
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: endorsements = [] } = await supabase
+    .from('endorsements')
+    .select('id, created_at, type, status, student_id, students:student_id (first_name, last_name)')
+    .eq('instructor_id', instructor.id)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
 
-  // If not an instructor, redirect to appropriate dashboard
-  if (profile?.role && profile.role !== "instructor") {
-    redirect(`/${profile.role}/dashboard`)
+  // Compute stats
+  const stats = {
+    totalStudents: enrollments.length,
+    totalSessions: sessions.length,
+    totalEndorsements: (await supabase
+      .from('endorsements')
+      .select('id', { count: 'exact', head: true })
+      .eq('instructor_id', instructor.id)
+      .eq('status', 'approved')
+    ).count || 0,
   }
-
-  const isAlsoAdmin = await hasAdditionalRole("admin")
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Show approval status banner if needed */}
-      <ApprovalStatusBanner userId={user.id} />
-
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.first_name}</h1>
-          <p className="text-muted-foreground">Here's an overview of your students and upcoming sessions</p>
-        </div>
-        {isAlsoAdmin && <RoleSwitcher currentRole="instructor" hasAdditionalRole={isAlsoAdmin} />}
-      </div>
-
-      <Suspense fallback={<Skeleton className="h-[100px] w-full" />}>
-        <InstructorStatsCards instructorId={user.id} />
-      </Suspense>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="col-span-2">
-          <CardHeader>
-            <CardTitle>Upcoming Flight Sessions</CardTitle>
-            <CardDescription>Your scheduled flight sessions for the next 7 days</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <UpcomingInstructorSessions instructorId={user.id} />
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Pending Endorsements</CardTitle>
-            <CardDescription>Student endorsements awaiting your approval</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <PendingEndorsements instructorId={user.id} />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Students</CardTitle>
-          <CardDescription>Students currently assigned to you</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-            <InstructorStudentsList instructorId={user.id} />
-          </Suspense>
-        </CardContent>
-      </Card>
+    <div className="space-y-8">
+      <InstructorStatsCards stats={stats} />
+      <UpcomingInstructorSessions sessions={sessions} />
+      <PendingEndorsements endorsements={endorsements} instructorStatus={instructor.status} instructorId={instructor.id} />
+      <InstructorStudentsList enrollments={enrollments} />
     </div>
   )
 }

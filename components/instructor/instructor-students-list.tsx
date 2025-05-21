@@ -1,8 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatDate } from "@/lib/utils"
 import { Search, UserPlus } from "lucide-react"
+import { useState } from "react"
 
 interface Student {
   id: string
@@ -30,64 +29,25 @@ interface Student {
 }
 
 interface InstructorStudentsListProps {
-  instructorId: string
-  initialStudents?: any[]
+  enrollments: any[]
 }
 
-export function InstructorStudentsList({ instructorId, initialStudents = [] }: InstructorStudentsListProps) {
-  const [students, setStudents] = useState<Student[]>([])
+export function InstructorStudentsList({ enrollments }: InstructorStudentsListProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [loading, setLoading] = useState(!initialStudents.length)
-
-  useEffect(() => {
-    // Transform initial data if available
-    if (initialStudents.length > 0) {
-      const transformedStudents = initialStudents.map((enrollment) => ({
-        id: enrollment.students.id,
-        first_name: enrollment.students.first_name,
-        last_name: enrollment.students.last_name,
-        email: enrollment.students.email,
-        avatar_url: enrollment.students.avatar_url,
-        status: enrollment.students.status,
-        enrollment: {
-          id: enrollment.id,
-          start_date: enrollment.start_date,
-          syllabus: enrollment.syllabi,
-        },
-      }))
-      setStudents(transformedStudents)
-      setLoading(false)
-      return
-    }
-
-    // Fetch students from API
-    const fetchStudents = async () => {
-      try {
-        const res = await fetch(`/api/instructor/students?instructorId=${instructorId}`)
-        const data = await res.json()
-        const transformedStudents = (data.students || []).map((enrollment: any) => ({
-          id: enrollment.students.id,
-          first_name: enrollment.students.first_name,
-          last_name: enrollment.students.last_name,
-          email: enrollment.students.email,
-          avatar_url: enrollment.students.avatar_url,
-          status: enrollment.students.status,
-          enrollment: {
-            id: enrollment.id,
-            start_date: enrollment.start_date,
-            syllabus: enrollment.syllabi,
-          },
-        }))
-        setStudents(transformedStudents)
-      } catch (error) {
-        console.error("Error fetching students:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchStudents()
-  }, [instructorId, initialStudents])
+  // Transform enrollments to students
+  const students: Student[] = enrollments.map((enrollment) => ({
+    id: enrollment.student.id,
+    first_name: enrollment.student.first_name,
+    last_name: enrollment.student.last_name,
+    email: enrollment.student.email,
+    avatar_url: enrollment.student.avatar_url,
+    status: enrollment.student.status,
+    enrollment: {
+      id: enrollment.id,
+      start_date: enrollment.start_date,
+      syllabus: enrollment.syllabus,
+    },
+  }))
 
   // Filter students based on search query
   const filteredStudents = students.filter((student) => {
@@ -102,11 +62,14 @@ export function InstructorStudentsList({ instructorId, initialStudents = [] }: I
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   }
 
-  if (loading) {
+  if (!enrollments || enrollments.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[300px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-      </div>
+      <Card className="flex flex-col items-center justify-center p-6 text-center">
+        <p className="text-muted-foreground mb-4">No students found</p>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/instructor/students/new">Enroll New Student</Link>
+        </Button>
+      </Card>
     )
   }
 
@@ -124,9 +87,9 @@ export function InstructorStudentsList({ instructorId, initialStudents = [] }: I
           />
         </div>
         <Button asChild size="sm">
-          <Link href="/instructor/students/assign">
+          <Link href="/instructor/students/new">
             <UserPlus className="mr-2 h-4 w-4" />
-            Assign New Student
+            Enroll New Student
           </Link>
         </Button>
       </div>
@@ -135,7 +98,7 @@ export function InstructorStudentsList({ instructorId, initialStudents = [] }: I
         <Card className="flex flex-col items-center justify-center p-6 text-center">
           <p className="text-muted-foreground mb-4">No students found</p>
           <Button asChild variant="outline" size="sm">
-            <Link href="/instructor/students/assign">Assign New Student</Link>
+            <Link href="/instructor/students/new">Enroll New Student</Link>
           </Button>
         </Card>
       ) : (
