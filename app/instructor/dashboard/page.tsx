@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { getCurrentInstructor } from '@/lib/user-service'
 import { getInstructorFlightSessions } from '@/lib/flight-session-service'
 import { getInstructorEnrollments } from '@/lib/enrollment-service'
+import { InstructorQuickLinks } from "@/components/instructor/instructor-quick-links"
 
 export default async function InstructorDashboardPage() {
   // Get instructor profile
@@ -51,6 +52,7 @@ export default async function InstructorDashboardPage() {
 
   return (
     <div className="space-y-8">
+      <InstructorQuickLinks />
       <InstructorStatsCards stats={stats} />
       <UpcomingInstructorSessions sessions={sessions} />
       <PendingEndorsements endorsements={endorsements} instructorStatus={instructor.status} instructorId={instructor.id} />
