@@ -1,6 +1,7 @@
 import { Sidebar } from "./Sidebar"
 import { useState } from "react"
 import LessonInfoPanel from "./LessonInfoPanel"
+import ManeuversPanel from "./ManeuversPanel"
 
 const PANELS = [
   "Lesson Info",
@@ -15,6 +16,7 @@ const PANELS = [
 export default function LessonBuilderWorkstation() {
   const [panel, setPanel] = useState(PANELS[0])
   const [lessonInfo, setLessonInfo] = useState({})
+  const [maneuvers, setManeuvers] = useState([])
   return (
     <div className="flex h-screen">
       <Sidebar panels={PANELS} selected={panel} onSelect={setPanel} />
@@ -27,6 +29,13 @@ export default function LessonBuilderWorkstation() {
               <LessonInfoPanel value={lessonInfo} onChange={setLessonInfo} />
               <div className="mt-6 flex justify-end">
                 <button className="btn btn-primary">Save Lesson Info</button>
+              </div>
+            </>
+          ) : panel === "Maneuvers" ? (
+            <>
+              <ManeuversPanel value={maneuvers} onChange={setManeuvers} />
+              <div className="mt-6 flex justify-end">
+                <button className="btn btn-primary">Save Maneuvers</button>
               </div>
             </>
           ) : (
