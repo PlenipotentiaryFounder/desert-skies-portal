@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -36,6 +36,26 @@ export function MissionForm({ enrollments, lessons, maneuvers, onSubmit, initial
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [aircraftOptions, setAircraftOptions] = useState<any[]>([])
+  const [aircraftLoading, setAircraftLoading] = useState(false)
+  const [aircraftError, setAircraftError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchAircraft() {
+      setAircraftLoading(true)
+      setAircraftError(null)
+      try {
+        const res = await fetch("/api/instructor/schedule/aircraft")
+        const data = await res.json()
+        setAircraftOptions(data.aircraft || [])
+      } catch (e) {
+        setAircraftError("Failed to load aircraft options")
+        setAircraftOptions([])
+      }
+      setAircraftLoading(false)
+    }
+    fetchAircraft()
+  }, [])
 
   // Handlers
   function handleChange(field: string, value: any) {
@@ -105,6 +125,31 @@ export function MissionForm({ enrollments, lessons, maneuvers, onSubmit, initial
             </SelectContent>
           </Select>
         )}
+        <div>
+          <label>Aircraft</label>
+          <Select
+            value={form.aircraftId || ""}
+            onValueChange={v => handleChange("aircraftId", v)}
+            disabled={aircraftLoading}
+            required
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={aircraftLoading ? "Loading..." : "Select aircraft"} />
+            </SelectTrigger>
+            <SelectContent>
+              {aircraftOptions.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.tail_number} ({a.make} {a.model})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {aircraftError && <div className="text-red-500 text-sm">{aircraftError}</div>}
+        </div>
+        <div className="flex gap-2">
+          <Input type="date" value={form.date || ""} onChange={e => handleChange("date", e.target.value)} required />
+          <Input type="time" value={form.startTime || ""} onChange={e => handleChange("startTime", e.target.value)} required />
+          <Input type="time" value={form.endTime || ""} onChange={e => handleChange("endTime", e.target.value)} required />
+        </div>
+        <Textarea placeholder="Notes (optional)" value={form.notes || ""} onChange={e => handleChange("notes", e.target.value)} />
         <div className="flex gap-2">
           <Button type="button" onClick={handleBack}>Back</Button>
           <Button type="button" onClick={handleNext} disabled={form.mode === "precreated" && !form.lessonId}>Next</Button>
@@ -128,6 +173,31 @@ export function MissionForm({ enrollments, lessons, maneuvers, onSubmit, initial
         <Textarea placeholder="Role" value={form.custom.role} onChange={(e) => handleCustomChange("role", e.target.value)} />
         <Textarea placeholder="What to Bring" value={form.custom.whatToBring} onChange={(e) => handleCustomChange("whatToBring", e.target.value)} />
         <Textarea placeholder="Notes" value={form.custom.notes} onChange={(e) => handleCustomChange("notes", e.target.value)} />
+        <div>
+          <label>Aircraft</label>
+          <Select
+            value={form.aircraftId || ""}
+            onValueChange={v => handleChange("aircraftId", v)}
+            disabled={aircraftLoading}
+            required
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={aircraftLoading ? "Loading..." : "Select aircraft"} />
+            </SelectTrigger>
+            <SelectContent>
+              {aircraftOptions.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.tail_number} ({a.make} {a.model})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {aircraftError && <div className="text-red-500 text-sm">{aircraftError}</div>}
+        </div>
+        <div className="flex gap-2">
+          <Input type="date" value={form.date || ""} onChange={e => handleChange("date", e.target.value)} required />
+          <Input type="time" value={form.startTime || ""} onChange={e => handleChange("startTime", e.target.value)} required />
+          <Input type="time" value={form.endTime || ""} onChange={e => handleChange("endTime", e.target.value)} required />
+        </div>
+        <Textarea placeholder="Notes (optional)" value={form.notes || ""} onChange={e => handleChange("notes", e.target.value)} />
         <div>
           <label className="block font-medium mb-1">Select Maneuvers</label>
           <div className="flex flex-col gap-2">

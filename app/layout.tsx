@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import SupabaseProvider from "@/components/providers/supabase-provider"
 import { cn } from "@/lib/utils"
 import "./globals.css"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -14,16 +15,19 @@ export const metadata = {
     generator: 'v0.dev'
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { session } } = await supabase.auth.getSession()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SupabaseProvider>
+          <SupabaseProvider initialSession={session}>
             {children}
             <Toaster />
           </SupabaseProvider>

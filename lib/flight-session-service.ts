@@ -30,6 +30,13 @@ export type FlightSession = {
     altimeter?: string
     conditions?: string
   } | null
+  session_type: "mission" | "ground" | "mock_oral" | "mock_check_ride"
+  prebrief_minutes: number
+  postbrief_minutes: number
+  location_id: string | null
+  recurrence_rule: string | null
+  requested_by: string | null
+  request_status: "pending" | "approved" | "denied" | "cancelled"
   student?: {
     id: string
     first_name: string
@@ -89,6 +96,13 @@ export type FlightSessionFormData = {
     altimeter?: string
     conditions?: string
   } | null
+  session_type?: "mission" | "ground" | "mock_oral" | "mock_check_ride"
+  prebrief_minutes?: number
+  postbrief_minutes?: number
+  location_id?: string | null
+  recurrence_rule?: string | null
+  requested_by?: string | null
+  request_status?: "pending" | "approved" | "denied" | "cancelled"
 }
 
 export async function getFlightSessions() {
@@ -327,8 +341,20 @@ export async function getInstructorFlightSessions(instructorId: string) {
 export async function createFlightSession(formData: FlightSessionFormData) {
   const supabase = await createServerSupabaseClient()
 
+  // Set sensible defaults for new fields
+  const insertData: FlightSessionInsert = {
+    ...formData,
+    session_type: formData.session_type || "mission",
+    prebrief_minutes: formData.prebrief_minutes ?? 30,
+    postbrief_minutes: formData.postbrief_minutes ?? 30,
+    location_id: formData.location_id || null,
+    recurrence_rule: formData.recurrence_rule || null,
+    requested_by: formData.requested_by || null,
+    request_status: formData.request_status || "pending",
+  }
+
   // @ts-expect-error Supabase type system is too strict, but this is safe
-  const { data, error } = await supabase.from("flight_sessions").insert([formData as FlightSessionInsert]).select()
+  const { data, error } = await supabase.from("flight_sessions").insert([insertData]).select()
 
   if (error) {
     console.error("Error creating flight session:", error)
@@ -344,8 +370,20 @@ export async function createFlightSession(formData: FlightSessionFormData) {
 export async function updateFlightSession(id: string, formData: Partial<FlightSessionFormData>) {
   const supabase = await createServerSupabaseClient()
 
+  // Allow updating new fields as well
+  const updateData: FlightSessionUpdate = {
+    ...formData,
+    session_type: formData.session_type,
+    prebrief_minutes: formData.prebrief_minutes,
+    postbrief_minutes: formData.postbrief_minutes,
+    location_id: formData.location_id,
+    recurrence_rule: formData.recurrence_rule,
+    requested_by: formData.requested_by,
+    request_status: formData.request_status,
+  }
+
   // @ts-expect-error Supabase type system is too strict, but this is safe
-  const { data, error } = await supabase.from("flight_sessions").update(formData as FlightSessionUpdate).eq("id", id as Database["public"]["Tables"]["flight_sessions"]["Row"]["id"]).select()
+  const { data, error } = await supabase.from("flight_sessions").update(updateData).eq("id", id as Database["public"]["Tables"]["flight_sessions"]["Row"]["id"]).select()
 
   if (error) {
     console.error("Error updating flight session:", error)

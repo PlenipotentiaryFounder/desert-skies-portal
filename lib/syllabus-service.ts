@@ -57,18 +57,19 @@ export async function getSyllabi() {
 
   // Get lesson counts for each syllabus
   const syllabusIds = data.map((syllabus: any) => syllabus.id)
-  const { data: lessonCounts, error: lessonError } = await supabase
+  const { data: lessons, error: lessonError } = await supabase
     .from("syllabus_lessons")
-    .select("syllabus_id, count")
+    .select("syllabus_id")
     .in("syllabus_id", syllabusIds)
-    // @ts-expect-error Supabase type system does not type .group but it works
-    .group("syllabus_id")
 
   if (lessonError) {
-    console.error("Error fetching lesson counts:", lessonError)
-  } else if (lessonCounts) {
-    // @ts-expect-error Map false positive
-    const countsMap = new Map((lessonCounts as any[]).map((item: any) => [item.syllabus_id, Number.parseInt(item.count)]))
+    console.error("Error fetching lessons:", lessonError)
+  } else if (lessons) {
+    // Count lessons per syllabus_id
+    const countsMap = new Map<string, number>()
+    for (const lesson of lessons as any[]) {
+      countsMap.set(lesson.syllabus_id, (countsMap.get(lesson.syllabus_id) || 0) + 1)
+    }
     (data as any[]).forEach((syllabus: any) => {
       syllabus.lesson_count = countsMap.get(syllabus.id) || 0
     })

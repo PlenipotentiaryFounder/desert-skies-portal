@@ -2,6 +2,9 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from "@/types/supabase"
+import { cookies } from "next/headers"
 
 export type User = {
   id: string
@@ -35,143 +38,127 @@ export type NewUser = {
   }
 }
 
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY must be set in environment variables.");
+  }
+  return createClient(url, key);
+}
+
 export async function getUsers() {
   const supabase = await createServerSupabaseClient()
 
   const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false })
 
-  if (error) {
+  if (error || !Array.isArray(data)) {
     console.error("Error fetching users:", error)
     return []
   }
 
-  return data as User[]
+  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"][]
 }
 
 export async function getUserById(id: string) {
   const supabase = await createServerSupabaseClient()
-
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", id).single()
-
-  if (error) {
+  const { data, error } = await supabase.from("profiles").select("*").eq("id" as any, id as any).single()
+  if (error || !data) {
     console.error("Error fetching user:", error)
     return null
   }
-
-  return data as User
+  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"]
 }
 
 export async function getStudents() {
   const supabase = await createServerSupabaseClient()
-
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("role", "student")
+    .eq("role" as any, "student" as any)
     .order("created_at", { ascending: false })
-
-  if (error) {
+  if (error || !Array.isArray(data)) {
     console.error("Error fetching students:", error)
     return []
   }
-
-  return data as User[]
+  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"][]
 }
 
 export async function getInstructors() {
   const supabase = await createServerSupabaseClient()
-
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("role", "instructor")
+    .eq("role" as any, "instructor" as any)
     .order("created_at", { ascending: false })
-
-  if (error) {
+  if (error || !Array.isArray(data)) {
     console.error("Error fetching instructors:", error)
     return []
   }
-
-  return data as User[]
+  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"][]
 }
 
 export async function getPendingInstructors() {
   const supabase = await createServerSupabaseClient()
-
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("role", "instructor")
-    .eq("status", "pending")
+    .eq("role" as any, "instructor" as any)
+    .eq("status" as any, "pending" as any)
     .order("created_at", { ascending: false })
-
-  if (error) {
+  if (error || !Array.isArray(data)) {
     console.error("Error fetching pending instructors:", error)
     return []
   }
-
-  return data as User[]
+  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"][]
 }
 
 export async function createUser(userData: NewUser) {
-  const supabase = await createServerSupabaseClient()
-
-  // First create the auth user
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: userData.email,
-    password: userData.password || Math.random().toString(36).slice(-8), // Generate random password if not provided
+    password: userData.password || Math.random().toString(36).slice(-8),
     email_confirm: true,
   })
-
   if (authError) {
     console.error("Error creating auth user:", authError)
     return { success: false, error: authError.message }
   }
-
-  // Then create the profile
-  const { error: profileError } = await supabase.from("profiles").insert({
+  const profileInsert: Database["public"]["Tables"]["profiles"]["Insert"] = {
     id: authData.user.id,
     email: userData.email,
     first_name: userData.first_name,
     last_name: userData.last_name,
     role: userData.role,
-    phone: userData.phone || null,
-    bio: userData.bio || null,
-    status: userData.status || (userData.role === "instructor" ? "pending" : "active"),
-    metadata: userData.metadata || null,
-  })
-
+  }
+  if (userData.phone) profileInsert.phone = userData.phone
+  if (userData.bio) profileInsert.bio = userData.bio
+  const { error: profileError } = await supabaseAdmin.from("profiles").insert(profileInsert as any)
   if (profileError) {
     console.error("Error creating user profile:", profileError)
     return { success: false, error: profileError.message }
   }
-
   revalidatePath("/admin/users")
   return { success: true, userId: authData.user.id }
 }
 
 export async function updateUser(id: string, userData: Partial<User>) {
   const supabase = await createServerSupabaseClient()
-
+  const updateData: Database["public"]["Tables"]["profiles"]["Update"] = {}
+  if (userData.first_name) updateData.first_name = userData.first_name
+  if (userData.last_name) updateData.last_name = userData.last_name
+  if (userData.role) updateData.role = userData.role
+  if (userData.phone) updateData.phone = userData.phone
+  if (userData.bio) updateData.bio = userData.bio
+  updateData.updated_at = new Date().toISOString()
   const { error } = await supabase
     .from("profiles")
-    .update({
-      first_name: userData.first_name,
-      last_name: userData.last_name,
-      role: userData.role,
-      phone: userData.phone,
-      bio: userData.bio,
-      status: userData.status,
-      metadata: userData.metadata,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-
+    .update(updateData as any)
+    .eq("id" as any, id as any)
   if (error) {
     console.error("Error updating user:", error)
     return { success: false, error: error.message }
   }
-
   revalidatePath(`/admin/users/${id}`)
   revalidatePath("/admin/users")
   return { success: true }
@@ -179,43 +166,31 @@ export async function updateUser(id: string, userData: Partial<User>) {
 
 export async function deleteUser(id: string) {
   const supabase = await createServerSupabaseClient()
-
-  // First delete the profile
-  const { error: profileError } = await supabase.from("profiles").delete().eq("id", id)
-
+  const { error: profileError } = await supabase.from("profiles").delete().eq("id" as any, id as any)
   if (profileError) {
     console.error("Error deleting user profile:", profileError)
     return { success: false, error: profileError.message }
   }
-
-  // Then delete the auth user
   const { error: authError } = await supabase.auth.admin.deleteUser(id)
-
   if (authError) {
     console.error("Error deleting auth user:", authError)
     return { success: false, error: authError.message }
   }
-
   revalidatePath("/admin/users")
   return { success: true }
 }
 
 export async function updateUserStatus(id: string, status: "active" | "inactive" | "pending") {
   const supabase = await createServerSupabaseClient()
-
+  const updateData: Database["public"]["Tables"]["profiles"]["Update"] = { updated_at: new Date().toISOString() }
   const { error } = await supabase
     .from("profiles")
-    .update({
-      status: status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-
+    .update(updateData as any)
+    .eq("id" as any, id as any)
   if (error) {
     console.error("Error updating user status:", error)
     return { success: false, error: error.message }
   }
-
   revalidatePath(`/admin/users/${id}`)
   revalidatePath("/admin/users")
   return { success: true }
@@ -223,20 +198,15 @@ export async function updateUserStatus(id: string, status: "active" | "inactive"
 
 export async function updateUserRole(id: string, role: "admin" | "instructor" | "student") {
   const supabase = await createServerSupabaseClient()
-
+  const updateData: Database["public"]["Tables"]["profiles"]["Update"] = { role: role, updated_at: new Date().toISOString() }
   const { error } = await supabase
     .from("profiles")
-    .update({
-      role: role,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-
+    .update(updateData as any)
+    .eq("id" as any, id as any)
   if (error) {
     console.error("Error updating user role:", error)
     return { success: false, error: error.message }
   }
-
   revalidatePath(`/admin/users/${id}`)
   revalidatePath("/admin/users")
   return { success: true }
@@ -244,43 +214,32 @@ export async function updateUserRole(id: string, role: "admin" | "instructor" | 
 
 export async function getUserPermissions(id: string) {
   const supabase = await createServerSupabaseClient()
-
-  const { data, error } = await supabase.from("user_permissions").select("*").eq("user_id", id)
-
-  if (error) {
+  const { data, error } = await supabase.from("user_permissions").select("*").eq("user_id", String(id))
+  if (error || !Array.isArray(data)) {
     console.error("Error fetching user permissions:", error)
     return []
   }
-
   return data.map((p) => p.permission) as string[]
 }
 
 export async function updateUserPermissions(id: string, permissions: string[]) {
   const supabase = await createServerSupabaseClient()
-
-  // First delete existing permissions
-  const { error: deleteError } = await supabase.from("user_permissions").delete().eq("user_id", id)
-
+  const { error: deleteError } = await supabase.from("user_permissions").delete().eq("user_id", String(id))
   if (deleteError) {
     console.error("Error deleting user permissions:", deleteError)
     return { success: false, error: deleteError.message }
   }
-
-  // Then insert new permissions
   if (permissions.length > 0) {
-    const permissionsData = permissions.map((permission) => ({
+    const permissionsData: Database["public"]["Tables"]["user_permissions"]["Insert"][] = permissions.map((permission) => ({
       user_id: id,
       permission: permission,
     }))
-
     const { error: insertError } = await supabase.from("user_permissions").insert(permissionsData)
-
     if (insertError) {
       console.error("Error inserting user permissions:", insertError)
       return { success: false, error: insertError.message }
     }
   }
-
   revalidatePath(`/admin/users/${id}`)
   return { success: true }
 }
@@ -299,12 +258,12 @@ export async function searchUsers(query: string) {
     return []
   }
 
-  return data as User[]
+  return data as Database["public"]["Tables"]["profiles"]["Row"][]
 }
 
 export async function filterUsersByRole(role: "admin" | "instructor" | "student" | "all") {
   const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = await createServerSupabaseClient()
 
   if (role === "all") {
     return getUsers()
@@ -321,12 +280,12 @@ export async function filterUsersByRole(role: "admin" | "instructor" | "student"
     return []
   }
 
-  return data as User[]
+  return data as Database["public"]["Tables"]["profiles"]["Row"][]
 }
 
 export async function filterUsersByStatus(status: "active" | "inactive" | "pending" | "all") {
   const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = await createServerSupabaseClient()
 
   if (status === "all") {
     return getUsers()
@@ -343,96 +302,14 @@ export async function filterUsersByStatus(status: "active" | "inactive" | "pendi
     return []
   }
 
-  return data as User[]
+  return data as Database["public"]["Tables"]["profiles"]["Row"][]
 }
 
-export async function hasAdditionalRole(userId: string, role: string): Promise<boolean> {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
-
-  const { data, error } = await supabase.from("profiles").select("metadata").eq("id", userId).single()
-
-  if (error || !data) {
-    console.error("Error checking additional roles:", error)
-    return false
-  }
-
-  const metadata = data.metadata as { additional_roles?: string[] } | null
-  return !!metadata?.additional_roles?.includes(role)
-}
-
-export async function addAdditionalRole(userId: string, role: string) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
-
-  // First get the current metadata
-  const { data, error: fetchError } = await supabase.from("profiles").select("metadata").eq("id", userId).single()
-
-  if (fetchError) {
-    console.error("Error fetching user metadata:", fetchError)
-    return { success: false, error: fetchError.message }
-  }
-
-  // Update the metadata with the new role
-  const currentMetadata = (data?.metadata as { additional_roles?: string[] } | null) || {}
-  const currentRoles = currentMetadata?.additional_roles || []
-
-  if (!currentRoles.includes(role)) {
-    const updatedRoles = [...currentRoles, role]
-    const updatedMetadata = { ...currentMetadata, additional_roles: updatedRoles }
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        metadata: updatedMetadata,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId)
-
-    if (updateError) {
-      console.error("Error updating user metadata:", updateError)
-      return { success: false, error: updateError.message }
-    }
-  }
-
-  revalidatePath(`/admin/users/${userId}`)
-  return { success: true }
-}
-
-export async function removeAdditionalRole(userId: string, role: string) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
-
-  // First get the current metadata
-  const { data, error: fetchError } = await supabase.from("profiles").select("metadata").eq("id", userId).single()
-
-  if (fetchError) {
-    console.error("Error fetching user metadata:", fetchError)
-    return { success: false, error: fetchError.message }
-  }
-
-  // Update the metadata by removing the role
-  const currentMetadata = (data?.metadata as { additional_roles?: string[] } | null) || {}
-  const currentRoles = currentMetadata?.additional_roles || []
-
-  if (currentRoles.includes(role)) {
-    const updatedRoles = currentRoles.filter((r) => r !== role)
-    const updatedMetadata = { ...currentMetadata, additional_roles: updatedRoles }
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        metadata: updatedMetadata,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId)
-
-    if (updateError) {
-      console.error("Error updating user metadata:", updateError)
-      return { success: false, error: updateError.message }
-    }
-  }
-
-  revalidatePath(`/admin/users/${userId}`)
-  return { success: true }
+export async function getCurrentInstructor() {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return null;
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).eq("role", "instructor").single();
+  if (error) return null;
+  return data as User;
 }

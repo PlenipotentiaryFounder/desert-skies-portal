@@ -34,6 +34,9 @@ export async function GET(req: NextRequest) {
     .lt("start_time", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
     .order("start_time", { ascending: true })
     .limit(5)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error(error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json({ sessions: data || [] })
 } 

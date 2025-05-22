@@ -114,8 +114,8 @@ export function InstructorStudentsList({ enrollments }: InstructorStudentsListPr
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredStudents.map((student) => (
-                <TableRow key={student.id}>
+              {filteredStudents.map((student, index) => (
+                <TableRow key={student.enrollment?.id || student.id || index}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>

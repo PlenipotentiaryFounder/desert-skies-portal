@@ -6,6 +6,7 @@ import { getInstructorFlightSessions } from "@/lib/flight-session-service"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { InstructorFlightSessionsList } from "./instructor-flight-sessions-list"
+import { InstructorScheduleCalendar } from "./InstructorScheduleCalendar"
 
 export const metadata = {
   title: "Flight Schedule | Desert Skies Aviation",
@@ -42,6 +43,8 @@ export default async function InstructorSchedulePage() {
       <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
         <InstructorFlightSessionsList initialSessions={flightSessions} />
       </Suspense>
+
+      <InstructorScheduleCalendar sessions={flightSessions} />
     </div>
   )
 }

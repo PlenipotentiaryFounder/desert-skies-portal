@@ -29,10 +29,11 @@ interface FlightSession {
   }
 }
 
+const supabase = createClient()
+
 export function UpcomingFlightsList({ studentId }: UpcomingFlightsListProps) {
   const [flights, setFlights] = useState<FlightSession[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     async function fetchFlights() {
@@ -88,7 +89,7 @@ export function UpcomingFlightsList({ studentId }: UpcomingFlightsListProps) {
     }
 
     fetchFlights()
-  }, [supabase, studentId])
+  }, [studentId])
 
   if (loading) {
     return <div className="flex items-center justify-center h-[300px]">Loading upcoming flights...</div>

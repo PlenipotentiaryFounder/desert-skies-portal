@@ -16,10 +16,12 @@ const Context = createContext<SupabaseContext | undefined>(undefined)
 
 export default function SupabaseProvider({
   children,
+  initialSession,
 }: {
   children: React.ReactNode
+  initialSession: Session | null
 }) {
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState<Session | null>(initialSession)
 
   // Use the singleton client
   const supabase = useMemo(() => createClient(), [])

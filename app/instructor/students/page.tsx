@@ -31,7 +31,7 @@ export default async function InstructorStudentsPage() {
         </CardHeader>
         <CardContent>
           <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <InstructorStudentsList instructorId={session.user.id} />
+            <InstructorStudentsList enrollments={enrollments} />
           </Suspense>
         </CardContent>
       </Card>

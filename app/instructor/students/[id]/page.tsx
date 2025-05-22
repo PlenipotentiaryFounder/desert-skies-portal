@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SyllabusProgress } from "@/components/student/syllabus-progress"
 import { formatDate, getInitials } from "@/lib/utils"
 import { notFound } from "next/navigation"
+import { usePathname } from "next/navigation"
 
 interface StudentDetailPageProps {
   params: {
@@ -115,6 +116,11 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
               <div className="flex flex-col gap-2">
                 <Button>Schedule Flight</Button>
                 <Button variant="outline">Message Student</Button>
+                <Button asChild variant="secondary">
+                  <Link href={`/instructor/students/new?studentId=${student.id}`}>
+                    Enroll in New Syllabus
+                  </Link>
+                </Button>
               </div>
             </div>
           </CardContent>

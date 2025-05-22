@@ -1,8 +1,137 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
+      aircraft: {
+        Row: {
+          category: string
+          class: string
+          created_at: string | null
+          hobbs_time: number
+          id: string
+          is_active: boolean | null
+          is_complex: boolean | null
+          is_high_performance: boolean | null
+          is_tailwheel: boolean | null
+          last_inspection_date: string
+          make: string
+          model: string
+          tail_number: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          category: string
+          class: string
+          created_at?: string | null
+          hobbs_time: number
+          id?: string
+          is_active?: boolean | null
+          is_complex?: boolean | null
+          is_high_performance?: boolean | null
+          is_tailwheel?: boolean | null
+          last_inspection_date: string
+          make: string
+          model: string
+          tail_number: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          category?: string
+          class?: string
+          created_at?: string | null
+          hobbs_time?: number
+          id?: string
+          is_active?: boolean | null
+          is_complex?: boolean | null
+          is_high_performance?: boolean | null
+          is_tailwheel?: boolean | null
+          last_inspection_date?: string
+          make?: string
+          model?: string
+          tail_number?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      availability_blocks: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          id: string
+          reason: string | null
+          recurrence_rule: string | null
+          start_time: string
+          updated_at: string | null
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          id?: string
+          reason?: string | null
+          recurrence_rule?: string | null
+          start_time: string
+          updated_at?: string | null
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          reason?: string | null
+          recurrence_rule?: string | null
+          start_time?: string
+          updated_at?: string | null
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
+      calendar_integrations: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          provider: string
+          refresh_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          provider: string
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          provider?: string
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           id: string
@@ -281,59 +410,6 @@ export interface Database {
           maneuver_id?: string
           score?: number
           notes?: string | null
-        }
-      }
-      aircraft: {
-        Row: {
-          id: string
-          created_at: string
-          updated_at: string
-          tail_number: string
-          make: string
-          model: string
-          year: number
-          category: string
-          class: string
-          is_complex: boolean
-          is_high_performance: boolean
-          is_tailwheel: boolean
-          is_active: boolean
-          hobbs_time: number
-          last_inspection_date: string
-        }
-        Insert: {
-          id?: string
-          created_at?: string
-          updated_at?: string
-          tail_number: string
-          make: string
-          model: string
-          year: number
-          category: string
-          class: string
-          is_complex?: boolean
-          is_high_performance?: boolean
-          is_tailwheel?: boolean
-          is_active?: boolean
-          hobbs_time: number
-          last_inspection_date: string
-        }
-        Update: {
-          id?: string
-          created_at?: string
-          updated_at?: string
-          tail_number?: string
-          make?: string
-          model?: string
-          year?: number
-          category?: string
-          class?: string
-          is_complex?: boolean
-          is_high_performance?: boolean
-          is_tailwheel?: boolean
-          is_active?: boolean
-          hobbs_time?: number
-          last_inspection_date?: string
         }
       }
       documents: {

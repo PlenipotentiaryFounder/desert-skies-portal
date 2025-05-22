@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import type { Database } from "@/types/supabase"
@@ -9,7 +9,10 @@ export async function POST(request: Request) {
     const { userId, email, firstName, lastName, role, status = "active" } = requestData
 
     // Create a Supabase client with the service role key
-    const supabase = createRouteHandlerClient<Database>({ cookies })
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     // Insert the profile with the appropriate status
     // Instructors start with "pending" status by default

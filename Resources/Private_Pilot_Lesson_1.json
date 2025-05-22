@@ -1,0 +1,83 @@
+{
+  "lesson_title": "Private Pilot Lesson #1 \u2013 Takeoffs, Landings, Slow Flight & Stalls",
+  "lesson_objective": "By the end of this lesson, you\u2019ll begin to understand how slow flight ties directly into the landing phase. We\u2019ll break down the aerodynamic concepts and start developing muscle memory for stable, controlled landings and coordinated flight near stall speed.",
+  "schedule_overview": {
+    "meet_time": "Wednesday @ 5:15 a.m.",
+    "location": {
+      "name": "Falcon Field",
+      "icao": "KFFZ",
+      "address": "4800 E Falcon Dr, Mesa, AZ 85215"
+    },
+    "pre_brief": "30 min \u2013 Walk through slow flight and stall procedures",
+    "flight_block": "2 hrs \u2013 Maneuver training + pattern work at an untowered airport",
+    "post_brief": "Up to 1 hr \u2013 Debrief + Intro to PAVE (time permitting)"
+  },
+  "core_topics": [
+    "Slow Flight (clean and dirty)",
+    "Power-On and Power-Off Stalls",
+    "Pitch-for-Airspeed, Power-for-Altitude technique",
+    "Behind the Power Curve",
+    "Takeoff and Landing Fundamentals",
+    "Traffic Pattern Procedures at Untowered Airports",
+    "Pitch/Power Settings and V-Speeds"
+  ],
+  "performance_standards": "We\u2019re not expecting perfection this early \u2014 the goal is to understand the relationship between slow flight and the landing phase. If by the end of the flight you can safely fly slow flight in both configurations, recognize stalls, and start to correlate those skills with real-world landings, we\u2019re in great shape.",
+  "knowledge_and_prep_work": {
+    "resources": [
+      {
+        "title": "AFH Chapter 5 \u2013 Slow Flight, Stalls, and Spins",
+        "type": "Handbook",
+        "description": "FAA guidance on maneuvering during slow flight and recognizing/stalling conditions.",
+        "source": "FAA",
+        "link": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook"
+      },
+      {
+        "title": "AFH Chapter 8 \u2013 Traffic Patterns",
+        "type": "Handbook",
+        "description": "Covers standard pattern entries and radio procedures at untowered airports.",
+        "source": "FAA",
+        "link": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook"
+      },
+      {
+        "title": "Slow Flight Explained",
+        "type": "Video",
+        "description": "Step-by-step explanation of slow flight entry, control, and recovery.",
+        "source": "Fly8MA",
+        "link": "https://www.youtube.com/watch?v=fzoy_EzOxrk"
+      },
+      {
+        "title": "Stall Recognition and Recovery",
+        "type": "Video",
+        "description": "Demonstrates how to identify stall conditions and perform proper recovery techniques.",
+        "source": "Sporty's",
+        "link": "https://www.youtube.com/watch?v=fzoy_EzOxrk"
+      },
+      {
+        "title": "Traffic Pattern Procedures \u2013 Untowered Airports",
+        "type": "Video",
+        "description": "Overview of VFR pattern work, radio calls, and pattern safety tips.",
+        "source": "Fly8MA",
+        "link": "https://www.youtube.com/watch?v=fzoy_EzOxrk"
+      }
+    ]
+  },
+  "key_skills_to_focus_on": [
+    "Understanding how pitch and power interact at low speeds",
+    "Recognizing and recovering from stall indications",
+    "Developing precise, stabilized approaches",
+    "Managing descent rate and timing the flare during landings"
+  ],
+  "common_errors_to_avoid": [
+    "Overcontrolling during slow flight",
+    "Letting the nose drop during stall recovery",
+    "Ballooning or flaring too high during landing",
+    "Fixating on one instrument or point during maneuvering"
+  ],
+  "your_role_in_the_cockpit": "You\u2019ll be flying each maneuver after I demo them. I\u2019ll coach you through the slow flight and stall entries, and we\u2019ll build your comfort in the pattern as we go. You\u2019ll also start handling radio calls at the untowered airport.",
+  "what_to_bring": [
+    "Headset",
+    "Logbook",
+    "Water or light snack (it\u2019s early!)"
+  ],
+  "final_thoughts": "This lesson is a major building block for everything that follows in your training. Takeoffs and landings are where everything comes together, and slow flight is the foundation. If we have time after the flight, we\u2019ll kick off our deeper dive into aeronautical decision-making by starting the PAVE checklist, focusing on \u201cP \u2013 Pilot\u201d (which includes the IMSAFE checklist)."
+}

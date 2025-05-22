@@ -18,6 +18,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { RoleSwitcher } from "@/components/shared/role-switcher"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -375,7 +379,9 @@ const SidebarFooter = React.forwardRef<
       data-sidebar="footer"
       className={cn("flex flex-col gap-2 p-2", className)}
       {...props}
-    />
+    >
+      <UserSidebarInfo />
+    </div>
   )
 })
 SidebarFooter.displayName = "SidebarFooter"
@@ -735,6 +741,56 @@ const SidebarMenuSubButton = React.forwardRef<
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
+function UserSidebarInfo() {
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const [isAlsoAdmin, setIsAlsoAdmin] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Fetch user and profile info from Supabase
+    const fetchUser = async () => {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+        setProfile(profile)
+        // Check for additional role
+        if (profile?.metadata?.additional_roles?.includes("admin") || profile?.metadata?.additional_roles?.includes("instructor")) {
+          setIsAlsoAdmin(true)
+        }
+      }
+    }
+    fetchUser()
+  }, [])
+
+  const handleLogout = async () => {
+    const { createClient } = await import("@/lib/supabase/client")
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
+
+  if (!user || !profile) return null
+
+  return (
+    <div className="flex flex-col items-center gap-2 p-2 border-t">
+      <Avatar className="h-10 w-10">
+        <AvatarImage src={profile.avatar_url || undefined} alt={profile.first_name} />
+        <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
+      </Avatar>
+      <div className="text-center">
+        <div className="font-medium">{profile.first_name} {profile.last_name}</div>
+        <div className="text-xs text-muted-foreground">{profile.email}</div>
+      </div>
+      {isAlsoAdmin && <RoleSwitcher currentRole={profile.role} hasAdditionalRole={isAlsoAdmin} />}
+      <button onClick={handleLogout} className="text-xs text-red-600 hover:underline mt-1">Log out</button>
+    </div>
+  )
+}
+
 export {
   Sidebar,
   SidebarContent,
@@ -760,4 +816,5 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
+  UserSidebarInfo,
 }

@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { getStudentFlightSessions } from "@/lib/flight-session-service"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StudentFlightSessionsList } from "./student-flight-sessions-list"
+import { StudentScheduleCalendar } from "./StudentScheduleCalendar"
 
 export const metadata = {
   title: "My Flight Schedule | Desert Skies Aviation",
@@ -31,6 +32,8 @@ export default async function StudentSchedulePage() {
       <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
         <StudentFlightSessionsList initialSessions={flightSessions} />
       </Suspense>
+
+      <StudentScheduleCalendar sessions={flightSessions} />
     </div>
   )
 }
