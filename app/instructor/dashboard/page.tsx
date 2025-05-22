@@ -17,6 +17,7 @@ import { getCurrentInstructor } from '@/lib/user-service'
 import { getInstructorFlightSessions } from '@/lib/flight-session-service'
 import { getInstructorEnrollments } from '@/lib/enrollment-service'
 import { InstructorQuickLinks } from "@/components/instructor/instructor-quick-links"
+import { InstructorProgressWidget } from "@/components/instructor/instructor-progress-widget"
 
 export default async function InstructorDashboardPage() {
   // Get instructor profile
@@ -53,6 +54,7 @@ export default async function InstructorDashboardPage() {
   return (
     <div className="space-y-8">
       <InstructorQuickLinks />
+      <InstructorProgressWidget enrollments={enrollments} />
       <InstructorStatsCards stats={stats} />
       <UpcomingInstructorSessions sessions={sessions} />
       <PendingEndorsements endorsements={endorsements} instructorStatus={instructor.status} instructorId={instructor.id} />
