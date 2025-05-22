@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { RoleSwitcher } from "@/components/shared/role-switcher"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -746,6 +747,7 @@ function UserSidebarInfo() {
   const [profile, setProfile] = useState<any>(null)
   const [isAlsoAdmin, setIsAlsoAdmin] = useState(false)
   const router = useRouter()
+  const [showPopover, setShowPopover] = useState(false)
 
   useEffect(() => {
     // Fetch user and profile info from Supabase
@@ -777,16 +779,32 @@ function UserSidebarInfo() {
 
   return (
     <div className="flex flex-col items-center gap-2 p-2 border-t">
-      <Avatar className="h-10 w-10">
-        <AvatarImage src={profile.avatar_url || undefined} alt={profile.first_name} />
-        <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
-      </Avatar>
-      <div className="text-center">
-        <div className="font-medium">{profile.first_name} {profile.last_name}</div>
-        <div className="text-xs text-muted-foreground">{profile.email}</div>
-      </div>
-      {isAlsoAdmin && <RoleSwitcher currentRole={profile.role} hasAdditionalRole={isAlsoAdmin} />}
-      <button onClick={handleLogout} className="text-xs text-red-600 hover:underline mt-1">Log out</button>
+      <Popover open={showPopover} onOpenChange={setShowPopover}>
+        <PopoverTrigger asChild>
+          <div className="cursor-pointer" onClick={() => setShowPopover(!showPopover)}>
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={profile.avatar_url || undefined} alt={profile.first_name} />
+              <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
+            </Avatar>
+            <div className="text-center">
+              <div className="font-medium">{profile.first_name} {profile.last_name}</div>
+              <div className="text-xs text-muted-foreground">{profile.email}</div>
+            </div>
+          </div>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-56">
+          <div className="flex flex-col gap-2">
+            <div className="font-medium mb-1">Switch View</div>
+            {profile.role === "admin" || profile.metadata?.additional_roles?.includes("admin") ? (
+              <Button variant="ghost" onClick={() => { setShowPopover(false); router.push("/admin/dashboard") }}>Admin Dashboard</Button>
+            ) : null}
+            {profile.role === "instructor" || profile.metadata?.additional_roles?.includes("instructor") ? (
+              <Button variant="ghost" onClick={() => { setShowPopover(false); router.push("/instructor/dashboard") }}>Instructor Dashboard</Button>
+            ) : null}
+            <Button variant="outline" onClick={handleLogout} className="text-red-600 mt-2">Log out</Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }

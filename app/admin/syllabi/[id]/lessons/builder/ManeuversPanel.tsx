@@ -4,9 +4,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
-export default function ManeuversPanel({ value, onChange }: {
+export default function ManeuversPanel({ value, onChange, feedbackFields, onFeedbackFieldsChange, feedbackInstructions, onFeedbackInstructionsChange }: {
   value: any[],
-  onChange: (v: any[]) => void
+  onChange: (v: any[]) => void,
+  feedbackFields: string,
+  onFeedbackFieldsChange: (v: string) => void,
+  feedbackInstructions: string,
+  onFeedbackInstructionsChange: (v: string) => void
 }) {
   const [allManeuvers, setAllManeuvers] = useState<any[]>([])
   const [search, setSearch] = useState("")
@@ -20,7 +24,7 @@ export default function ManeuversPanel({ value, onChange }: {
 
   function handleSelect(maneuver: any) {
     if (selected.find((m) => m.id === maneuver.id)) return
-    const next = [...selected, { ...maneuver, is_required: true, default_score: 0, instructor_notes: "" }]
+    const next = [...selected, { ...maneuver, is_required: true, default_score: 0, instructor_notes: "", is_scorable: false, scoring_labels: "", example_feedback: "" }]
     setSelected(next)
     onChange(next)
   }
@@ -77,7 +81,26 @@ export default function ManeuversPanel({ value, onChange }: {
                   onChange={e => handleChange(m.id, "default_score", e.target.value)}
                   placeholder="Score"
                 />
+                <Badge variant={m.is_scorable ? "default" : "secondary"} onClick={() => handleChange(m.id, "is_scorable", !m.is_scorable)}>
+                  {m.is_scorable ? "Scorable" : "Not Scorable"}
+                </Badge>
               </div>
+              {m.is_scorable && (
+                <div className="mb-2">
+                  <label className="block text-sm font-medium mb-1">Scoring Labels (comma separated, e.g. Unsatisfactory, Developing, Proficient, Excellent)</label>
+                  <Input
+                    value={m.scoring_labels || ''}
+                    onChange={e => handleChange(m.id, "scoring_labels", e.target.value)}
+                    placeholder="Enter custom labels or leave blank for default"
+                  />
+                  <label className="block text-sm font-medium mt-2 mb-1">Example Feedback</label>
+                  <Textarea
+                    placeholder="Example feedback for this maneuver"
+                    value={m.example_feedback || ''}
+                    onChange={e => handleChange(m.id, "example_feedback", e.target.value)}
+                  />
+                </div>
+              )}
               <Textarea
                 placeholder="Instructor notes for this maneuver"
                 value={m.instructor_notes}
@@ -86,6 +109,22 @@ export default function ManeuversPanel({ value, onChange }: {
             </div>
           ))}
         </div>
+      </div>
+      {/* Lesson-level feedback template */}
+      <div className="mt-8 border-t pt-6">
+        <h3 className="font-semibold mb-2">Lesson Feedback Template</h3>
+        <label className="block text-sm font-medium mb-1">Feedback Fields (comma separated, e.g. Overall Performance, Areas for Improvement, Strengths)</label>
+        <Input
+          value={feedbackFields}
+          onChange={e => onFeedbackFieldsChange(e.target.value)}
+          placeholder="Enter feedback fields for this lesson"
+        />
+        <label className="block text-sm font-medium mt-2 mb-1">Feedback Instructions</label>
+        <Textarea
+          placeholder="Instructions for providing lesson feedback (optional)"
+          value={feedbackInstructions}
+          onChange={e => onFeedbackInstructionsChange(e.target.value)}
+        />
       </div>
     </div>
   )

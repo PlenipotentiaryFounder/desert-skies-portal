@@ -20,7 +20,7 @@ import { getInstructorEnrollments } from '@/lib/enrollment-service'
 export default async function InstructorDashboardPage() {
   // Get instructor profile
   const instructor = await getCurrentInstructor()
-  if (!instructor) return <div>Not authorized</div>
+  if (!instructor) return <div>Not authorized. You must have role 'instructor', 'admin', or 'instructor' in additional_roles.</div>
 
   // Get all enrollments for this instructor
   const enrollments = await getInstructorEnrollments(instructor.id)

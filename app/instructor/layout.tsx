@@ -63,9 +63,20 @@ export default async function InstructorLayout({
     redirect("/login")
   }
 
-  const role = await getUserRole()
+  const supabase = await createServerSupabaseClient()
+  // @ts-expect-error: Supabase type inference issue, id is string
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("role, metadata").eq("id", user.id).single()
+  // Type guard to ensure profile is the expected object
+  function isProfile(obj: any): obj is { role: string; metadata?: { additional_roles?: string[] } } {
+    return obj && typeof obj === "object" && "role" in obj;
+  }
+  if (profileError || !isProfile(profile)) {
+    redirect("/login")
+  }
+  const additionalRoles = profile.metadata?.additional_roles || []
+  const isInstructor = profile.role === "instructor" || additionalRoles.includes("instructor") || profile.role === "admin"
 
-  if (role !== "instructor") {
+  if (!isInstructor) {
     redirect("/")
   }
 

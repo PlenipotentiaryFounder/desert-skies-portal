@@ -42,16 +42,21 @@ export async function middleware(req: NextRequest) {
     if (isAuthRoute && session) {
       try {
         // Get user role from profiles table
-        const { data: profileData } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
-
+        const { data: profileData } = await supabase.from("profiles").select("role, metadata").eq("id", session.user.id).single()
         const role = profileData?.role
+        const additionalRoles = profileData?.metadata?.additional_roles || []
+        const hasAdmin = role === "admin" || additionalRoles.includes("admin")
+        const hasInstructor = role === "instructor" || additionalRoles.includes("instructor")
+        const hasStudent = role === "student" || additionalRoles.includes("student")
 
-        // Redirect based on role
-        if (role === "admin") {
+        // On login/root, if user has both admin and instructor, show dashboard picker
+        if (hasAdmin && hasInstructor) {
+          return NextResponse.redirect(new URL("/dashboard-picker", req.url))
+        } else if (hasAdmin) {
           return NextResponse.redirect(new URL("/admin/dashboard", req.url))
-        } else if (role === "instructor") {
+        } else if (hasInstructor) {
           return NextResponse.redirect(new URL("/instructor/dashboard", req.url))
-        } else if (role === "student") {
+        } else if (hasStudent) {
           return NextResponse.redirect(new URL("/student/dashboard", req.url))
         }
       } catch (error) {
@@ -65,27 +70,36 @@ export async function middleware(req: NextRequest) {
     if (session && isProtectedRoute) {
       try {
         // Get user role
-        const { data: profileData } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
-
+        const { data: profileData } = await supabase.from("profiles").select("role, metadata").eq("id", session.user.id).single()
         const role = profileData?.role
+        const additionalRoles = profileData?.metadata?.additional_roles || []
+        const hasAdmin = role === "admin" || additionalRoles.includes("admin")
+        const hasInstructor = role === "instructor" || additionalRoles.includes("instructor")
+        const hasStudent = role === "student" || additionalRoles.includes("student")
 
-        // Check if user has access to this route based on their role
-        const hasAccess =
-          role &&
-          // Check if attempting to access a route for their role
-          (path.startsWith(`/${role}`) ||
-            // Allow admin to access all protected routes
-            role === "admin")
+        // Allow admin to access any protected route, including /student/* and /instructor/*
+        if (hasAdmin) {
+          return res
+        }
 
-        if (!hasAccess && role) {
-          // Redirect to appropriate dashboard for their role
-          if (role === "student") {
-            return NextResponse.redirect(new URL("/student/dashboard", req.url))
-          } else if (role === "instructor") {
-            return NextResponse.redirect(new URL("/instructor/dashboard", req.url))
-          } else if (role === "admin") {
-            return NextResponse.redirect(new URL("/admin/dashboard", req.url))
-          }
+        // Check if user has access to this route based on their role or additional_roles
+        if (path.startsWith("/student") && hasStudent) {
+          return res
+        }
+        if (path.startsWith("/instructor") && hasInstructor) {
+          return res
+        }
+        if (path.startsWith("/admin") && hasAdmin) {
+          return res
+        }
+
+        // If user does not have access, redirect to their dashboard
+        if (hasStudent) {
+          return NextResponse.redirect(new URL("/student/dashboard", req.url))
+        } else if (hasInstructor) {
+          return NextResponse.redirect(new URL("/instructor/dashboard", req.url))
+        } else if (hasAdmin) {
+          return NextResponse.redirect(new URL("/admin/dashboard", req.url))
         }
       } catch (error) {
         console.error("Error checking role access:", error)

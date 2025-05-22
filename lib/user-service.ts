@@ -309,7 +309,10 @@ export async function getCurrentInstructor() {
   const supabase = await createServerSupabaseClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return null;
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).eq("role", "instructor").single();
-  if (error) return null;
-  return data as User;
+  const { data: profile, error } = await supabase.from("profiles").select("*, metadata").eq("id", user.id).single();
+  if (error || !profile) return null;
+  const additionalRoles = profile.metadata?.additional_roles || [];
+  const isInstructor = profile.role === "instructor" || additionalRoles.includes("instructor") || profile.role === "admin";
+  if (!isInstructor) return null;
+  return profile as User;
 }

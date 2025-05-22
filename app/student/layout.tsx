@@ -61,9 +61,21 @@ export default async function StudentLayout({
     redirect("/login")
   }
 
-  const role = await getUserRole()
+  // session.user.id is always a string (UUID) in our schema
+  const userId = session.user.id as string
+  // @ts-expect-error: Supabase type inference issue, id is string
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("role, metadata").eq("id", userId).single()
+  // Type guard to ensure profile is the expected object
+  function isProfile(obj: any): obj is { role: string; metadata?: { additional_roles?: string[] } } {
+    return obj && typeof obj === "object" && "role" in obj;
+  }
+  if (profileError || !isProfile(profile)) {
+    redirect("/login")
+  }
+  const additionalRoles = profile.metadata?.additional_roles || []
+  const isStudent = profile.role === "student" || additionalRoles.includes("student") || profile.role === "admin"
 
-  if (role !== "student") {
+  if (!isStudent) {
     redirect("/")
   }
 
