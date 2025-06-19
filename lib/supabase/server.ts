@@ -12,37 +12,39 @@ export async function createServerSupabaseClient() {
 // This helper wraps getSession() and returns the user object (or null) for use everywhere in server components.
 export async function getUserFromSession() {
   const supabase = await createServerSupabaseClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  return session?.user ?? null
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error) {
+    console.error('Error getting user:', error)
+    return null
+  }
+  
+  return user
 }
 
+// Update getUserRole to use getUser()
 export async function getUserRole() {
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const user = await getUserFromSession()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
-  const { data } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
+  const supabase = await createServerSupabaseClient()
+  const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single()
   return data?.role
 }
 
+// Update hasAdditionalRole to use getUser()
 export async function hasAdditionalRole(role: string) {
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const user = await getUserFromSession()
 
-  if (!session) {
+  if (!user) {
     return false
   }
 
-  const { data } = await supabase.from("profiles").select("metadata").eq("id", session.user.id).single()
+  const supabase = await createServerSupabaseClient()
+  const { data } = await supabase.from("profiles").select("metadata").eq("id", user.id).single()
 
   if (!data || !data.metadata) {
     return false

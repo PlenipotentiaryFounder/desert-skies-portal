@@ -21,7 +21,12 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const supabase = await createServerSupabaseClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
   const { data: { session } } = await supabase.auth.getSession()
+
+  if (error) {
+    console.error('Error fetching user:', error)
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>
