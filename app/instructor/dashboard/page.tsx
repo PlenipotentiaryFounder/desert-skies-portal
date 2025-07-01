@@ -66,6 +66,9 @@ export default async function InstructorDashboardPage() {
 
   return (
     <div className="space-y-8">
+      <div className="mb-4 py-2 px-4 bg-blue-50 border-b-2 border-blue-200 text-blue-900 text-lg font-semibold uppercase tracking-wide">
+        Instructor Portal
+      </div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Instructor Dashboard</h1>
         <div className="w-48">
