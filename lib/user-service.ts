@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { Database } from "@/types/supabase"
 import { cookies } from "next/headers"
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
 
 export type User = Database["public"]["Tables"]["profiles"]["Row"] & {
   roles?: string[]
@@ -100,8 +101,11 @@ export async function getPendingInstructors(): Promise<User[]> {
 }
 
 export async function createUser(userData: NewUser) {
-  const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  // Use the service role key for admin operations
+  const supabase = createSupabaseAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: userData.email,
