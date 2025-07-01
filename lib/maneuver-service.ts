@@ -1,6 +1,7 @@
 "use server"
 
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
 
 export type Maneuver = {
@@ -21,7 +22,7 @@ export type ManeuverFormData = {
 }
 
 export async function getManeuvers() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("maneuvers")
@@ -38,7 +39,7 @@ export async function getManeuvers() {
 }
 
 export async function getManeuverById(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase.from("maneuvers").select("*").eq("id", id).single()
 
@@ -51,7 +52,7 @@ export async function getManeuverById(id: string) {
 }
 
 export async function createManeuver(formData: ManeuverFormData) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase.from("maneuvers").insert([formData]).select()
 
@@ -65,7 +66,7 @@ export async function createManeuver(formData: ManeuverFormData) {
 }
 
 export async function updateManeuver(id: string, formData: ManeuverFormData) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase.from("maneuvers").update(formData).eq("id", id).select()
 
@@ -80,7 +81,7 @@ export async function updateManeuver(id: string, formData: ManeuverFormData) {
 }
 
 export async function deleteManeuver(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Check if the maneuver is used in any lesson
   const { data: lessonManeuvers, error: checkError } = await supabase
@@ -133,7 +134,7 @@ export async function deleteManeuver(id: string) {
 }
 
 export async function assignManeuverToLesson(lessonId: string, maneuverIds: string[], isRequired = true) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const maneuversToInsert = maneuverIds.map((maneuver_id) => ({
     lesson_id: lessonId,
@@ -153,8 +154,7 @@ export async function assignManeuverToLesson(lessonId: string, maneuverIds: stri
 }
 
 export async function removeManeuverFromLesson(lessonId: string, maneuverIds: string[]) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = createClient(await cookies())
 
   const { error } = await supabase
     .from("lesson_maneuvers")
@@ -172,8 +172,7 @@ export async function removeManeuverFromLesson(lessonId: string, maneuverIds: st
 }
 
 export async function getManeuversForLesson(lessonId: string) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("lesson_maneuvers")

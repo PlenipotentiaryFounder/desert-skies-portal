@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { createServerSupabaseClient, hasAdditionalRole } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { getUserProfileWithRoles } from "@/lib/user-service"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards"
@@ -8,9 +9,11 @@ import { RecentActivityList } from "@/components/admin/recent-activity-list"
 import { ActiveInstructorsList } from "@/components/admin/active-instructors-list"
 import { EnrollmentChart } from "@/components/admin/enrollment-chart"
 import { RoleSwitcher } from "@/components/shared/role-switcher"
+import { cookies } from "next/headers"
 
 export default async function AdminDashboardPage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -19,13 +22,13 @@ export default async function AdminDashboardPage() {
     redirect("/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const profile = await getUserProfileWithRoles(user.id)
 
-  if (!profile || profile.role !== "admin") {
+  if (!profile) {
     redirect("/")
   }
 
-  const isAlsoInstructor = await hasAdditionalRole("instructor")
+  const userRoles = profile.roles || []
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,7 +37,7 @@ export default async function AdminDashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-muted-foreground">Welcome back, {profile.first_name}</p>
         </div>
-        <RoleSwitcher currentRole="admin" hasAdditionalRole={isAlsoInstructor} />
+        <RoleSwitcher roles={userRoles} />
       </div>
 
       <Suspense fallback={<Skeleton className="h-[100px] w-full" />}>

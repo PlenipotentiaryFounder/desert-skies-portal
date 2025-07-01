@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { RoleSwitcher } from "@/components/shared/role-switcher"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { createClient } from "@/lib/supabase/client"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -167,6 +168,7 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right"
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
+    profile: AuthenticatedUser | null
   }
 >(
   (
@@ -176,6 +178,7 @@ const Sidebar = React.forwardRef<
       collapsible = "offcanvas",
       className,
       children,
+      profile,
       ...props
     },
     ref
@@ -372,16 +375,23 @@ SidebarHeader.displayName = "SidebarHeader"
 
 const SidebarFooter = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, ...props }, ref) => {
+  React.ComponentProps<"div"> & {
+    variant?: "sidebar" | "floating" | "inset",
+    profile: AuthenticatedUser | null
+  }
+>(({ className, variant, profile, ...props }, ref) => {
+  const { state } = useSidebar()
   return (
     <div
       ref={ref}
-      data-sidebar="footer"
-      className={cn("flex flex-col gap-2 p-2", className)}
+      className={cn(
+        "flex flex-col gap-y-2 border-t p-2",
+        state === "collapsed" && variant !== "floating" ? "py-2" : "p-2",
+        className
+      )}
       {...props}
     >
-      <UserSidebarInfo />
+      <UserSidebarInfo profile={profile} />
     </div>
   )
 })
@@ -742,71 +752,83 @@ const SidebarMenuSubButton = React.forwardRef<
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
-function UserSidebarInfo() {
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [isAlsoAdmin, setIsAlsoAdmin] = useState(false)
-  const router = useRouter()
-  const [showPopover, setShowPopover] = useState(false)
+interface UserSidebarInfoProps {
+  profile: AuthenticatedUser | null
+}
 
-  useEffect(() => {
-    // Fetch user and profile info from Supabase
-    const fetchUser = async () => {
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      if (user) {
-        const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-        setProfile(profile)
-        // Check for additional role
-        if (profile?.metadata?.additional_roles?.includes("admin") || profile?.metadata?.additional_roles?.includes("instructor")) {
-          setIsAlsoAdmin(true)
-        }
-      }
-    }
-    fetchUser()
-  }, [])
+function UserSidebarInfo({ profile }: UserSidebarInfoProps) {
+  const { state } = useSidebar()
+  const router = useRouter()
+  const supabase = createClient()
 
   const handleLogout = async () => {
-    const { createClient } = await import("@/lib/supabase/client")
-    const supabase = createClient()
     await supabase.auth.signOut()
     router.push("/login")
   }
 
-  if (!user || !profile) return null
+  const handleProfileClick = () => {
+    //
+  }
+
+  if (!profile) {
+    return <UserSidebarInfoSkeleton />
+  }
+
+  const userRoles = profile.roles.map(r => r.role_name)
 
   return (
-    <div className="flex flex-col items-center gap-2 p-2 border-t">
-      <Popover open={showPopover} onOpenChange={setShowPopover}>
+    <div className="flex flex-col gap-y-1">
+      <Popover>
         <PopoverTrigger asChild>
-          <div className="cursor-pointer" onClick={() => setShowPopover(!showPopover)}>
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={profile.avatar_url || undefined} alt={profile.first_name} />
-              <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
+          <Button
+            variant="ghost"
+            className={cn(
+              "h-14 justify-start p-2",
+              state === "collapsed" &&
+                "h-12 w-12 items-center justify-center p-0"
+            )}
+          >
+            <Avatar
+              className={cn(
+                "h-10 w-10",
+                state === "collapsed" && "h-8 w-8"
+              )}
+            >
+              <AvatarImage src={profile.avatar_url || ""} />
+              <AvatarFallback>
+                {profile.first_name?.[0]}
+                {profile.last_name?.[0]}
+              </AvatarFallback>
             </Avatar>
-            <div className="text-center">
-              <div className="font-medium">{profile.first_name} {profile.last_name}</div>
-              <div className="text-xs text-muted-foreground">{profile.email}</div>
+            <div
+              className={cn(
+                "ml-2 flex flex-col items-start",
+                state === "collapsed" && "hidden"
+              )}
+            >
+              <span className="text-sm font-medium">
+                {profile.first_name} {profile.last_name}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {profile.email}
+              </span>
             </div>
-          </div>
+          </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-56">
-          <div className="flex flex-col gap-2">
-            <div className="font-medium mb-1">Switch View</div>
-            {profile.role === "admin" || profile.metadata?.additional_roles?.includes("admin") ? (
-              <Button variant="ghost" onClick={() => { setShowPopover(false); router.push("/admin/dashboard") }}>Admin Dashboard</Button>
-            ) : null}
-            {profile.role === "instructor" || profile.metadata?.additional_roles?.includes("instructor") ? (
-              <Button variant="ghost" onClick={() => { setShowPopover(false); router.push("/instructor/dashboard") }}>Instructor Dashboard</Button>
-            ) : null}
-            <Button variant="outline" onClick={handleLogout} className="text-red-600 mt-2">Log out</Button>
-          </div>
+        <PopoverContent side="right" className="flex flex-col gap-y-2">
+          <RoleSwitcher roles={userRoles} />
+          <Button variant="outline" onClick={handleProfileClick}>
+            View Profile & Settings
+          </Button>
+          <Button onClick={handleLogout}>Log Out</Button>
         </PopoverContent>
       </Popover>
     </div>
   )
+}
+
+function UserSidebarInfoSkeleton() {
+  // ... existing code ...
 }
 
 export {
@@ -835,4 +857,5 @@ export {
   SidebarTrigger,
   useSidebar,
   UserSidebarInfo,
+  UserSidebarInfoSkeleton,
 }

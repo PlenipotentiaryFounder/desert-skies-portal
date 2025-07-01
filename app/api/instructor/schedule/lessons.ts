@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const instructorId = searchParams.get("instructorId")
   const studentId = searchParams.get("studentId")
   const syllabusId = searchParams.get("syllabusId")
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   let query = supabase.from("lessons").select("id, title, syllabus_id")
   if (syllabusId) query = query.eq("syllabus_id", syllabusId)
   // Optionally filter by instructor or student if needed

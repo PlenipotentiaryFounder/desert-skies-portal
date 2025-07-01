@@ -3,6 +3,8 @@ import { createUser, getUserById } from "@/lib/user-service";
 import { createEnrollment } from "@/lib/enrollment-service";
 import { getSyllabusById } from "@/lib/syllabus-service";
 import { sendEmail } from "@/lib/email-service";
+import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 function isUser(obj: any): obj is { id: string } {
   return obj && typeof obj === 'object' && typeof obj.id === 'string';
@@ -25,9 +27,9 @@ export async function POST(req: NextRequest) {
     if (!isUser(student)) {
       // Try to find by email in profiles
       try {
-        const supabase = await import("@/lib/supabase/server");
-        const client = await supabase.createServerSupabaseClient();
-        const { data: found, error } = await client.from("profiles").select("*").eq("email", email).single();
+        const cookieStore = await cookies();
+        const supabase = createClient(cookieStore);
+        const { data: found, error } = await supabase.from("profiles").select("*").eq("email", email).single();
         if (error) console.error("Error in profiles lookup:", error);
         if (isUser(found)) student = found;
       } catch (err) {

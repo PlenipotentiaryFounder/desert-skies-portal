@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 // POST: Create new lesson with tags
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   // Insert lesson
   const { lesson, maneuvers, coreTopics, resources, whatToBring, ...lessonFields } = body
   const { data: lessonData, error: lessonError } = await supabase.from("syllabus_lessons").insert([lessonFields]).select()
@@ -23,7 +25,8 @@ export async function POST(req: NextRequest) {
 // PUT: Update lesson and tags
 export async function PUT(req: NextRequest) {
   const body = await req.json()
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const { id, maneuvers, coreTopics, resources, whatToBring, ...lessonFields } = body
   // Update lesson
   const { data: lessonData, error: lessonError } = await supabase.from("syllabus_lessons").update(lessonFields).eq("id", id).select()
@@ -46,7 +49,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get("id")
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const { data: lesson, error } = await supabase.from("syllabus_lessons").select("*", "id", "title", "objectives", "standards", "email_template").eq("id", id).single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   // Fetch tags

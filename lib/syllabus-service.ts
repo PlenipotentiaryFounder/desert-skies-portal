@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 
@@ -46,7 +46,7 @@ export type SyllabusLessonFormData = {
 }
 
 export async function getSyllabi() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase.from("syllabi").select("*").order("created_at", { ascending: false })
 
@@ -79,7 +79,7 @@ export async function getSyllabi() {
 }
 
 export async function getSyllabusById(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase.from("syllabi").select("*").eq("id", id as any).single()
 
@@ -92,7 +92,7 @@ export async function getSyllabusById(id: string) {
 }
 
 export async function createSyllabus(formData: SyllabusFormData) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // @ts-expect-error Supabase type system is too strict for insert
   const { data, error } = await supabase.from("syllabi").insert([
@@ -109,7 +109,7 @@ export async function createSyllabus(formData: SyllabusFormData) {
 }
 
 export async function updateSyllabus(id: string, formData: SyllabusFormData) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // @ts-expect-error Supabase type system is too strict for update
   const { data, error } = await supabase.from("syllabi")
@@ -128,7 +128,7 @@ export async function updateSyllabus(id: string, formData: SyllabusFormData) {
 }
 
 export async function deleteSyllabus(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { error } = await supabase.from("syllabi").delete().eq("id", id as any)
 
@@ -142,7 +142,7 @@ export async function deleteSyllabus(id: string) {
 }
 
 export async function getSyllabusLessons(syllabusId: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("syllabus_lessons")
@@ -159,7 +159,7 @@ export async function getSyllabusLessons(syllabusId: string) {
 }
 
 export async function getSyllabusLessonById(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase.from("syllabus_lessons").select("*").eq("id", id as any).single()
 
@@ -172,7 +172,7 @@ export async function getSyllabusLessonById(id: string) {
 }
 
 export async function createSyllabusLesson(formData: SyllabusLessonFormData) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // @ts-expect-error Supabase type system is too strict for insert
   const { data, error } = await supabase.from("syllabus_lessons").insert([
@@ -189,7 +189,7 @@ export async function createSyllabusLesson(formData: SyllabusLessonFormData) {
 }
 
 export async function updateSyllabusLesson(id: string, formData: SyllabusLessonFormData) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // @ts-expect-error Supabase type system is too strict for update
   const { data, error } = await supabase.from("syllabus_lessons")
@@ -207,7 +207,7 @@ export async function updateSyllabusLesson(id: string, formData: SyllabusLessonF
 }
 
 export async function deleteSyllabusLesson(id: string, syllabusId: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { error } = await supabase.from("syllabus_lessons").delete().eq("id", id as any)
 

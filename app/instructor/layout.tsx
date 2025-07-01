@@ -1,8 +1,10 @@
 import type React from "react"
 import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { getUserProfileWithRoles } from "@/lib/user-service"
 import { BookOpen, Calendar, ClipboardCheck, FileText, Home, Plane, Settings, User, Users } from "lucide-react"
-import { createServerSupabaseClient, getUserRole, getUserFromSession } from "@/lib/supabase/server"
 import { DashboardShell } from "@/components/shared/dashboard-shell"
+import { cookies } from "next/headers"
 
 const navItems = [
   {
@@ -57,31 +59,28 @@ export default async function InstructorLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const user = await getUserFromSession()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     redirect("/login")
   }
 
-  const supabase = await createServerSupabaseClient()
-  // @ts-expect-error: Supabase type inference issue, id is string
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("role, metadata").eq("id", user.id).single()
-  // Type guard to ensure profile is the expected object
-  function isProfile(obj: any): obj is { role: string; metadata?: { additional_roles?: string[] } } {
-    return obj && typeof obj === "object" && "role" in obj;
-  }
-  if (profileError || !isProfile(profile)) {
-    redirect("/login")
-  }
-  const additionalRoles = profile.metadata?.additional_roles || []
-  const isInstructor = profile.role === "instructor" || additionalRoles.includes("instructor") || profile.role === "admin"
+  const profile = await getUserProfileWithRoles(user.id)
+  const roles = profile?.roles || []
 
-  if (!isInstructor) {
+  const canAccessInstructor = roles.includes("instructor")
+  const canAccessAdmin = roles.includes("admin")
+
+  if (!canAccessInstructor && !canAccessAdmin) {
     redirect("/")
   }
 
   return (
-    <DashboardShell navItems={navItems} userRole="instructor">
+    <DashboardShell navItems={navItems} userRole="instructor" profile={profile}>
       {children}
     </DashboardShell>
   )

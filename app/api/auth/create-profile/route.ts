@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import type { Database } from "@/types/supabase"
 
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Server error:", error)
+    console.error("Error setting up Thomas's roles:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

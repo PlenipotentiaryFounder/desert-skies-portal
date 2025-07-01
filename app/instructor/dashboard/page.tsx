@@ -2,7 +2,8 @@
 // Always await createServerSupabaseClient() to get a usable Supabase client instance.
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { createServerSupabaseClient, hasAdditionalRole, getUserFromSession } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { InstructorStudentsList } from "@/components/instructor/instructor-students-list"
@@ -13,16 +14,29 @@ import { ApprovalStatusBanner } from "@/components/instructor/approval-status-ba
 import { RoleSwitcher } from "@/components/shared/role-switcher"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { getCurrentInstructor } from '@/lib/user-service'
+import { getUserProfileWithRoles } from '@/lib/user-service'
 import { getInstructorFlightSessions } from '@/lib/flight-session-service'
 import { getInstructorEnrollments } from '@/lib/enrollment-service'
 import { InstructorQuickLinks } from "@/components/instructor/instructor-quick-links"
 import { InstructorProgressWidget } from "@/components/instructor/instructor-progress-widget"
 
 export default async function InstructorDashboardPage() {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/login")
+  }
+
   // Get instructor profile
-  const instructor = await getCurrentInstructor()
+  const instructor = await getUserProfileWithRoles(user.id)
   if (!instructor) return <div>Not authorized. You must have role 'instructor', 'admin', or 'instructor' in additional_roles.</div>
+  
+  const roles = instructor.roles.map(r => r.role_name)
 
   // Get all enrollments for this instructor
   const enrollments = await getInstructorEnrollments(instructor.id)
@@ -31,7 +45,6 @@ export default async function InstructorDashboardPage() {
   const sessions = await getInstructorFlightSessions(instructor.id)
 
   // Get pending endorsements for this instructor
-  const supabase = await createServerSupabaseClient()
   const { data: endorsements = [] } = await supabase
     .from('endorsements')
     .select('id, created_at, type, status, student_id, students:student_id (first_name, last_name)')
@@ -53,6 +66,12 @@ export default async function InstructorDashboardPage() {
 
   return (
     <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Instructor Dashboard</h1>
+        <div className="w-48">
+          <RoleSwitcher roles={roles} />
+        </div>
+      </div>
       <InstructorQuickLinks />
       <InstructorProgressWidget enrollments={enrollments} />
       <InstructorStatsCards stats={stats} />

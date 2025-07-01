@@ -1,7 +1,8 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { getUserById } from "@/lib/user-service"
 import { getStudentEnrollments } from "@/lib/enrollment-service"
 import { Button } from "@/components/ui/button"
@@ -20,7 +21,8 @@ interface StudentDetailPageProps {
 }
 
 export default async function StudentDetailPage({ params }: StudentDetailPageProps) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -175,18 +177,34 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
           <CardContent>
             {sessions && sessions.length > 0 ? (
               <div className="space-y-4">
-                {sessions.map((session) => (
-                  <div key={session.id} className="flex justify-between items-center p-4 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{session.lesson.title}</div>
-                      <div className="text-sm text-muted-foreground">{session.lesson.lesson_type}</div>
+                {sessions.map((session) => {
+                  let lessonTitle = "No lesson info";
+                  let lessonType = "";
+                  if (session.lesson) {
+                    if (Array.isArray(session.lesson) && session.lesson.length > 0) {
+                      const firstLesson = session.lesson[0];
+                      if (firstLesson && typeof firstLesson === 'object' && 'title' in firstLesson && 'lesson_type' in firstLesson) {
+                        lessonTitle = firstLesson.title;
+                        lessonType = firstLesson.lesson_type;
+                      }
+                    } else if (!Array.isArray(session.lesson) && session.lesson?.title && session.lesson?.lesson_type) {
+                      lessonTitle = session.lesson.title;
+                      lessonType = session.lesson.lesson_type;
+                    }
+                  }
+                  return (
+                    <div key={session.id} className="flex justify-between items-center p-4 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{lessonTitle}</div>
+                        <div className="text-sm text-muted-foreground">{lessonType}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm">{formatDate(session.date)}</div>
+                        <div className="text-sm text-muted-foreground capitalize">{session.status}</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm">{formatDate(session.date)}</div>
-                      <div className="text-sm text-muted-foreground capitalize">{session.status}</div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p>No flight sessions recorded yet</p>

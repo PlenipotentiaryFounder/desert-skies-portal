@@ -1,5 +1,6 @@
 import { Suspense } from "react"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { getStudentFlightSessions } from "@/lib/flight-session-service"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StudentFlightSessionsList } from "./student-flight-sessions-list"
@@ -11,7 +12,8 @@ export const metadata = {
 }
 
 export default async function StudentSchedulePage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

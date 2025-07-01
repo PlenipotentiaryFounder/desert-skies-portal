@@ -1,180 +1,36 @@
-import { redirect } from "next/navigation"
-import { createServerSupabaseClient, getUserFromSession } from "@/lib/supabase/server"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LandingHero } from "@/components/landing/landing-hero"
+import { LandingFeatures } from "@/components/landing/landing-features"
+import { LandingTestimonials } from "@/components/landing/landing-testimonials"
+import { LandingCta } from "@/components/landing/landing-cta"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export default async function Home() {
-  try {
-    // Get the current user
-    const user = await getUserFromSession()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-    if (user) {
-      // User is authenticated, get their role and profile
-      const supabase = await createServerSupabaseClient()
-      const { data: profile } = await supabase.from("profiles").select("role, full_name, avatar_url").eq("id", user.id).single()
-
-      // Show user card if we have profile data
-      if (profile) {
-        return (
-          <div className="flex flex-col min-h-screen">
-            <header className="border-b">
-              <div className="container flex h-16 items-center justify-between py-4">
-                <div className="flex items-center gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6"
-                  >
-                    <path d="M12 19l9 2-9-18-9 18 9-2z" />
-                  </svg>
-                  <span className="text-xl font-bold">Desert Skies Aviation</span>
-                </div>
-              </div>
-            </header>
-            <main className="flex-1 container py-8">
-              <Card className="max-w-md mx-auto">
-                <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name || user.email} />
-                      <AvatarFallback>{(profile.full_name || user.email || "User").substring(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle>{profile.full_name || user.email}</CardTitle>
-                      <CardDescription className="capitalize">{profile.role}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-4">
-                    <Button 
-                      className="w-full" 
-                      onClick={() => {
-                        if (profile.role === "admin") redirect("/admin/dashboard")
-                        else if (profile.role === "instructor") redirect("/instructor/dashboard")
-                        else if (profile.role === "student") redirect("/student/dashboard")
-                      }}
-                    >
-                      Go to Dashboard
-                    </Button>
-                    <form action="/auth/signout" method="post">
-                      <Button variant="outline" className="w-full" type="submit">
-                        Sign Out
-                      </Button>
-                    </form>
-                  </div>
-                </CardContent>
-              </Card>
-            </main>
-            <footer className="border-t py-6">
-              <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} Desert Skies Aviation. All rights reserved.
-                </p>
-              </div>
-            </footer>
-          </div>
-        )
-      }
-
-      // If we have a role but no profile, redirect to appropriate dashboard
-      if (profile?.role === "admin") {
-        redirect("/admin/dashboard")
-      } else if (profile?.role === "instructor") {
-        redirect("/instructor/dashboard")
-      } else if (profile?.role === "student") {
-        redirect("/student/dashboard")
-      }
-    }
-
-    // If not authenticated or no role found, show a simple landing page
+  if (user) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <header className="border-b">
-          <div className="container flex h-16 items-center justify-between py-4">
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-              >
-                <path d="M12 19l9 2-9-18-9 18 9-2z" />
-              </svg>
-              <span className="text-xl font-bold">Desert Skies Aviation</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <a href="/login" className="px-4 py-2 text-sm font-medium border rounded-md hover:bg-accent">
-                Log In
-              </a>
-              <a
-                href="/signup"
-                className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-              >
-                Sign Up
-              </a>
-            </div>
-          </div>
-        </header>
-        <main className="flex-1 flex flex-col items-center justify-center p-4">
-          <div className="max-w-3xl text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">Modern Flight Training Management</h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Streamline your aviation training with our comprehensive platform for students, instructors, and flight
-              schools.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/signup"
-                className="px-6 py-3 text-base font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-              >
-                Get Started
-              </a>
-              <a href="/login" className="px-6 py-3 text-base font-medium border rounded-md hover:bg-accent">
-                Log In
-              </a>
-            </div>
-          </div>
-        </main>
-        <footer className="border-t py-6">
-          <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Desert Skies Aviation. All rights reserved.
-            </p>
-          </div>
-        </footer>
-      </div>
-    )
-  } catch (error) {
-    console.error("Error in Home page:", error)
-
-    // Fallback UI in case of error
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 className="text-2xl font-bold mb-4">Desert Skies Aviation</h1>
-        <p className="mb-6">Welcome to our flight training portal</p>
-        <div className="flex gap-4">
-          <a href="/login" className="px-4 py-2 text-sm font-medium border rounded-md hover:bg-accent">
-            Log In
-          </a>
-          <a
-            href="/signup"
-            className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-          >
-            Sign Up
-          </a>
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">You are logged in.</h1>
+          <p className="text-muted-foreground">Redirecting to your dashboard...</p>
         </div>
       </div>
     )
   }
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-1">
+        <LandingHero />
+        <LandingFeatures />
+        <LandingTestimonials />
+        <LandingCta />
+      </main>
+    </div>
+  )
 }

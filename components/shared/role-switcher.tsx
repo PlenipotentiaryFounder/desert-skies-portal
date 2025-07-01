@@ -1,36 +1,64 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { CurrencyIcon as Exchange } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { ChevronsUpDown } from "lucide-react"
 
 interface RoleSwitcherProps {
-  currentRole: "admin" | "instructor"
-  hasAdditionalRole: boolean
+  roles: string[]
 }
 
-export function RoleSwitcher({ currentRole, hasAdditionalRole }: RoleSwitcherProps) {
+export function RoleSwitcher({ roles }: RoleSwitcherProps) {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const pathname = usePathname()
 
-  if (!hasAdditionalRole) {
+  const handleSwitch = (role: string) => {
+    router.push(`/${role}/dashboard`)
+  }
+
+  const getCurrentDashboardRole = () => {
+    const pathParts = pathname.split('/')
+    if (pathParts.length > 1 && (roles.includes(pathParts[1]))) {
+      return pathParts[1]
+    }
+    return 'dashboard' 
+  }
+
+  const currentDashboardRole = getCurrentDashboardRole()
+
+  if (!roles || roles.length < 2) {
     return null
   }
 
-  const handleSwitch = () => {
-    setIsLoading(true)
-    if (currentRole === "admin") {
-      router.push("/instructor/dashboard")
-    } else {
-      router.push("/admin/dashboard")
-    }
-  }
-
   return (
-    <Button variant="outline" size="sm" onClick={handleSwitch} disabled={isLoading} className="ml-auto">
-      <Exchange className="mr-2 h-4 w-4" />
-      {currentRole === "admin" ? "Switch to Instructor View" : "Switch to Admin View"}
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="w-full justify-between">
+          <span className="capitalize">{currentDashboardRole}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuLabel>Switch Dashboard</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {roles.map((role) => (
+          <DropdownMenuItem
+            key={role}
+            onClick={() => handleSwitch(role)}
+            disabled={role === currentDashboardRole}
+          >
+            <span className="capitalize">{role}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

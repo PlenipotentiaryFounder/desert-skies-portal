@@ -3,11 +3,13 @@ import { SyllabusList } from "./syllabus-list"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { PlusCircle, Database } from "lucide-react"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export default async function SyllabiPage() {
   const syllabi = await getSyllabi()
-  const supabase = createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // Check if we have any syllabi in the database
   const { count } = await supabase.from("syllabi").select("*", { count: "exact", head: true })

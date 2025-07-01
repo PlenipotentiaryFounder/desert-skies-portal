@@ -1,9 +1,10 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { createNotification } from "./notification-service"
 
 // Check for documents expiring soon
 export async function checkDocumentExpirations() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Get documents expiring in the next 30 days
   const thirtyDaysFromNow = new Date()
@@ -72,7 +73,7 @@ export async function checkDocumentExpirations() {
 
 // Check for upcoming flight sessions
 export async function checkUpcomingFlightSessions() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Get flight sessions in the next 24 hours
   const twentyFourHoursFromNow = new Date()
@@ -121,7 +122,7 @@ export async function checkUpcomingFlightSessions() {
         await createNotification({
           userId: session.student_id,
           title: "Upcoming Flight Session",
-          message: `You have a flight session scheduled in ${hoursUntilSession} hour${hoursUntilSession === 1 ? "" : "s"} with aircraft ${session.aircraft.tail_number} (${session.aircraft.make} ${session.aircraft.model}).`,
+          message: `You have a flight session scheduled in ${hoursUntilSession} hour${hoursUntilSession === 1 ? "" : "s"} with aircraft ${(session.aircraft as any).tail_number} (${(session.aircraft as any).make} ${(session.aircraft as any).model}).`,
           category: "flight_reminder",
           link: `/student/schedule`,
           relatedEntityId: session.id,
@@ -156,7 +157,7 @@ export async function checkUpcomingFlightSessions() {
         await createNotification({
           userId: session.instructor_id,
           title: "Upcoming Flight Session",
-          message: `You have a flight session with ${studentName} scheduled in ${hoursUntilSession} hour${hoursUntilSession === 1 ? "" : "s"} with aircraft ${session.aircraft.tail_number}.`,
+          message: `You have a flight session with ${studentName} scheduled in ${hoursUntilSession} hour${hoursUntilSession === 1 ? "" : "s"} with aircraft ${(session.aircraft as any).tail_number}.`,
           category: "flight_reminder",
           link: `/instructor/schedule`,
           relatedEntityId: session.id,

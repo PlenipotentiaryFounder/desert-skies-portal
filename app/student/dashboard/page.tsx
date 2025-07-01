@@ -1,49 +1,37 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
-import { formatDate } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
+import { getUserProfileWithRoles } from "@/lib/user-service"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StudentProgressChart } from "@/components/student/student-progress-chart"
 import { UpcomingFlightsList } from "@/components/student/upcoming-flights-list"
 import { RecentManeuverScores } from "@/components/student/recent-maneuver-scores"
 import { DocumentsOverview } from "@/components/student/documents-overview"
+import { CurrentEnrollmentCard } from "./CurrentEnrollmentCard"
 
 export default async function StudentDashboardPage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
 
-  // Get the current session
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  // If not authenticated, redirect to login
-  if (!session) {
+  if (!user) {
     redirect("/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
+  const profile = await getUserProfileWithRoles(user.id)
+  const roles = profile?.roles.map(r => r.role_name) || []
 
-  // If not a student, redirect to appropriate dashboard
-  if (profile?.role && profile.role !== "student") {
-    redirect(`/${profile.role}/dashboard`)
+  // This page is for students. If the user is not a student, but has other roles, redirect them.
+  // We will allow admins to see this page.
+  if (roles.length > 0 && !roles.includes("student") && !roles.includes("admin")) {
+    const highestRole = roles.includes("instructor") ? "instructor" : roles[0]
+    redirect(`/${highestRole}/dashboard`)
   }
-
-  const { data: enrollments } = await supabase
-    .from("student_enrollments")
-    .select(`
-      *,
-      syllabi:syllabus_id (title, faa_type),
-      instructors:instructor_id (
-        first_name,
-        last_name
-      )
-    `)
-    .eq("student_id", session.user.id)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-
-  const currentEnrollment = enrollments?.[0]
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,49 +40,9 @@ export default async function StudentDashboardPage() {
         <p className="text-muted-foreground">Here's an overview of your flight training progress</p>
       </div>
 
-      {currentEnrollment ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Training Program</CardTitle>
-            <CardDescription>
-              {currentEnrollment.syllabi.title} ({currentEnrollment.syllabi.faa_type})
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-sm font-medium">Instructor</p>
-                <p className="text-sm text-muted-foreground">
-                  {currentEnrollment.instructors.first_name} {currentEnrollment.instructors.last_name}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Started</p>
-                <p className="text-sm text-muted-foreground">{formatDate(currentEnrollment.start_date)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Target Completion</p>
-                <p className="text-sm text-muted-foreground">
-                  {currentEnrollment.target_completion_date
-                    ? formatDate(currentEnrollment.target_completion_date)
-                    : "Not set"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Status</p>
-                <p className="text-sm text-muted-foreground capitalize">{currentEnrollment.status}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>No Active Training Program</CardTitle>
-            <CardDescription>You are not currently enrolled in any training program</CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+      <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+        <CurrentEnrollmentCard studentId={user.id} />
+      </Suspense>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="col-span-2">
@@ -104,7 +52,7 @@ export default async function StudentDashboardPage() {
           </CardHeader>
           <CardContent>
             <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <StudentProgressChart studentId={session.user.id} />
+              <StudentProgressChart studentId={user.id} />
             </Suspense>
           </CardContent>
         </Card>
@@ -116,7 +64,7 @@ export default async function StudentDashboardPage() {
           </CardHeader>
           <CardContent>
             <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <UpcomingFlightsList studentId={session.user.id} />
+              <UpcomingFlightsList studentId={user.id} />
             </Suspense>
           </CardContent>
         </Card>
@@ -130,7 +78,7 @@ export default async function StudentDashboardPage() {
           </CardHeader>
           <CardContent>
             <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <RecentManeuverScores studentId={session.user.id} />
+              <RecentManeuverScores studentId={user.id} />
             </Suspense>
           </CardContent>
         </Card>
@@ -142,7 +90,7 @@ export default async function StudentDashboardPage() {
           </CardHeader>
           <CardContent>
             <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <DocumentsOverview userId={session.user.id} />
+              <DocumentsOverview userId={user.id} />
             </Suspense>
           </CardContent>
         </Card>

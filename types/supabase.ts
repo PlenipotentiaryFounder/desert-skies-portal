@@ -135,6 +135,464 @@ export type Database = {
         }
         Relationships: []
       }
+      core_topics: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      document_types: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          requires_expiration: boolean | null
+          requires_verification: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          requires_expiration?: boolean | null
+          requires_verification?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          requires_expiration?: boolean | null
+          requires_verification?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          document_type: string
+          expiration_date: string | null
+          file_path: string
+          file_type: string
+          id: string
+          is_verified: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          document_type: string
+          expiration_date?: string | null
+          file_path: string
+          file_type: string
+          id?: string
+          is_verified?: boolean | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          document_type?: string
+          expiration_date?: string | null
+          file_path?: string
+          file_type?: string
+          id?: string
+          is_verified?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      endorsement_templates: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string
+          ecfr_link: string | null
+          explanation: string | null
+          faa_reference: string | null
+          id: string
+          tags: string[] | null
+          template_text: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string
+          ecfr_link?: string | null
+          explanation?: string | null
+          faa_reference?: string | null
+          id?: string
+          tags?: string[] | null
+          template_text: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string
+          ecfr_link?: string | null
+          explanation?: string | null
+          faa_reference?: string | null
+          id?: string
+          tags?: string[] | null
+          template_text?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      endorsements: {
+        Row: {
+          created_at: string | null
+          date_issued: string
+          description: string
+          endorsement_type: string
+          expiration_date: string | null
+          id: string
+          instructor_id: string
+          reference: string | null
+          status: string
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_issued: string
+          description: string
+          endorsement_type: string
+          expiration_date?: string | null
+          id?: string
+          instructor_id: string
+          reference?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_issued?: string
+          description?: string
+          endorsement_type?: string
+          expiration_date?: string | null
+          id?: string
+          instructor_id?: string
+          reference?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endorsements_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endorsements_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      errors: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      faa_requirements: {
+        Row: {
+          certificate_type: string
+          created_at: string | null
+          description: string
+          id: string
+          minimum_value: number | null
+          reference: string
+          requirement_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          certificate_type: string
+          created_at?: string | null
+          description: string
+          id?: string
+          minimum_value?: number | null
+          reference: string
+          requirement_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          certificate_type?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          minimum_value?: number | null
+          reference?: string
+          requirement_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      flight_log_entries: {
+        Row: {
+          aircraft_id: string
+          complex_time: number | null
+          created_at: string | null
+          cross_country_time: number | null
+          date: string
+          dual_given: number | null
+          dual_received: number | null
+          flight_session_id: string | null
+          high_performance_time: number | null
+          id: string
+          instructor_id: string | null
+          instrument_time: number | null
+          landings_day: number | null
+          landings_night: number | null
+          multi_engine_time: number | null
+          night_time: number | null
+          pic_time: number | null
+          remarks: string | null
+          sic_time: number | null
+          simulator_time: number | null
+          solo_time: number | null
+          student_id: string
+          tailwheel_time: number | null
+          total_time: number
+          updated_at: string | null
+        }
+        Insert: {
+          aircraft_id: string
+          complex_time?: number | null
+          created_at?: string | null
+          cross_country_time?: number | null
+          date: string
+          dual_given?: number | null
+          dual_received?: number | null
+          flight_session_id?: string | null
+          high_performance_time?: number | null
+          id?: string
+          instructor_id?: string | null
+          instrument_time?: number | null
+          landings_day?: number | null
+          landings_night?: number | null
+          multi_engine_time?: number | null
+          night_time?: number | null
+          pic_time?: number | null
+          remarks?: string | null
+          sic_time?: number | null
+          simulator_time?: number | null
+          solo_time?: number | null
+          student_id: string
+          tailwheel_time?: number | null
+          total_time: number
+          updated_at?: string | null
+        }
+        Update: {
+          aircraft_id?: string
+          complex_time?: number | null
+          created_at?: string | null
+          cross_country_time?: number | null
+          date?: string
+          dual_given?: number | null
+          dual_received?: number | null
+          flight_session_id?: string | null
+          high_performance_time?: number | null
+          id?: string
+          instructor_id?: string | null
+          instrument_time?: number | null
+          landings_day?: number | null
+          landings_night?: number | null
+          multi_engine_time?: number | null
+          night_time?: number | null
+          pic_time?: number | null
+          remarks?: string | null
+          sic_time?: number | null
+          simulator_time?: number | null
+          solo_time?: number | null
+          student_id?: string
+          tailwheel_time?: number | null
+          total_time?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_log_entries_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_log_entries_flight_session_id_fkey"
+            columns: ["flight_session_id"]
+            isOneToOne: false
+            referencedRelation: "flight_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flight_sessions: {
+        Row: {
+          aircraft_id: string
+          created_at: string | null
+          date: string
+          end_time: string | null
+          enrollment_id: string
+          hobbs_end: number
+          hobbs_start: number
+          id: string
+          instructor_id: string
+          lesson_id: string
+          location_id: string | null
+          notes: string | null
+          postbrief_minutes: number | null
+          prebrief_minutes: number | null
+          recurrence_rule: string | null
+          request_status: string | null
+          requested_by: string | null
+          session_type: string | null
+          start_time: string | null
+          status: string
+          updated_at: string | null
+          weather_conditions: Json | null
+        }
+        Insert: {
+          aircraft_id: string
+          created_at?: string | null
+          date: string
+          end_time?: string | null
+          enrollment_id: string
+          hobbs_end: number
+          hobbs_start: number
+          id?: string
+          instructor_id: string
+          lesson_id: string
+          location_id?: string | null
+          notes?: string | null
+          postbrief_minutes?: number | null
+          prebrief_minutes?: number | null
+          recurrence_rule?: string | null
+          request_status?: string | null
+          requested_by?: string | null
+          session_type?: string | null
+          start_time?: string | null
+          status?: string
+          updated_at?: string | null
+          weather_conditions?: Json | null
+        }
+        Update: {
+          aircraft_id?: string
+          created_at?: string | null
+          date?: string
+          end_time?: string | null
+          enrollment_id?: string
+          hobbs_end?: number
+          hobbs_start?: number
+          id?: string
+          instructor_id?: string
+          lesson_id?: string
+          location_id?: string | null
+          notes?: string | null
+          postbrief_minutes?: number | null
+          prebrief_minutes?: number | null
+          recurrence_rule?: string | null
+          request_status?: string | null
+          requested_by?: string | null
+          session_type?: string | null
+          start_time?: string | null
+          status?: string
+          updated_at?: string | null
+          weather_conditions?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_sessions_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_sessions_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "student_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_sessions_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_sessions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "syllabus_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_sessions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           id: string
@@ -333,6 +791,14 @@ export type Database = {
           status?: string
         }
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
       flight_sessions: {
         Row: {
           id: string

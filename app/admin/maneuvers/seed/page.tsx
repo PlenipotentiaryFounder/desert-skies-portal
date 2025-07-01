@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { CheckCircle2, Loader2 } from "lucide-react"
 import type { Database } from "@/types/supabase"
 import { Button } from "@/components/ui/button"
@@ -273,7 +272,6 @@ export default function SeedManeuversPage() {
   const [isComplete, setIsComplete] = useState(false)
   const [progress, setProgress] = useState(0)
   const router = useRouter()
-  const supabase = createClientComponentClient<Database>()
 
   const handleSeedManeuvers = async () => {
     setIsSeeding(true)

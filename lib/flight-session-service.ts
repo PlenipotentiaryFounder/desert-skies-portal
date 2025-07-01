@@ -1,6 +1,7 @@
 "use server"
 
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import type { Database } from "@/types/supabase"
 import { revalidatePath } from "next/cache"
 
@@ -106,7 +107,8 @@ export type FlightSessionFormData = {
 }
 
 export async function getFlightSessions() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("flight_sessions")
@@ -164,7 +166,8 @@ export async function getFlightSessions() {
 }
 
 export async function getFlightSessionById(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const { data, error } = await supabase
     .from("flight_sessions")
     .select(`
@@ -229,7 +232,8 @@ export async function getFlightSessionById(id: string) {
 }
 
 export async function getStudentFlightSessions(studentId: string) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // First get the student's enrollments
   const { data: enrollments, error: enrollmentsError } = await supabase
@@ -285,7 +289,8 @@ export async function getStudentFlightSessions(studentId: string) {
 }
 
 export async function getInstructorFlightSessions(instructorId: string) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("flight_sessions")
@@ -339,7 +344,8 @@ export async function getInstructorFlightSessions(instructorId: string) {
 }
 
 export async function createFlightSession(formData: FlightSessionFormData) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // Set sensible defaults for new fields
   const insertData: FlightSessionInsert = {
@@ -368,7 +374,8 @@ export async function createFlightSession(formData: FlightSessionFormData) {
 }
 
 export async function updateFlightSession(id: string, formData: Partial<FlightSessionFormData>) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // Allow updating new fields as well
   const updateData: FlightSessionUpdate = {
@@ -400,7 +407,8 @@ export async function updateFlightSession(id: string, formData: Partial<FlightSe
 }
 
 export async function deleteFlightSession(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // First delete any maneuver scores associated with this session
   // @ts-expect-error Supabase type system is too strict, but this is safe
@@ -427,7 +435,8 @@ export async function deleteFlightSession(id: string) {
 }
 
 export async function getAvailableManeuversForLesson(lessonId: string) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // Get maneuvers associated with this lesson
   const { data: lessonManeuvers, error: lessonManeuversError } = await supabase
@@ -468,7 +477,8 @@ export async function saveManeuverScores(
     notes?: string | null
   }>,
 ) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // First delete any existing scores for this session
   // @ts-expect-error Supabase type system is too strict, but this is safe
@@ -488,7 +498,7 @@ export async function saveManeuverScores(
   }))
 
   // @ts-expect-error Supabase type system is too strict, but this is safe
-  const { error: insertError } = await supabase.from("maneuver_scores").insert(scoresToInsert as Database["public"]["Tables"]["maneuver_scores"]["Insert"][])
+  const { data, error: insertError } = await supabase.from("maneuver_scores").insert(scoresToInsert as Database["public"]["Tables"]["maneuver_scores"]["Insert"][])
 
   if (insertError) {
     console.error("Error inserting maneuver scores:", insertError)
@@ -498,5 +508,5 @@ export async function saveManeuverScores(
   revalidatePath(`/admin/schedule/${flightSessionId}`)
   revalidatePath(`/instructor/schedule/${flightSessionId}`)
   revalidatePath(`/student/schedule/${flightSessionId}`)
-  return { success: true }
+  return { success: true, data: data }
 }

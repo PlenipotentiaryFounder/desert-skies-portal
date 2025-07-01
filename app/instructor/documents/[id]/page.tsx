@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { getDocumentById, getDocumentFileUrl } from "@/lib/document-service"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { formatDate } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +14,8 @@ export const metadata = {
 }
 
 export default async function InstructorDocumentDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

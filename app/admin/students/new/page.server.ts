@@ -2,7 +2,8 @@
 
 import { createUser, getUserById } from "@/lib/user-service"
 import { createEnrollment } from "@/lib/enrollment-service"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { sendEmail } from "@/lib/email-service"
 import WelcomeStudentEmail from "@/app/emails/WelcomeStudentEmail"
 import InstructorEnrollmentConfirmationEmail from "@/app/emails/InstructorEnrollmentConfirmationEmail"
@@ -29,7 +30,8 @@ export async function adminAddStudentServerAction({ email, firstName, lastName, 
       return { success: false, error: userResult.error || "Failed to create user" }
     }
     // 2. Generate a magic link for the student
-    const supabase = await createServerSupabaseClient()
+    const cookieStore = await cookies()
+    const supabase = createClient(cookieStore)
     const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email,

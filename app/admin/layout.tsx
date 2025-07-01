@@ -1,5 +1,7 @@
 import type React from "react"
 import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import {
   BookOpen,
   Calendar,
@@ -13,8 +15,8 @@ import {
   Users,
   UserCheck,
 } from "lucide-react"
-import { createServerSupabaseClient, getUserRole } from "@/lib/supabase/server"
 import { DashboardShell } from "@/components/shared/dashboard-shell"
+import { getUserProfileWithRoles } from "@/lib/user-service"
 
 const navItems = [
   {
@@ -79,23 +81,25 @@ export default async function AdminLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect("/login")
   }
 
-  const role = await getUserRole()
+  const profile = await getUserProfileWithRoles(user.id)
+  const roles = profile?.roles.map((r: { role_name: string }) => r.role_name) || []
 
-  if (role !== "admin") {
+  if (!roles.includes("admin")) {
     redirect("/")
   }
 
   return (
-    <DashboardShell navItems={navItems} userRole="admin">
+    <DashboardShell navItems={navItems} userRole="admin" profile={profile}>
       {children}
     </DashboardShell>
   )

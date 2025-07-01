@@ -1,14 +1,16 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AircraftList } from "@/components/admin/aircraft-list"
 
 export default async function AircraftPage() {
-  const supabase = createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // Check if we have any aircraft in the database
   const { count } = await supabase.from("aircraft").select("*", { count: "exact", head: true })

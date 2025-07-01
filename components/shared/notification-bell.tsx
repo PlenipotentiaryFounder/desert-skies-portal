@@ -3,19 +3,22 @@
 import { useState, useEffect } from "react"
 import { Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useSupabase } from "@/components/providers/supabase-provider"
 import { NotificationDropdown } from "./notification-dropdown"
+import { AuthenticatedUser } from "@/types/user"
 
-export function NotificationBell() {
-  const { user } = useSupabase()
+interface NotificationBellProps {
+  profile: AuthenticatedUser | null
+}
+
+export function NotificationBell({ profile }: NotificationBellProps) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    if (!user) return
+    if (!profile) return
 
     const fetchUnreadCount = async () => {
-      const res = await fetch(`/api/notifications/unread?userId=${user.id}`)
+      const res = await fetch(`/api/notifications/unread?userId=${profile.id}`)
       const data = await res.json()
       setUnreadCount(data.count)
     }
@@ -24,7 +27,8 @@ export function NotificationBell() {
 
     // Set up real-time subscription for new notifications
     const setupSubscription = async () => {
-      const { supabase } = await import("@/lib/supabase/client")
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
 
       const subscription = supabase
         .channel("notification-changes")
@@ -34,7 +38,7 @@ export function NotificationBell() {
             event: "*",
             schema: "public",
             table: "notifications",
-            filter: `user_id=eq.${user.id}`,
+            filter: `user_id=eq.${profile.id}`,
           },
           () => {
             fetchUnreadCount()
@@ -54,9 +58,9 @@ export function NotificationBell() {
         unsubscribe.then((unsub) => unsub())
       }
     }
-  }, [user])
+  }, [profile])
 
-  if (!user) return null
+  if (!profile) return null
 
   return (
     <div className="relative">
@@ -75,7 +79,7 @@ export function NotificationBell() {
         )}
       </Button>
 
-      {isOpen && <NotificationDropdown onClose={() => setIsOpen(false)} />}
+      {isOpen && <NotificationDropdown onClose={() => setIsOpen(false)} profile={profile} />}
     </div>
   )
 }

@@ -1,7 +1,8 @@
 import { getInstructorEnrollments } from "@/lib/enrollment-service"
 import { getSyllabusLessons } from "@/lib/syllabus-service"
 import { getManeuvers } from "@/lib/maneuver-service"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { MissionFormClient } from "@/components/instructor/mission-form-client"
 
 export const metadata = {
@@ -10,7 +11,8 @@ export const metadata = {
 }
 
 export default async function ScheduleNewMissionPage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

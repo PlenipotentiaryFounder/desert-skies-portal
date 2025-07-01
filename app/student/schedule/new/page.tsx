@@ -1,8 +1,10 @@
 import { RequestSessionForm } from "./RequestSessionForm"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export default async function NewStudentSchedulePage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   // Fetch options for selects
   const [{ data: enrollments = [] }, { data: lessons = [] }, { data: instructors = [] }, { data: aircraft = [] }, { data: locations = [] }] = await Promise.all([
     supabase.from("student_enrollments").select("id, syllabus_id, syllabus:syllabus_id (title)"),

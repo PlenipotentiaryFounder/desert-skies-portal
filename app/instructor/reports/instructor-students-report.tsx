@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatDate } from "@/lib/utils"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Download, GraduationCap } from "lucide-react"
 
 interface InstructorStudentsReportProps {
@@ -21,7 +20,6 @@ export function InstructorStudentsReport({ instructorId }: InstructorStudentsRep
   const [students, setStudents] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [report, setReport] = useState<any>(null)
-  const supabase = createClientComponentClient()
 
   // Fetch instructor's students on component mount
   useEffect(() => {

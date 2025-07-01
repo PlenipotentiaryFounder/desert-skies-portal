@@ -1,7 +1,8 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StudentDocumentsList } from "./student-documents-list"
@@ -12,7 +13,8 @@ export const metadata = {
 }
 
 export default async function StudentDocumentsPage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -44,7 +46,8 @@ export default async function StudentDocumentsPage() {
 }
 
 async function StudentDocumentsListWrapper({ userId }: { userId: string }) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const { data: documents } = await supabase
     .from("documents")
     .select("*")

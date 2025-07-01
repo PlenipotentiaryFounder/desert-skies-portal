@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { NotificationItem } from "@/components/shared/notification-item"
 import { Switch } from "@/components/ui/switch"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { type Notification, type NotificationSettings } from "@/lib/notification-service"
 
 export default function InstructorNotificationsPage() {
@@ -15,7 +14,6 @@ export default function InstructorNotificationsPage() {
   const [settings, setSettings] = useState<NotificationSettings | null>(null)
   const [settingsLoading, setSettingsLoading] = useState(true)
   const [settingsSaving, setSettingsSaving] = useState(false)
-  const supabase = createClientComponentClient()
 
   useEffect(() => {
     async function fetchData() {

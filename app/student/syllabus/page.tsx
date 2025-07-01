@@ -1,5 +1,6 @@
 import { Suspense } from "react"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { getStudentEnrollments } from "@/lib/enrollment-service"
 import { getSyllabusLessons } from "@/lib/syllabus-service"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,7 +9,8 @@ import { SyllabusProgress } from "@/components/student/syllabus-progress"
 import { formatDate } from "@/lib/utils"
 
 export default async function StudentSyllabusPage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

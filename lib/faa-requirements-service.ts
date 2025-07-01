@@ -1,6 +1,7 @@
 "use server"
 
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
 
 export type CertificateType =
@@ -83,7 +84,7 @@ export interface FlightLogEntry {
 }
 
 export async function getFAARequirements(certificateType?: CertificateType) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   let query = supabase.from("faa_requirements").select("*")
 
@@ -102,7 +103,7 @@ export async function getFAARequirements(certificateType?: CertificateType) {
 }
 
 export async function getFAARequirementById(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase.from("faa_requirements").select("*").eq("id", id).single()
 
@@ -115,7 +116,7 @@ export async function getFAARequirementById(id: string) {
 }
 
 export async function createFAARequirement(requirement: Omit<FAARequirement, "id" | "created_at" | "updated_at">) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("faa_requirements")
@@ -139,7 +140,7 @@ export async function createFAARequirement(requirement: Omit<FAARequirement, "id
 }
 
 export async function updateFAARequirement(id: string, requirement: Partial<FAARequirement>) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { error } = await supabase
     .from("faa_requirements")
@@ -164,7 +165,7 @@ export async function updateFAARequirement(id: string, requirement: Partial<FAAR
 }
 
 export async function deleteFAARequirement(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { error } = await supabase.from("faa_requirements").delete().eq("id", id)
 
@@ -178,7 +179,7 @@ export async function deleteFAARequirement(id: string) {
 }
 
 export async function getStudentRequirements(studentId: string, certificateType?: CertificateType) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   let query = supabase
     .from("student_requirements")
@@ -203,7 +204,7 @@ export async function getStudentRequirements(studentId: string, certificateType?
 }
 
 export async function getStudentRequirementById(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("student_requirements")
@@ -225,7 +226,7 @@ export async function getStudentRequirementById(id: string) {
 export async function createStudentRequirement(
   requirement: Omit<StudentRequirement, "id" | "created_at" | "updated_at">,
 ) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("student_requirements")
@@ -251,7 +252,7 @@ export async function createStudentRequirement(
 }
 
 export async function updateStudentRequirement(id: string, requirement: Partial<StudentRequirement>) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { error } = await supabase
     .from("student_requirements")
@@ -274,7 +275,7 @@ export async function updateStudentRequirement(id: string, requirement: Partial<
 }
 
 export async function verifyStudentRequirement(id: string, instructorId: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // First get the requirement to check if it's complete
   const { data: requirement, error: fetchError } = await supabase
@@ -312,7 +313,7 @@ export async function verifyStudentRequirement(id: string, instructorId: string)
 }
 
 export async function getFlightLogEntries(studentId: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -333,7 +334,7 @@ export async function getFlightLogEntries(studentId: string) {
 }
 
 export async function getFlightLogEntryById(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -354,7 +355,7 @@ export async function getFlightLogEntryById(id: string) {
 }
 
 export async function createFlightLogEntry(entry: Omit<FlightLogEntry, "id" | "created_at" | "updated_at">) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -398,7 +399,7 @@ export async function createFlightLogEntry(entry: Omit<FlightLogEntry, "id" | "c
 }
 
 export async function updateFlightLogEntry(id: string, entry: Partial<FlightLogEntry>) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // First get the original entry
   const { data: originalEntry, error: fetchError } = await supabase
@@ -453,7 +454,7 @@ export async function updateFlightLogEntry(id: string, entry: Partial<FlightLogE
 }
 
 export async function deleteFlightLogEntry(id: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // First get the entry to be deleted
   const { data: entry, error: fetchError } = await supabase.from("flight_log_entries").select("*").eq("id", id).single()
@@ -478,7 +479,7 @@ export async function deleteFlightLogEntry(id: string) {
 }
 
 export async function getStudentTotalHours(studentId: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -536,7 +537,7 @@ export async function getStudentTotalHours(studentId: string) {
 
 // Helper function to update requirements when a new flight is logged
 async function updateRequirementsFromFlight(studentId: string, flight: any) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Get all requirements for this student
   const { data: requirements, error } = await supabase
@@ -607,7 +608,7 @@ async function updateRequirementsFromFlight(studentId: string, flight: any) {
 
 // Helper function to update requirements when a flight is updated
 async function updateRequirementsFromFlightUpdate(studentId: string, originalFlight: any, updatedFlight: any) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Get all requirements for this student
   const { data: requirements, error } = await supabase
@@ -682,7 +683,7 @@ async function updateRequirementsFromFlightUpdate(studentId: string, originalFli
 
 // Helper function to update requirements when a flight is deleted
 async function updateRequirementsFromFlightDeletion(studentId: string, flight: any) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Get all requirements for this student
   const { data: requirements, error } = await supabase
@@ -752,7 +753,7 @@ async function updateRequirementsFromFlightDeletion(studentId: string, flight: a
 }
 
 export async function initializeStudentRequirements(studentId: string, certificateType: CertificateType) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Get all requirements for this certificate type
   const { data: requirements, error } = await supabase

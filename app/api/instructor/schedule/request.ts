@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createFlightSession } from "@/lib/flight-session-service"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { createNotification } from "@/lib/notification-service"
 
 export async function POST(req: NextRequest) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     enrollment_id,
     lesson_id,

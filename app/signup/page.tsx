@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { SignupForm } from "@/components/auth/signup-form"
 
 export default async function SignupPage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

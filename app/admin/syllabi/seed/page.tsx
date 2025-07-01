@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { BookOpen, Loader2, Plus } from "lucide-react"
 import type { Database } from "@/types/supabase"
 import { Button } from "@/components/ui/button"
@@ -464,7 +463,6 @@ export default function SeedSyllabiPage() {
   })
   const router = useRouter()
   const { toast } = useToast()
-  const supabase = createClientComponentClient<Database>()
 
   const handleSeedSyllabi = async () => {
     setIsSeeding(true)

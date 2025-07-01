@@ -1,172 +1,184 @@
 "use server"
 
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-import { createClient } from '@supabase/supabase-js'
 import type { Database } from "@/types/supabase"
 import { cookies } from "next/headers"
 
-export type User = {
-  id: string
-  created_at: string
-  updated_at: string
-  email: string
-  first_name: string
-  last_name: string
-  role: "admin" | "instructor" | "student"
-  avatar_url: string | null
-  phone: string | null
-  bio: string | null
-  status: "active" | "inactive" | "pending"
+export type User = Database["public"]["Tables"]["profiles"]["Row"] & {
+  roles?: string[]
   permissions?: string[]
-  metadata?: {
-    additional_roles?: string[]
-  }
+  goals?: string
+  initial_role?: string
 }
 
-export type NewUser = {
-  email: string
-  first_name: string
-  last_name: string
-  role: "admin" | "instructor" | "student"
-  phone?: string
-  bio?: string
-  status: "active" | "inactive" | "pending"
+export type NewUser = Database["public"]["Tables"]["profiles"]["Insert"] & {
   password?: string
-  metadata?: {
-    additional_roles?: string[]
-  }
+  initial_role?: string
 }
 
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY must be set in environment variables.");
-  }
-  return createClient(url, key);
-}
-
-export async function getUsers() {
-  const supabase = await createServerSupabaseClient()
+export async function getUsers(): Promise<User[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false })
-
-  if (error || !Array.isArray(data)) {
-    console.error("Error fetching users:", error)
-    return []
+  if (error) {
+    throw new Error(error.message)
   }
-
-  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"][]
+  return data as User[]
 }
 
-export async function getUserById(id: string) {
-  const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase.from("profiles").select("*").eq("id" as any, id as any).single()
+export async function getUserById(id: string): Promise<User | null> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", id).single()
   if (error || !data) {
-    console.error("Error fetching user:", error)
     return null
   }
-  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"]
+  return data as User
 }
 
-export async function getStudents() {
-  const supabase = await createServerSupabaseClient()
+export async function getStudents(): Promise<User[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  // This needs to be adapted based on how roles are stored. Assuming a join with user_roles
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
-    .eq("role" as any, "student" as any)
+    .select("*, user_roles!inner(roles!inner(name))")
+    .eq("user_roles.roles.name", "student")
     .order("created_at", { ascending: false })
+
   if (error || !Array.isArray(data)) {
-    console.error("Error fetching students:", error)
     return []
   }
-  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"][]
+  return data as User[]
 }
 
-export async function getInstructors() {
-  const supabase = await createServerSupabaseClient()
+export async function getInstructors(): Promise<User[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
-    .eq("role" as any, "instructor" as any)
+    .select("*, user_roles!inner(roles!inner(name))")
+    .eq("user_roles.roles.name", "instructor")
     .order("created_at", { ascending: false })
+
   if (error || !Array.isArray(data)) {
-    console.error("Error fetching instructors:", error)
     return []
   }
-  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"][]
+  return data as User[]
 }
 
-export async function getPendingInstructors() {
-  const supabase = await createServerSupabaseClient()
+export async function getActiveInstructors(): Promise<User[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
-    .eq("role" as any, "instructor" as any)
-    .eq("status" as any, "pending" as any)
+    .select("*, user_roles!inner(roles!inner(name))")
+    .eq("user_roles.roles.name", "instructor")
+    .eq("status", "active")
     .order("created_at", { ascending: false })
   if (error || !Array.isArray(data)) {
-    console.error("Error fetching pending instructors:", error)
     return []
   }
-  return data as unknown as Database["public"]["Tables"]["profiles"]["Row"][]
+  return data as User[]
+}
+
+export async function getPendingInstructors(): Promise<User[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*, user_roles!inner(roles!inner(name))")
+    .eq("user_roles.roles.name", "instructor")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+  if (error || !Array.isArray(data)) {
+    return []
+  }
+  return data as User[]
 }
 
 export async function createUser(userData: NewUser) {
-  const supabaseAdmin = getSupabaseAdmin();
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: userData.email,
-    password: userData.password || Math.random().toString(36).slice(-8),
+    password: userData.password,
     email_confirm: true,
   })
+
   if (authError) {
-    console.error("Error creating auth user:", authError)
-    return { success: false, error: authError.message }
+    throw new Error(authError.message)
   }
-  const profileInsert: Database["public"]["Tables"]["profiles"]["Insert"] = {
-    id: authData.user.id,
+
+  const userId = authData.user.id
+
+  const profileData: Database["public"]["Tables"]["profiles"]["Insert"] = {
+    id: userId,
     email: userData.email,
     first_name: userData.first_name,
     last_name: userData.last_name,
-    role: userData.role,
+    phone: userData.phone,
+    bio: userData.bio,
+    status: "pending", // Default status
   }
-  if (userData.phone) profileInsert.phone = userData.phone
-  if (userData.bio) profileInsert.bio = userData.bio
-  const { error: profileError } = await supabaseAdmin.from("profiles").insert(profileInsert as any)
+
+  const { error: profileError } = await supabase.from("profiles").insert(profileData)
+
   if (profileError) {
-    console.error("Error creating user profile:", profileError)
-    return { success: false, error: profileError.message }
+    throw new Error(profileError.message)
   }
+  
+  if (userData.initial_role) {
+    // This assumes a `user_roles` table exists
+    // You might need to fetch role_id from `roles` table first
+  }
+
+
   revalidatePath("/admin/users")
-  return { success: true, userId: authData.user.id }
+
+  return { ...authData.user, ...userData }
 }
 
 export async function updateUser(id: string, userData: Partial<User>) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const updateData: Database["public"]["Tables"]["profiles"]["Update"] = {}
   if (userData.first_name) updateData.first_name = userData.first_name
   if (userData.last_name) updateData.last_name = userData.last_name
-  if (userData.role) updateData.role = userData.role
   if (userData.phone) updateData.phone = userData.phone
   if (userData.bio) updateData.bio = userData.bio
-  updateData.updated_at = new Date().toISOString()
-  const { error } = await supabase
-    .from("profiles")
-    .update(updateData as any)
-    .eq("id" as any, id as any)
-  if (error) {
-    console.error("Error updating user:", error)
-    return { success: false, error: error.message }
+  if (userData.status) updateData.status = userData.status
+
+  if (userData.goals || userData.initial_role) {
+    const { data: user, error } = await supabase.from("profiles").select("metadata").eq("id", id).single()
+    if (error) console.error("Error fetching user metadata", error)
+    const metadata = (user?.metadata as any) || {}
+    if (userData.goals) metadata.goals = userData.goals
+    if (userData.initial_role) metadata.initial_role = userData.initial_role
+    updateData.metadata = metadata
   }
+
+  updateData.updated_at = new Date().toISOString()
+
+  const { error } = await supabase.from("profiles").update(updateData).eq("id", id)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
   revalidatePath(`/admin/users/${id}`)
   revalidatePath("/admin/users")
-  return { success: true }
+
+  return { id, ...userData }
 }
 
 export async function deleteUser(id: string) {
-  const supabase = await createServerSupabaseClient()
-  const { error: profileError } = await supabase.from("profiles").delete().eq("id" as any, id as any)
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const { error: profileError } = await supabase.from("profiles").delete().eq("id", id)
   if (profileError) {
     console.error("Error deleting user profile:", profileError)
     return { success: false, error: profileError.message }
@@ -181,12 +193,10 @@ export async function deleteUser(id: string) {
 }
 
 export async function updateUserStatus(id: string, status: "active" | "inactive" | "pending") {
-  const supabase = await createServerSupabaseClient()
-  const updateData: Database["public"]["Tables"]["profiles"]["Update"] = { updated_at: new Date().toISOString() }
-  const { error } = await supabase
-    .from("profiles")
-    .update(updateData as any)
-    .eq("id" as any, id as any)
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const updateData: Database["public"]["Tables"]["profiles"]["Update"] = { status, updated_at: new Date().toISOString() }
+  const { error } = await supabase.from("profiles").update(updateData).eq("id", id)
   if (error) {
     console.error("Error updating user status:", error)
     return { success: false, error: error.message }
@@ -196,25 +206,33 @@ export async function updateUserStatus(id: string, status: "active" | "inactive"
   return { success: true }
 }
 
-export async function updateUserRole(id: string, role: "admin" | "instructor" | "student") {
-  const supabase = await createServerSupabaseClient()
-  const updateData: Database["public"]["Tables"]["profiles"]["Update"] = { role: role, updated_at: new Date().toISOString() }
-  const { error } = await supabase
-    .from("profiles")
-    .update(updateData as any)
-    .eq("id" as any, id as any)
-  if (error) {
+export async function updateUserRole(id: string, roleName: string) {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+
+  try {
+    const { data, error } = await supabase.rpc("update_user_role", {
+      p_user_id: id,
+      p_role_name: roleName,
+    })
+
+    if (error) {
+      throw error
+    }
+
+    revalidatePath(`/admin/users/${id}`)
+    revalidatePath("/admin/users")
+    return { success: true, data }
+  } catch (error) {
     console.error("Error updating user role:", error)
-    return { success: false, error: error.message }
+    return { success: false, error: (error as Error).message }
   }
-  revalidatePath(`/admin/users/${id}`)
-  revalidatePath("/admin/users")
-  return { success: true }
 }
 
-export async function getUserPermissions(id: string) {
-  const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase.from("user_permissions").select("*").eq("user_id", String(id))
+export async function getUserPermissions(id: string): Promise<string[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const { data, error } = await supabase.from("user_permissions").select("permission").eq("user_id", id)
   if (error || !Array.isArray(data)) {
     console.error("Error fetching user permissions:", error)
     return []
@@ -223,8 +241,9 @@ export async function getUserPermissions(id: string) {
 }
 
 export async function updateUserPermissions(id: string, permissions: string[]) {
-  const supabase = await createServerSupabaseClient()
-  const { error: deleteError } = await supabase.from("user_permissions").delete().eq("user_id", String(id))
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const { error: deleteError } = await supabase.from("user_permissions").delete().eq("user_id", id)
   if (deleteError) {
     console.error("Error deleting user permissions:", deleteError)
     return { success: false, error: deleteError.message }
@@ -244,75 +263,93 @@ export async function updateUserPermissions(id: string, permissions: string[]) {
   return { success: true }
 }
 
-export async function searchUsers(query: string) {
-  const supabase = await createServerSupabaseClient()
-
+export async function searchUsers(query: string): Promise<User[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select()
     .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
     .order("created_at", { ascending: false })
 
-  if (error) {
-    console.error("Error searching users:", error)
+  if (error || !Array.isArray(data)) {
     return []
   }
-
-  return data as Database["public"]["Tables"]["profiles"]["Row"][]
+  return data as User[]
 }
 
-export async function filterUsersByRole(role: "admin" | "instructor" | "student" | "all") {
-  const cookieStore = cookies()
-  const supabase = await createServerSupabaseClient()
-
-  if (role === "all") {
-    return getUsers()
+export async function filterUsersByRole(role: "admin" | "instructor" | "student" | "all"): Promise<User[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  let query = supabase.from("profiles").select("*, user_roles!inner(roles!inner(name))")
+  if (role !== "all") {
+    query = query.eq("user_roles.roles.name", role)
   }
+  const { data, error } = await query.order("created_at", { ascending: false })
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("role", role)
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    console.error("Error filtering users:", error)
+  if (error || !Array.isArray(data)) {
     return []
   }
-
-  return data as Database["public"]["Tables"]["profiles"]["Row"][]
+  return data as User[]
 }
 
-export async function filterUsersByStatus(status: "active" | "inactive" | "pending" | "all") {
-  const cookieStore = cookies()
-  const supabase = await createServerSupabaseClient()
-
-  if (status === "all") {
-    return getUsers()
+export async function filterUsersByStatus(status: "active" | "inactive" | "pending" | "all"): Promise<User[]> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  let query = supabase.from("profiles").select("*")
+  if (status !== "all") {
+    query = query.eq("status", status)
   }
+  const { data, error } = await query.order("created_at", { ascending: false })
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("status", status)
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    console.error("Error filtering users:", error)
+  if (error || !Array.isArray(data)) {
     return []
   }
-
-  return data as Database["public"]["Tables"]["profiles"]["Row"][]
+  return data as User[]
 }
 
-export async function getCurrentInstructor() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) return null;
-  const { data: profile, error } = await supabase.from("profiles").select("*, metadata").eq("id", user.id).single();
-  if (error || !profile) return null;
-  const additionalRoles = profile.metadata?.additional_roles || [];
-  const isInstructor = profile.role === "instructor" || additionalRoles.includes("instructor") || profile.role === "admin";
-  if (!isInstructor) return null;
-  return profile as User;
+export async function getCurrentInstructor(): Promise<User | null> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session) {
+    return null
+  }
+
+  return getUserProfileWithRoles(session.user.id)
+}
+
+export async function getUserProfileWithRoles(userId: string): Promise<User | null> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const { data: profile, error: profileError } = await supabase.from("profiles").select(`*`).eq("id", userId).single()
+
+  if (profileError) {
+    console.error("Error fetching user profile:", profileError)
+    return null
+  }
+
+  const { data: rolesData, error: rolesError } = await supabase.rpc("get_user_roles", { p_user_id: userId })
+
+  if (rolesError) {
+    console.error("Error fetching user roles:", rolesError)
+    // Return profile without roles if roles fetch fails
+    return { ...profile, roles: [] } as User
+  }
+
+  const roles = rolesData.map((r: any) => r.role_name)
+
+  return { ...profile, roles } as User
+}
+
+export async function getUserProfile(userId: string): Promise<User | null> {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+
+  if (error) return null
+  return data as User
 }

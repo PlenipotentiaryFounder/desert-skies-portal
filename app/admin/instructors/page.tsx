@@ -1,9 +1,11 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { InstructorApprovalList } from "./instructor-approval-list"
 
 export default async function InstructorApprovalPage() {
-  const supabase = createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // Check if user is authenticated and is an admin
   const {

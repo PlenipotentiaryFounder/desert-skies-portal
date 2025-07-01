@@ -1,4 +1,5 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export type ReportTimeframe = "week" | "month" | "quarter" | "year" | "custom"
 
@@ -12,7 +13,7 @@ export interface ReportFilter {
 }
 
 export async function getFlightHoursReport(timeframe: ReportTimeframe, filters: ReportFilter = {}) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Build the date range based on timeframe
   const { startDate, endDate } = getDateRangeFromTimeframe(timeframe, filters.startDate, filters.endDate)
@@ -82,7 +83,7 @@ export async function getFlightHoursReport(timeframe: ReportTimeframe, filters: 
 }
 
 export async function getStudentProgressReport(studentId: string, syllabusId?: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Get student enrollment
   let enrollmentQuery = supabase
@@ -210,7 +211,7 @@ export async function getInstructorPerformanceReport(
   timeframe: ReportTimeframe,
   filters: ReportFilter = {},
 ) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Build the date range based on timeframe
   const { startDate, endDate } = getDateRangeFromTimeframe(timeframe, filters.startDate, filters.endDate)
@@ -316,8 +317,8 @@ export async function getInstructorPerformanceReport(
 
       return {
         studentId: enrollment.student_id,
-        studentName: `${enrollment.student.first_name} ${enrollment.student.last_name}`,
-        syllabusTitle: enrollment.syllabus.title,
+        studentName: `${(enrollment.student as any)[0].first_name} ${(enrollment.student as any)[0].last_name}`,
+        syllabusTitle: (enrollment.syllabus as any)[0].title,
         totalLessons,
         completedLessons,
         progressPercentage,
@@ -337,7 +338,7 @@ export async function getInstructorPerformanceReport(
 }
 
 export async function getAircraftUtilizationReport(timeframe: ReportTimeframe, filters: ReportFilter = {}) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Build the date range based on timeframe
   const { startDate, endDate } = getDateRangeFromTimeframe(timeframe, filters.startDate, filters.endDate)
@@ -423,7 +424,7 @@ export async function getAircraftUtilizationReport(timeframe: ReportTimeframe, f
 }
 
 export async function getSchoolPerformanceReport(timeframe: ReportTimeframe, filters: ReportFilter = {}) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createClient(await cookies())
 
   // Build the date range based on timeframe
   const { startDate, endDate } = getDateRangeFromTimeframe(timeframe, filters.startDate, filters.endDate)

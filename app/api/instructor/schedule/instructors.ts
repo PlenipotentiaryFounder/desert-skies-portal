@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export async function GET(req: NextRequest) {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const { data, error } = await supabase
     .from("instructors")
     .select("id, first_name, last_name, email, avatar_url, status")

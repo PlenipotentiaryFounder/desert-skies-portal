@@ -1,9 +1,11 @@
 import { ManageSessionRequests } from "./ManageSessionRequests"
 import { getInstructorFlightSessions } from "@/lib/flight-session-service"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export default async function InstructorSessionRequestsPage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   // Get current instructor ID
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.user?.id) return <div>Unauthorized</div>

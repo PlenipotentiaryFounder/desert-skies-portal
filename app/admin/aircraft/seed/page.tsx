@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Loader2, Plane, Plus } from "lucide-react"
 import type { Database } from "@/types/supabase"
 import { Button } from "@/components/ui/button"
@@ -102,7 +101,6 @@ export default function SeedAircraftPage() {
   const [aircraftCount, setAircraftCount] = useState(0)
   const router = useRouter()
   const { toast } = useToast()
-  const supabase = createClientComponentClient<Database>()
 
   const handleSeedAircraft = async () => {
     setIsSeeding(true)

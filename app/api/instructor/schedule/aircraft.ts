@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const instructorId = searchParams.get("instructorId")
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   let query = supabase.from("aircraft").select("id, tail_number, make, model, status")
   // Optionally filter by instructor if needed
   // (Assumes you have a way to relate aircraft to instructors)

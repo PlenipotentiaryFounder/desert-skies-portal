@@ -1,41 +1,26 @@
-import type React from "react"
+import "@/styles/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import SupabaseProvider from "@/components/providers/supabase-provider"
-import { cn } from "@/lib/utils"
-import "./globals.css"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { SiteHeader } from "@/components/shared/site-header"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Desert Skies Aviation Training Portal",
-  description: "Modern flight training management for students, instructors, and administrators",
-    generator: 'v0.dev'
+  title: "Desert Skies Portal",
+  description: "Flight Training Portal for Desert Skies",
 }
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (error) {
-    console.error('Error fetching user:', error)
-  }
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
+      <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SupabaseProvider initialSession={session}>
-            {children}
-            <Toaster />
-          </SupabaseProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <SiteHeader />
+            <div className="flex-1">{children}</div>
+          </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

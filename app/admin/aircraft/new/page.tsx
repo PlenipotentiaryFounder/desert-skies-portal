@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -14,6 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
+import { createClient } from "@/lib/supabase/client"
 
 const formSchema = z.object({
   tail_number: z.string().min(1, "Tail number is required"),
@@ -26,10 +26,10 @@ const formSchema = z.object({
     .max(new Date().getFullYear(), "Year cannot be in the future"),
   category: z.string().min(1, "Category is required"),
   class: z.string().min(1, "Class is required"),
-  is_complex: z.boolean().default(false),
-  is_high_performance: z.boolean().default(false),
-  is_tailwheel: z.boolean().default(false),
-  is_active: z.boolean().default(true),
+  is_complex: z.boolean(),
+  is_high_performance: z.boolean(),
+  is_tailwheel: z.boolean(),
+  is_active: z.boolean(),
   hobbs_time: z.coerce.number().min(0, "Hobbs time must be a positive number"),
   last_inspection_date: z.string().min(1, "Last inspection date is required"),
 })
@@ -38,7 +38,6 @@ export default function NewAircraftPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
-  const supabase = createClientComponentClient<Database>()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,7 +61,7 @@ export default function NewAircraftPage() {
     setIsSubmitting(true)
 
     try {
-      const { error } = await supabase.from("aircraft").insert({
+      const { error } = await createClient().from("aircraft").insert({
         ...values,
         id: crypto.randomUUID(),
         created_at: new Date().toISOString(),

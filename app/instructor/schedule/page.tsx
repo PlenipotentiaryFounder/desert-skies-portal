@@ -1,7 +1,8 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { getInstructorFlightSessions } from "@/lib/flight-session-service"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -14,7 +15,8 @@ export const metadata = {
 }
 
 export default async function InstructorSchedulePage() {
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { FileText, Plane, Users } from "lucide-react"
 import type { Database } from "@/types/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,7 +13,6 @@ export function AdminStatsCards() {
     totalAircraft: 0,
   })
   const [loading, setLoading] = useState(true)
-  const supabase = createClientComponentClient<Database>()
 
   useEffect(() => {
     async function fetchStats() {

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 
-export function LandingCTA() {
+export function LandingCta() {
   return (
     <section id="pricing" className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
       <div className="container px-4 md:px-6">

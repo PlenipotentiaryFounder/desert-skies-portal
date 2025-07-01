@@ -1,4 +1,5 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { getEnrollments } from "@/lib/enrollment-service"
 import { FlightSessionForm } from "../flight-session-form"
 
@@ -8,7 +9,8 @@ export const metadata = {
 }
 
 export default async function NewFlightSessionPage() {
-  const supabase = createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // Get all active enrollments with student and syllabus info
   const enrollments = await getEnrollments()

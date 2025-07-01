@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const instructorId = searchParams.get("instructorId")
   if (!instructorId) return NextResponse.json({ error: "Missing instructorId" }, { status: 400 })
-  const supabase = await createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
   // Total students
   const { count: totalStudents } = await supabase

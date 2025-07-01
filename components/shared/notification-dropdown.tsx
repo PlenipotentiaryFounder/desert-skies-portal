@@ -5,48 +5,50 @@ import { useRouter } from "next/navigation"
 import { Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useSupabase } from "@/components/providers/supabase-provider"
 import { type Notification } from "@/lib/notification-service"
 import { NotificationItem } from "./notification-item"
 import { createClient } from "@/lib/supabase/client"
+import { AuthenticatedUser } from "@/types/user"
 
 interface NotificationDropdownProps {
   onClose: () => void
+  profile: AuthenticatedUser | null
 }
 
-export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
-  const { user, userRole } = useSupabase()
+export function NotificationDropdown({ onClose, profile }: NotificationDropdownProps) {
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
-    if (!user) return
+    if (!profile) return
 
     const fetchNotifications = async () => {
       setLoading(true)
-      const res = await fetch(`/api/notifications?userId=${user.id}`)
+      const res = await fetch(`/api/notifications?userId=${profile.id}`)
       const data = await res.json()
       setNotifications(data)
       setLoading(false)
     }
 
     fetchNotifications()
-  }, [user])
+  }, [profile])
 
   const handleMarkAllAsRead = async () => {
-    if (!user) return
+    if (!profile) return
 
     await fetch("/api/notifications/mark-all-read", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id }),
+      body: JSON.stringify({ userId: profile.id }),
     })
     setNotifications((prev) => prev.map((notification) => ({ ...notification, isRead: true })))
   }
 
   const handleViewAllNotifications = () => {
+    if (!profile) return
+    const userRole = profile.roles?.[0]?.role_name || 'student'
     router.push(`/${userRole}/notifications`)
     onClose()
   }
