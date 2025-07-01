@@ -13,7 +13,7 @@ function isUser(obj: any): obj is { id: string } {
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const { email, firstName, lastName, syllabusId, instructorId } = data;
+    const { email, firstName, lastName, phone, syllabusId, instructorId } = data;
     let studentId = null;
     let isNewStudent = false;
 
@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
           email,
           first_name: firstName,
           last_name: lastName,
+          phone,
           role: "student",
           status: "active"
         });

@@ -18,6 +18,7 @@ export default function EnrollNewStudentForm({ syllabi, students, instructor }: 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [syllabusId, setSyllabusId] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Only show this instructor's students for existing
   // const instructorStudents = students.filter((s) => s.instructor_id === instructor.id);
@@ -30,7 +31,7 @@ export default function EnrollNewStudentForm({ syllabi, students, instructor }: 
     );
   });
 
-  const canContinueStep1 = (mode === 'existing' && selectedStudent) || (mode === 'new' && email && firstName && lastName);
+  const canContinueStep1 = (mode === 'existing' && selectedStudent) || (mode === 'new' && email && firstName && lastName && phone);
   const canContinueStep2 = syllabusId;
 
   const handleEnroll = async () => {
@@ -44,6 +45,7 @@ export default function EnrollNewStudentForm({ syllabi, students, instructor }: 
           email,
           firstName,
           lastName,
+          phone,
           syllabusId,
           instructorId: instructor.id,
         };
@@ -52,6 +54,7 @@ export default function EnrollNewStudentForm({ syllabi, students, instructor }: 
           email: selectedStudent.email,
           firstName: selectedStudent.first_name,
           lastName: selectedStudent.last_name,
+          phone: selectedStudent.phone,
           syllabusId,
           instructorId: instructor.id,
         };
@@ -143,21 +146,6 @@ export default function EnrollNewStudentForm({ syllabi, students, instructor }: 
         )}
         {step === 1 && mode === 'new' && (
           <div className="bg-white rounded-xl shadow p-6 border border-blue-100 flex flex-col gap-4">
-            <div className="flex items-center gap-2 mb-2">
-              <UserPlusIcon className="h-6 w-6 text-blue-600" />
-              <span className="font-semibold text-lg text-blue-900">Add New Student</span>
-            </div>
-            <div className="mb-2">
-              <label className="block font-medium mb-1 text-blue-800">Email <span className="text-red-500">*</span></label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@email.com"
-                required
-                className="w-full border border-blue-200 rounded-lg px-3 py-2 bg-blue-50 text-blue-900"
-              />
-            </div>
             <div className="mb-2">
               <label className="block font-medium mb-1 text-blue-800">First Name <span className="text-red-500">*</span></label>
               <input
@@ -174,6 +162,28 @@ export default function EnrollNewStudentForm({ syllabi, students, instructor }: 
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Last Name"
+                required
+                className="w-full border border-blue-200 rounded-lg px-3 py-2 bg-blue-50 text-blue-900"
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block font-medium mb-1 text-blue-800">Phone Number <span className="text-red-500">*</span></label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="(555) 555-5555"
+                required
+                className="w-full border border-blue-200 rounded-lg px-3 py-2 bg-blue-50 text-blue-900"
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block font-medium mb-1 text-blue-800">Email <span className="text-red-500">*</span></label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="student@email.com"
                 required
                 className="w-full border border-blue-200 rounded-lg px-3 py-2 bg-blue-50 text-blue-900"
               />
