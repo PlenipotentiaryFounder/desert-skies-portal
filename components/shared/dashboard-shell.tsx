@@ -1,7 +1,7 @@
 import type React from "react"
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { AuthenticatedUser } from "@/types/user"
+import type { Database } from "@/types/supabase"
 import { DashboardNav } from "@/components/shared/dashboard-nav"
 import { UserNav } from "@/components/shared/user-nav"
 import { MobileNav } from "@/components/shared/mobile-nav"
@@ -14,15 +14,23 @@ interface DashboardShellProps {
     icon: string
   }[]
   userRole: "admin" | "instructor" | "student"
-  profile: AuthenticatedUser | null
+  profile: Database["public"]["Tables"]["profiles"]["Row"] | null
 }
 
 export function DashboardShell({ children, navItems, userRole, profile }: DashboardShellProps) {
+  // Determine portal title
+  const portalTitle =
+    userRole === "admin"
+      ? "Admin Portal"
+      : userRole === "instructor"
+      ? "Instructor Portal"
+      : "Student Portal"
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="container flex h-16 items-center justify-between py-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <MobileNav navItems={navItems} userRole={userRole} />
             <Link href="/" className="flex items-center gap-2">
               <svg
@@ -39,6 +47,9 @@ export function DashboardShell({ children, navItems, userRole, profile }: Dashbo
               </svg>
               <span className="hidden font-bold sm:inline-block">Desert Skies Aviation</span>
             </Link>
+            <span className="ml-4 px-3 py-1 rounded bg-blue-50 border border-blue-200 text-blue-900 text-sm font-semibold uppercase tracking-wide">
+              {portalTitle}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <UserNav profile={profile} />

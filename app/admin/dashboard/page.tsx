@@ -32,9 +32,6 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="mb-4 py-2 px-4 bg-blue-50 border-b-2 border-blue-200 text-blue-900 text-lg font-semibold uppercase tracking-wide">
-        Admin Portal
-      </div>
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>

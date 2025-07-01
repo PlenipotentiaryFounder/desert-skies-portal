@@ -35,9 +35,6 @@ export default async function StudentDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="mb-4 py-2 px-4 bg-blue-50 border-b-2 border-blue-200 text-blue-900 text-lg font-semibold uppercase tracking-wide">
-        Student Portal
-      </div>
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.first_name}</h1>
         <p className="text-muted-foreground">Here's an overview of your flight training progress</p>

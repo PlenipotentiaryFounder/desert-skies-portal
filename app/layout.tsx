@@ -17,7 +17,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="relative flex min-h-screen flex-col">
-            <SiteHeader />
+            {/* SiteHeader is only for public/marketing pages. Portal pages (admin/instructor/student) use DashboardShell for their header. */}
+            {/* <SiteHeader /> */}
             <div className="flex-1">{children}</div>
           </div>
           <Toaster />
