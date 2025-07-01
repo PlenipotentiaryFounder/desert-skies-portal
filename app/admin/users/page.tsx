@@ -14,9 +14,10 @@ export default async function UsersPage({
 }: {
   searchParams: { q?: string; role?: string; status?: string }
 }) {
-  const query = searchParams.q || ""
-  const role = (searchParams.role as "admin" | "instructor" | "student" | "all") || "all"
-  const status = (searchParams.status as "active" | "inactive" | "pending" | "all") || "all"
+  const awaitedSearchParams = await searchParams
+  const query = awaitedSearchParams.q || ""
+  const role = (awaitedSearchParams.role as "admin" | "instructor" | "student" | "all") || "all"
+  const status = (awaitedSearchParams.status as "active" | "inactive" | "pending" | "all") || "all"
 
   return (
     <div className="flex flex-col space-y-6">
