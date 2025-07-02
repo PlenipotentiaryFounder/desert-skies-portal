@@ -65,7 +65,10 @@ export default async function StudentLayout({
   }
 
   const profile = await getUserProfileWithRoles(user.id)
-  const roles = profile?.roles.map((r: { role_name: string }) => r.role_name) || []
+  const roles = Array.isArray(profile?.roles)
+    ? profile.roles.map((r: any) => typeof r === "string" ? r : r.role_name)
+    : []
+  console.log('STUDENT LAYOUT: roles:', roles)
 
   const canAccessStudent = roles.includes("student")
   const canAccessAdmin = roles.includes("admin")

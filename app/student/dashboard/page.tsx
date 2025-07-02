@@ -24,7 +24,10 @@ export default async function StudentDashboardPage() {
   }
 
   const profile = await getUserProfileWithRoles(user.id)
-  const roles = profile?.roles.map(r => r.role_name) || []
+  const roles = Array.isArray(profile?.roles)
+    ? profile.roles.map((r: any) => typeof r === "string" ? r : r.role_name)
+    : []
+  console.log('STUDENT DASHBOARD: roles:', roles)
 
   // This page is for students. If the user is not a student, but has other roles, redirect them.
   // We will allow admins to see this page.
