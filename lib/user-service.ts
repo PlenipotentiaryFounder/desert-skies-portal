@@ -332,7 +332,7 @@ export async function getCurrentInstructor(): Promise<User | null> {
 
 export async function getUserProfileWithRoles(userId: string): Promise<User | null> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data: profile, error: profileError } = await supabase.from("profiles").select(`*`).eq("id", userId).single()
 
   if (profileError) {
@@ -355,7 +355,7 @@ export async function getUserProfileWithRoles(userId: string): Promise<User | nu
 
 export async function getUserProfile(userId: string): Promise<User | null> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
 
   if (error) return null

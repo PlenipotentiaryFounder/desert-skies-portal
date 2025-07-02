@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 
 export default async function NewStudentSchedulePage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   // Fetch options for selects
   const [{ data: enrollments = [] }, { data: lessons = [] }, { data: instructors = [] }, { data: aircraft = [] }, { data: locations = [] }] = await Promise.all([
     supabase.from("student_enrollments").select("id, syllabus_id, syllabus:syllabus_id (title)"),

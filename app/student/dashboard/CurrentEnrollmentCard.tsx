@@ -5,7 +5,7 @@ import { formatDate } from "@/lib/utils"
 
 export async function CurrentEnrollmentCard({ studentId }: { studentId: string }) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data: enrollments } = await supabase
     .from("student_enrollments")

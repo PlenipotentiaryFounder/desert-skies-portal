@@ -10,7 +10,7 @@ import { formatDate } from "@/lib/utils"
 
 export default async function StudentSyllabusPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

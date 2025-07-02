@@ -13,7 +13,7 @@ import { CurrentEnrollmentCard } from "./CurrentEnrollmentCard"
 
 export default async function StudentDashboardPage() {
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const {
     data: { user },
