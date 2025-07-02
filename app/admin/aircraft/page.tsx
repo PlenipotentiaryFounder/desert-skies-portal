@@ -10,7 +10,7 @@ import { AircraftList } from "@/components/admin/aircraft-list"
 
 export default async function AircraftPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Check if we have any aircraft in the database
   const { count } = await supabase.from("aircraft").select("*", { count: "exact", head: true })

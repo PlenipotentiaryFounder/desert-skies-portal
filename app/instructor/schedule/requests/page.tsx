@@ -5,7 +5,7 @@ import { cookies } from "next/headers"
 
 export default async function InstructorSessionRequestsPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   // Get current instructor ID
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.user?.id) return <div>Unauthorized</div>

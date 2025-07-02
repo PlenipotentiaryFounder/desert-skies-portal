@@ -6,6 +6,7 @@ import type { Database } from "@/types/supabase"
 import { cookies } from "next/headers"
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
+import { createApiSupabaseClient } from './supabase/api'
 
 export type User = Database["public"]["Tables"]["profiles"]["Row"] & {
   roles?: string[]
@@ -21,7 +22,7 @@ export type NewUser = Database["public"]["Tables"]["profiles"]["Insert"] & {
 
 export async function getUsers(): Promise<User[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false })
   if (error) {
@@ -32,7 +33,7 @@ export async function getUsers(): Promise<User[]> {
 
 export async function getUserById(id: string): Promise<User | null> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase.from("profiles").select("*").eq("id", id).single()
   if (error || !data) {
     return null
@@ -42,7 +43,7 @@ export async function getUserById(id: string): Promise<User | null> {
 
 export async function getStudents(): Promise<User[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   // This needs to be adapted based on how roles are stored. Assuming a join with user_roles
   const { data, error } = await supabase
     .from("profiles")
@@ -58,7 +59,7 @@ export async function getStudents(): Promise<User[]> {
 
 export async function getInstructors(): Promise<User[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase
     .from("profiles")
     .select("*, user_roles!inner(roles!inner(name))")
@@ -73,7 +74,7 @@ export async function getInstructors(): Promise<User[]> {
 
 export async function getActiveInstructors(): Promise<User[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase
     .from("profiles")
     .select("*, user_roles!inner(roles!inner(name))")
@@ -88,7 +89,7 @@ export async function getActiveInstructors(): Promise<User[]> {
 
 export async function getPendingInstructors(): Promise<User[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase
     .from("profiles")
     .select("*, user_roles!inner(roles!inner(name))")
@@ -149,7 +150,7 @@ export async function createUser(userData: NewUser) {
 
 export async function updateUser(id: string, userData: Partial<User>) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const updateData: Database["public"]["Tables"]["profiles"]["Update"] = {}
   if (userData.first_name) updateData.first_name = userData.first_name
   if (userData.last_name) updateData.last_name = userData.last_name
@@ -182,7 +183,7 @@ export async function updateUser(id: string, userData: Partial<User>) {
 
 export async function deleteUser(id: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { error: profileError } = await supabase.from("profiles").delete().eq("id", id)
   if (profileError) {
     console.error("Error deleting user profile:", profileError)
@@ -199,7 +200,7 @@ export async function deleteUser(id: string) {
 
 export async function updateUserStatus(id: string, status: "active" | "inactive" | "pending") {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const updateData: Database["public"]["Tables"]["profiles"]["Update"] = { status, updated_at: new Date().toISOString() }
   const { error } = await supabase.from("profiles").update(updateData).eq("id", id)
   if (error) {
@@ -213,7 +214,7 @@ export async function updateUserStatus(id: string, status: "active" | "inactive"
 
 export async function updateUserRole(id: string, roleName: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   try {
     const { data, error } = await supabase.rpc("update_user_role", {
@@ -236,7 +237,7 @@ export async function updateUserRole(id: string, roleName: string) {
 
 export async function getUserPermissions(id: string): Promise<string[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase.from("user_permissions").select("permission").eq("user_id", id)
   if (error || !Array.isArray(data)) {
     console.error("Error fetching user permissions:", error)
@@ -273,7 +274,7 @@ export async function updateUserPermissions(id: string, permissions: string[]) {
 
 export async function searchUsers(query: string): Promise<User[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase
     .from("profiles")
     .select()
@@ -288,7 +289,7 @@ export async function searchUsers(query: string): Promise<User[]> {
 
 export async function filterUsersByRole(role: "admin" | "instructor" | "student" | "all"): Promise<User[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   let query = supabase.from("profiles").select("*, user_roles!inner(roles!inner(name))")
   if (role !== "all") {
     query = query.eq("user_roles.roles.name", role)
@@ -303,7 +304,7 @@ export async function filterUsersByRole(role: "admin" | "instructor" | "student"
 
 export async function filterUsersByStatus(status: "active" | "inactive" | "pending" | "all"): Promise<User[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   let query = supabase.from("profiles").select("*")
   if (status !== "all") {
     query = query.eq("status", status)
@@ -318,7 +319,7 @@ export async function filterUsersByStatus(status: "active" | "inactive" | "pendi
 
 export async function getCurrentInstructor(): Promise<User | null> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -381,13 +382,32 @@ export async function getUserFromRequest(req: NextRequest): Promise<User | null>
     get: (name: string) => ({ value: cookieMap.get(name) }),
     set: () => {},
   };
-  const supabase = createClient(cookieStore as any);
+  const supabase = await createClient(cookieStore as any);
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return null;
   // Get profile and roles
   const profile = await getUserProfileWithRoles(user.id);
   if (!profile) return null;
   // Attach role (for compatibility with route logic)
+  if (profile.roles && profile.roles.length > 0) {
+    (profile as any).role = profile.roles[0];
+  }
+  return profile;
+}
+
+export async function getUserFromApiRequest(req: NextRequest): Promise<User | null> {
+  // Parse cookies from the request
+  const cookieHeader = req.headers.get('cookie') || '';
+  console.log('API getUserFromApiRequest cookieHeader:', cookieHeader);
+  const match = cookieHeader.match(/sb-[^=]+-auth-token=([^;]+)/);
+  console.log('API getUserFromApiRequest match:', match);
+  const jwt = match ? decodeURIComponent(match[1]) : undefined;
+
+  const supabase = createApiSupabaseClient(jwt);
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return null;
+  const profile = await getUserProfileWithRoles(user.id);
+  if (!profile) return null;
   if (profile.roles && profile.roles.length > 0) {
     (profile as any).role = profile.roles[0];
   }

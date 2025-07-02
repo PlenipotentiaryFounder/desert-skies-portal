@@ -22,7 +22,7 @@ import { InstructorProgressWidget } from "@/components/instructor/instructor-pro
 
 export default async function InstructorDashboardPage() {
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const {
     data: { user },

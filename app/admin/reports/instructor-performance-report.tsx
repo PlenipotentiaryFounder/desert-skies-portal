@@ -17,13 +17,13 @@ interface InstructorPerformanceReportProps {
   userId?: string
 }
 
-export function InstructorPerformanceReport({ userId }: InstructorPerformanceReportProps) {
+export async function InstructorPerformanceReport({ userId }: InstructorPerformanceReportProps) {
   const [timeframe, setTimeframe] = useState<ReportTimeframe>("month")
   const [selectedInstructor, setSelectedInstructor] = useState<string>(userId || "")
   const [instructors, setInstructors] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [report, setReport] = useState<any>(null)
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Fetch instructors on component mount
   useEffect(() => {

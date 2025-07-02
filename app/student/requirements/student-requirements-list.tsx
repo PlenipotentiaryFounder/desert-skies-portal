@@ -22,7 +22,7 @@ interface StudentRequirementsListProps {
   studentId: string
 }
 
-export function StudentRequirementsList({ studentId }: StudentRequirementsListProps) {
+export async function StudentRequirementsList({ studentId }: StudentRequirementsListProps) {
   const [activeTab, setActiveTab] = useState<CertificateType>("private_pilot")
   const [requirements, setRequirements] = useState<StudentRequirement[]>([])
   const [progress, setProgress] = useState({
@@ -32,7 +32,7 @@ export function StudentRequirementsList({ studentId }: StudentRequirementsListPr
   })
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = await createClient()
 
   useEffect(() => {
     async function fetchRequirements() {

@@ -14,7 +14,7 @@ export const metadata = {
 
 export default async function InstructorDocumentsPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -47,7 +47,7 @@ export default async function InstructorDocumentsPage() {
 
 async function InstructorDocumentsListWrapper({ instructorId }: { instructorId: string }) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Get instructor's students
   const { data: enrollments } = await supabase

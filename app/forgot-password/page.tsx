@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState("")
@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
     setSuccess("")
     setError("")
-    const supabase = createClient()
+    const supabase = await createClient()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     })

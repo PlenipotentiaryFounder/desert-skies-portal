@@ -82,7 +82,7 @@ export default async function AdminLayout({
   children: React.ReactNode
 }>) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { user },
   } = await supabase.auth.getUser()

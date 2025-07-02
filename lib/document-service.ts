@@ -27,7 +27,7 @@ export interface DocumentData {
 
 export async function getDocuments(userId?: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   let query = supabase
     .from("documents")
@@ -50,7 +50,7 @@ export async function getDocuments(userId?: string) {
 
 export async function getDocumentById(id: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("documents")
@@ -68,7 +68,7 @@ export async function getDocumentById(id: string) {
 
 export async function createDocument(document: DocumentData) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("documents")
@@ -96,7 +96,7 @@ export async function createDocument(document: DocumentData) {
 
 export async function updateDocument(id: string, document: Partial<DocumentData>) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("documents")
@@ -121,7 +121,7 @@ export async function updateDocument(id: string, document: Partial<DocumentData>
 
 export async function deleteDocument(id: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { error } = await supabase.from("documents").delete().eq("id", id)
 
@@ -135,7 +135,7 @@ export async function deleteDocument(id: string) {
 
 export async function verifyDocument(id: string, isVerified: boolean) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("documents")
@@ -156,7 +156,7 @@ export async function verifyDocument(id: string, isVerified: boolean) {
 
 export async function getExpiringDocuments(daysThreshold = 30) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Calculate the date threshold
   const today = new Date()
@@ -181,7 +181,7 @@ export async function getExpiringDocuments(daysThreshold = 30) {
 
 export async function getDocumentsByType(type: DocumentType, userId?: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   let query = supabase
     .from("documents")
@@ -205,7 +205,7 @@ export async function getDocumentsByType(type: DocumentType, userId?: string) {
 
 export async function uploadDocumentFile(file: File, path: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase.storage.from("documents").upload(path, file)
 
@@ -219,7 +219,7 @@ export async function uploadDocumentFile(file: File, path: string) {
 
 export async function getDocumentFileUrl(path: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data } = await supabase.storage.from("documents").getPublicUrl(path)
 
@@ -228,7 +228,7 @@ export async function getDocumentFileUrl(path: string) {
 
 export async function deleteDocumentFile(path: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { error } = await supabase.storage.from("documents").remove([path])
 

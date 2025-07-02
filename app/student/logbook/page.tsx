@@ -157,6 +157,7 @@ function SignatureModal({ entry, role, onClose, onSigned }: { entry: any, role: 
     setLoading(true);
     setError(null);
     setSuccess(false);
+    const supabase = await createClient();
     const res = await fetch('/api/student/flight-log-entries/sign', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -213,7 +214,13 @@ export default function StudentLogbookPage() {
       setLoading(true);
       const res = await fetch('/api/student/flight-log-entries');
       const data = await res.json();
-      setEntries(data);
+      if (Array.isArray(data)) {
+        setEntries(data);
+        setError(null);
+      } else {
+        setEntries([]);
+        setError(data.error || 'Failed to load logbook entries.');
+      }
       setLoading(false);
     }
     fetchEntries();
@@ -221,7 +228,7 @@ export default function StudentLogbookPage() {
 
   useEffect(() => {
     async function fetchRole() {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data: profile } = await supabase.from('profiles').select('id, roles').eq('id', user.id).single();

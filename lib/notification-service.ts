@@ -40,7 +40,7 @@ export interface NotificationSettings {
 
 export async function getNotifications(userId: string, limit = 10): Promise<Notification[]> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("notifications")
@@ -71,7 +71,7 @@ export async function getNotifications(userId: string, limit = 10): Promise<Noti
 
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { count, error } = await supabase
     .from("notifications")
@@ -89,7 +89,7 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
 
 export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", notificationId)
 
@@ -103,7 +103,7 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
 
 export async function markAllNotificationsAsRead(userId: string): Promise<boolean> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { error } = await supabase
     .from("notifications")
@@ -123,7 +123,7 @@ export async function createNotification(
   notification: Omit<Notification, "id" | "createdAt" | "isRead">,
 ): Promise<string | null> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("notifications")
@@ -150,7 +150,7 @@ export async function createNotification(
 
 export async function getNotificationSettings(userId: string): Promise<NotificationSettings | null> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase.from("notification_settings").select("*").eq("user_id", userId).single()
 
@@ -183,7 +183,7 @@ export async function updateNotificationSettings(
   settings: Partial<NotificationSettings> & { userId: string },
 ): Promise<boolean> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { error } = await supabase
     .from("notification_settings")
@@ -210,7 +210,7 @@ export async function updateNotificationSettings(
 
 async function createDefaultNotificationSettings(userId: string): Promise<NotificationSettings | null> {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const defaultSettings = {
     user_id: userId,

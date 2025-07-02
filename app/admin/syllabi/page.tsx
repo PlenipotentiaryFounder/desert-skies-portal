@@ -9,7 +9,7 @@ import { cookies } from "next/headers"
 export default async function SyllabiPage() {
   const syllabi = await getSyllabi()
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Check if we have any syllabi in the database
   const { count } = await supabase.from("syllabi").select("*", { count: "exact", head: true })

@@ -47,7 +47,7 @@ export type EnrollmentFormData = {
 }
 
 export async function getEnrollments() {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("student_enrollments")
@@ -82,7 +82,7 @@ export async function getEnrollments() {
 }
 
 export async function getEnrollmentById(id: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("student_enrollments")
@@ -119,7 +119,7 @@ export async function getEnrollmentById(id: string) {
 }
 
 export async function getStudentEnrollments(studentId: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("student_enrollments")
@@ -150,7 +150,7 @@ export async function getStudentEnrollments(studentId: string) {
 }
 
 export async function getInstructorEnrollments(instructorId: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("student_enrollments")
@@ -181,7 +181,7 @@ export async function getInstructorEnrollments(instructorId: string) {
 }
 
 export async function createEnrollment(formData: EnrollmentFormData) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const insertData: StudentEnrollmentInsert = {
     student_id: formData.student_id,
@@ -205,7 +205,7 @@ export async function createEnrollment(formData: EnrollmentFormData) {
 }
 
 export async function updateEnrollment(id: string, formData: EnrollmentFormData) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const updateData: StudentEnrollmentUpdate = { ...formData }
 
@@ -223,7 +223,7 @@ export async function updateEnrollment(id: string, formData: EnrollmentFormData)
 }
 
 export async function deleteEnrollment(id: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // @ts-expect-error Supabase type system is too strict, but this is safe
   const { error } = await supabase.from("student_enrollments").delete().eq("id", id as Database["public"]["Tables"]["student_enrollments"]["Row"]["id"])

@@ -14,7 +14,7 @@ export const metadata = {
 
 export default async function InstructorReportsPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

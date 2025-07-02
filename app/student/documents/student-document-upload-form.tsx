@@ -47,11 +47,11 @@ const formSchema = z.object({
   }),
 })
 
-export function StudentDocumentUploadForm({ userId }: StudentDocumentUploadFormProps) {
+export async function StudentDocumentUploadForm({ userId }: StudentDocumentUploadFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

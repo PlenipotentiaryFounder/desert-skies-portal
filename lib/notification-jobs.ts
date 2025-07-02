@@ -4,7 +4,7 @@ import { createNotification } from "./notification-service"
 
 // Check for documents expiring soon
 export async function checkDocumentExpirations() {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // Get documents expiring in the next 30 days
   const thirtyDaysFromNow = new Date()
@@ -73,7 +73,7 @@ export async function checkDocumentExpirations() {
 
 // Check for upcoming flight sessions
 export async function checkUpcomingFlightSessions() {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // Get flight sessions in the next 24 hours
   const twentyFourHoursFromNow = new Date()

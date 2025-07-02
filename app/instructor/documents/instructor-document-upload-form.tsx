@@ -47,7 +47,7 @@ const formSchema = z.object({
   }),
 })
 
-export function InstructorDocumentUploadForm({ userId }: InstructorDocumentUploadFormProps) {
+export async function InstructorDocumentUploadForm({ userId }: InstructorDocumentUploadFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -61,7 +61,7 @@ export function InstructorDocumentUploadForm({ userId }: InstructorDocumentUploa
     },
   })
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)

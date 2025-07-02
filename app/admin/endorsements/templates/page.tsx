@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { ExternalLink } from "lucide-react"
 
-export default function EndorsementTemplatesPage() {
+export default async function EndorsementTemplatesPage() {
   const [templates, setTemplates] = useState<any[]>([])
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("")
@@ -19,7 +19,7 @@ export default function EndorsementTemplatesPage() {
   useEffect(() => {
     const fetchTemplates = async () => {
       setLoading(true)
-      const supabase = createClient()
+      const supabase = await createClient()
       let query = supabase.from("endorsement_templates").select("*")
       if (category) query = query.eq("category", category)
       const { data } = await query

@@ -108,7 +108,7 @@ export type FlightSessionFormData = {
 
 export async function getFlightSessions() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("flight_sessions")
@@ -167,7 +167,7 @@ export async function getFlightSessions() {
 
 export async function getFlightSessionById(id: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase
     .from("flight_sessions")
     .select(`
@@ -233,7 +233,7 @@ export async function getFlightSessionById(id: string) {
 
 export async function getStudentFlightSessions(studentId: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // First get the student's enrollments
   const { data: enrollments, error: enrollmentsError } = await supabase
@@ -290,7 +290,7 @@ export async function getStudentFlightSessions(studentId: string) {
 
 export async function getInstructorFlightSessions(instructorId: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const { data, error } = await supabase
     .from("flight_sessions")
@@ -345,7 +345,7 @@ export async function getInstructorFlightSessions(instructorId: string) {
 
 export async function createFlightSession(formData: FlightSessionFormData) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Set sensible defaults for new fields
   const insertData: FlightSessionInsert = {
@@ -375,7 +375,7 @@ export async function createFlightSession(formData: FlightSessionFormData) {
 
 export async function updateFlightSession(id: string, formData: Partial<FlightSessionFormData>) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Allow updating new fields as well
   const updateData: FlightSessionUpdate = {
@@ -408,7 +408,7 @@ export async function updateFlightSession(id: string, formData: Partial<FlightSe
 
 export async function deleteFlightSession(id: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // First delete any maneuver scores associated with this session
   // @ts-expect-error Supabase type system is too strict, but this is safe
@@ -436,7 +436,7 @@ export async function deleteFlightSession(id: string) {
 
 export async function getAvailableManeuversForLesson(lessonId: string) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Get maneuvers associated with this lesson
   const { data: lessonManeuvers, error: lessonManeuversError } = await supabase
@@ -478,7 +478,7 @@ export async function saveManeuverScores(
   }>,
 ) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // First delete any existing scores for this session
   // @ts-expect-error Supabase type system is too strict, but this is safe

@@ -85,7 +85,7 @@ export interface FlightLogEntry {
 }
 
 export async function getFAARequirements(certificateType?: CertificateType) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   let query = supabase.from("faa_requirements").select("*")
 
@@ -104,7 +104,7 @@ export async function getFAARequirements(certificateType?: CertificateType) {
 }
 
 export async function getFAARequirementById(id: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase.from("faa_requirements").select("*").eq("id", id).single()
 
@@ -117,7 +117,7 @@ export async function getFAARequirementById(id: string) {
 }
 
 export async function createFAARequirement(requirement: Omit<FAARequirement, "id" | "created_at" | "updated_at">) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("faa_requirements")
@@ -141,7 +141,7 @@ export async function createFAARequirement(requirement: Omit<FAARequirement, "id
 }
 
 export async function updateFAARequirement(id: string, requirement: Partial<FAARequirement>) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { error } = await supabase
     .from("faa_requirements")
@@ -166,7 +166,7 @@ export async function updateFAARequirement(id: string, requirement: Partial<FAAR
 }
 
 export async function deleteFAARequirement(id: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { error } = await supabase.from("faa_requirements").delete().eq("id", id)
 
@@ -180,7 +180,7 @@ export async function deleteFAARequirement(id: string) {
 }
 
 export async function getStudentRequirements(studentId: string, certificateType?: CertificateType) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   let query = supabase
     .from("student_requirements")
@@ -205,7 +205,7 @@ export async function getStudentRequirements(studentId: string, certificateType?
 }
 
 export async function getStudentRequirementById(id: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("student_requirements")
@@ -227,7 +227,7 @@ export async function getStudentRequirementById(id: string) {
 export async function createStudentRequirement(
   requirement: Omit<StudentRequirement, "id" | "created_at" | "updated_at">,
 ) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("student_requirements")
@@ -253,7 +253,7 @@ export async function createStudentRequirement(
 }
 
 export async function updateStudentRequirement(id: string, requirement: Partial<StudentRequirement>) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { error } = await supabase
     .from("student_requirements")
@@ -276,7 +276,7 @@ export async function updateStudentRequirement(id: string, requirement: Partial<
 }
 
 export async function verifyStudentRequirement(id: string, instructorId: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // First get the requirement to check if it's complete
   const { data: requirement, error: fetchError } = await supabase
@@ -314,7 +314,7 @@ export async function verifyStudentRequirement(id: string, instructorId: string)
 }
 
 export async function getFlightLogEntries(studentId: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -357,7 +357,7 @@ export async function getFlightLogEntries(studentId: string) {
 }
 
 export async function getFlightLogEntryById(id: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -395,7 +395,7 @@ export async function getFlightLogEntryById(id: string) {
 }
 
 export async function createFlightLogEntry(entry: Omit<FlightLogEntry, "id" | "created_at" | "updated_at">) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -439,7 +439,7 @@ export async function createFlightLogEntry(entry: Omit<FlightLogEntry, "id" | "c
 }
 
 export async function updateFlightLogEntry(id: string, entry: Partial<FlightLogEntry>) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // First get the original entry
   const { data: originalEntry, error: fetchError } = await supabase
@@ -494,7 +494,7 @@ export async function updateFlightLogEntry(id: string, entry: Partial<FlightLogE
 }
 
 export async function deleteFlightLogEntry(id: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // First get the entry to be deleted
   const { data: entry, error: fetchError } = await supabase.from("flight_log_entries").select("*").eq("id", id).single()
@@ -519,7 +519,7 @@ export async function deleteFlightLogEntry(id: string) {
 }
 
 export async function getStudentTotalHours(studentId: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -577,7 +577,7 @@ export async function getStudentTotalHours(studentId: string) {
 
 // Helper function to update requirements when a new flight is logged
 async function updateRequirementsFromFlight(studentId: string, flight: any) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // Get all requirements for this student
   const { data: requirements, error } = await supabase
@@ -648,7 +648,7 @@ async function updateRequirementsFromFlight(studentId: string, flight: any) {
 
 // Helper function to update requirements when a flight is updated
 async function updateRequirementsFromFlightUpdate(studentId: string, originalFlight: any, updatedFlight: any) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // Get all requirements for this student
   const { data: requirements, error } = await supabase
@@ -723,7 +723,7 @@ async function updateRequirementsFromFlightUpdate(studentId: string, originalFli
 
 // Helper function to update requirements when a flight is deleted
 async function updateRequirementsFromFlightDeletion(studentId: string, flight: any) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // Get all requirements for this student
   const { data: requirements, error } = await supabase
@@ -793,7 +793,7 @@ async function updateRequirementsFromFlightDeletion(studentId: string, flight: a
 }
 
 export async function initializeStudentRequirements(studentId: string, certificateType: CertificateType) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
 
   // Get all requirements for this certificate type
   const { data: requirements, error } = await supabase
@@ -868,7 +868,7 @@ export async function getStudentCertificateProgress(studentId: string, certifica
 
 // --- Logbook Signature Logic ---
 export async function addLogbookSignature(entryId: string, userId: string, role: 'student' | 'instructor', pin: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
   const pin_hash = await bcrypt.hash(pin, 10)
   // Invalidate any previous signature for this entry/role/user
   await supabase.from("flight_log_entry_signatures").update({ is_current: false }).eq("entry_id", entryId).eq("role", role).eq("user_id", userId)
@@ -879,14 +879,14 @@ export async function addLogbookSignature(entryId: string, userId: string, role:
 }
 
 export async function verifyLogbookSignature(entryId: string, userId: string, role: 'student' | 'instructor', pin: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
   const { data, error } = await supabase.from("flight_log_entry_signatures").select("pin_hash").eq("entry_id", entryId).eq("user_id", userId).eq("role", role).eq("is_current", true).single()
   if (error || !data) return false
   return await bcrypt.compare(pin, data.pin_hash)
 }
 
 export async function invalidateLogbookSignatures(entryId: string, role?: 'student' | 'instructor') {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
   let query = supabase.from("flight_log_entry_signatures").update({ is_current: false }).eq("entry_id", entryId)
   if (role) query = query.eq("role", role)
   await query
@@ -894,13 +894,13 @@ export async function invalidateLogbookSignatures(entryId: string, role?: 'stude
 
 // --- Logbook Audit Logic ---
 export async function logLogbookAudit(entryId: string, action: string, performedBy: string, notes?: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
   await supabase.from("flight_log_entry_audit").insert({ entry_id: entryId, action, performed_by: performedBy, notes })
 }
 
 // --- Status Transition Logic ---
 export async function setLogbookEntryStatus(entryId: string, status: 'draft' | 'final' | 'voided', voidedBy?: string, voidReason?: string) {
-  const supabase = createClient(await cookies())
+  const supabase = await createClient(await cookies())
   const update: any = { status }
   if (status === 'voided') {
     update.voided_by = voidedBy

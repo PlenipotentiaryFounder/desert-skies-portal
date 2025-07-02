@@ -49,9 +49,9 @@ interface FlightSessionFormProps {
   initialData?: FlightSession
 }
 
-export function FlightSessionForm({ enrollments, instructors, aircraft, initialData }: FlightSessionFormProps) {
+export async function FlightSessionForm({ enrollments, instructors, aircraft, initialData }: FlightSessionFormProps) {
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = await createClient()
   const [lessons, setLessons] = useState<{ id: string; title: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedEnrollment, setSelectedEnrollment] = useState<string | null>(initialData?.enrollment_id || null)

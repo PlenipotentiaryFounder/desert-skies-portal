@@ -5,7 +5,7 @@ import { InstructorApprovalList } from "./instructor-approval-list"
 
 export default async function InstructorApprovalPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Check if user is authenticated and is an admin
   const {

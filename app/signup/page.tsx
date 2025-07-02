@@ -6,7 +6,7 @@ import { SignupForm } from "@/components/auth/signup-form"
 
 export default async function SignupPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

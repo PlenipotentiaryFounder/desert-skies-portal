@@ -8,7 +8,7 @@ import { InstructorStudentsList } from "@/components/instructor/instructor-stude
 
 export default async function InstructorStudentsPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()
