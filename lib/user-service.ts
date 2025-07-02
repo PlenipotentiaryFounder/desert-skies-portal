@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import type { Database } from "@/types/supabase"
 import { cookies } from "next/headers"
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
+import { NextRequest } from 'next/server'
 
 export type User = Database["public"]["Tables"]["profiles"]["Row"] & {
   roles?: string[]
@@ -170,13 +171,13 @@ export async function updateUser(id: string, userData: Partial<User>) {
   const { error } = await supabase.from("profiles").update(updateData).eq("id", id)
 
   if (error) {
-    throw new Error(error.message)
+    return { success: false, error: error.message }
   }
 
   revalidatePath(`/admin/users/${id}`)
   revalidatePath("/admin/users")
 
-  return { id, ...userData }
+  return { success: true, id, ...userData }
 }
 
 export async function deleteUser(id: string) {
@@ -245,8 +246,11 @@ export async function getUserPermissions(id: string): Promise<string[]> {
 }
 
 export async function updateUserPermissions(id: string, permissions: string[]) {
-  const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  // Use the admin client to bypass RLS
+  const supabase = createSupabaseAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
+  )
   const { error: deleteError } = await supabase.from("user_permissions").delete().eq("user_id", id)
   if (deleteError) {
     console.error("Error deleting user permissions:", deleteError)
@@ -356,4 +360,36 @@ export async function getUserProfile(userId: string): Promise<User | null> {
 
   if (error) return null
   return data as User
+}
+
+/**
+ * Extracts the authenticated user from a Next.js API route request using Supabase cookies.
+ * Returns null if not authenticated.
+ */
+export async function getUserFromRequest(req: NextRequest): Promise<User | null> {
+  // Get cookies from the request
+  const cookieHeader = req.headers.get('cookie') || '';
+  // Create a cookie store compatible with supabase/server
+  // next/headers cookies() is not available in API routes, so we parse manually
+  const cookieMap = new Map<string, string>();
+  for (const pair of cookieHeader.split(';')) {
+    const [key, ...rest] = pair.trim().split('=');
+    if (key && rest.length > 0) cookieMap.set(key, rest.join('='));
+  }
+  // Create a minimal cookieStore interface
+  const cookieStore = {
+    get: (name: string) => ({ value: cookieMap.get(name) }),
+    set: () => {},
+  };
+  const supabase = createClient(cookieStore as any);
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return null;
+  // Get profile and roles
+  const profile = await getUserProfileWithRoles(user.id);
+  if (!profile) return null;
+  // Attach role (for compatibility with route logic)
+  if (profile.roles && profile.roles.length > 0) {
+    (profile as any).role = profile.roles[0];
+  }
+  return profile;
 }

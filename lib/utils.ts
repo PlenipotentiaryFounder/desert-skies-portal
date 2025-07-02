@@ -16,10 +16,7 @@ export function formatDate(dateString: string): string {
 
 export function formatTime(time: string) {
   const [hours, minutes] = time.split(":")
-  const h = Number.parseInt(hours)
-  const ampm = h >= 12 ? "PM" : "AM"
-  const hour = h % 12 || 12
-  return `${hour}:${minutes} ${ampm}`
+  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`
 }
 
 export function calculateDuration(startTime: string, endTime: string) {

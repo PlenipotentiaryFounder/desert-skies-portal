@@ -92,7 +92,11 @@ export default async function AdminLayout({
   }
 
   const profile = await getUserProfileWithRoles(user.id)
-  const roles = profile?.roles.map((r: { role_name: string }) => r.role_name) || []
+  console.log('ADMIN LAYOUT: profile:', profile)
+  const roles = Array.isArray(profile?.roles)
+    ? profile.roles.map((r: any) => typeof r === "string" ? r : r.role_name)
+    : []
+  console.log('ADMIN LAYOUT: roles:', roles)
 
   if (!roles.includes("admin")) {
     redirect("/")

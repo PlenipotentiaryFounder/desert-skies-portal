@@ -105,12 +105,12 @@ export function RequestSessionForm({
         <input type="date" name="date" value={form.date} onChange={handleChange} required />
       </div>
       <div>
-        <label>Start Time</label>
-        <input type="time" name="start_time" value={form.start_time} onChange={handleChange} required />
+        <label>Start Time (24-hour)</label>
+        <input type="time" name="start_time" value={form.start_time} onChange={handleChange} required step="60" />
       </div>
       <div>
-        <label>End Time</label>
-        <input type="time" name="end_time" value={form.end_time} onChange={handleChange} required />
+        <label>End Time (24-hour)</label>
+        <input type="time" name="end_time" value={form.end_time} onChange={handleChange} required step="60" />
       </div>
       <div>
         <label>Session Type</label>

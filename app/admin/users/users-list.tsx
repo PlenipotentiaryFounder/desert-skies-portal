@@ -253,7 +253,7 @@ export function UsersList({ initialQuery, initialRole, initialStatus }: UsersLis
                   <TableHead className="w-[50px]">
                     <Checkbox
                       checked={users.length > 0 && selectedUsers.length === users.length}
-                      indeterminate={selectedUsers.length > 0 && selectedUsers.length < users.length}
+                      {...(selectedUsers.length > 0 && selectedUsers.length < users.length ? { indeterminate: true } : {})}
                       onCheckedChange={handleSelectAll}
                       aria-label="Select all users"
                     />
@@ -280,12 +280,28 @@ export function UsersList({ initialQuery, initialRole, initialStatus }: UsersLis
                   </TableRow>
                 ) : (
                   users.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow
+                      key={user.id}
+                      className="cursor-pointer hover:bg-accent/40 focus:bg-accent/60 transition-colors"
+                      onClick={e => {
+                        // Prevent row click if clicking on a button, link, or input
+                        if (
+                          (e.target as HTMLElement).closest('button, a, input, [role="menuitem"]')
+                        ) {
+                          return
+                        }
+                        router.push(`/admin/users/${user.id}`)
+                      }}
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`View details for ${user.first_name} ${user.last_name}`}
+                    >
                       <TableCell>
                         <Checkbox
                           checked={selectedUsers.includes(user.id)}
                           onCheckedChange={(checked) => handleUserSelection(user.id, checked === true)}
                           aria-label={`Select ${user.first_name} ${user.last_name}`}
+                          onClick={e => e.stopPropagation()}
                         />
                       </TableCell>
                       <TableCell>
@@ -302,6 +318,7 @@ export function UsersList({ initialQuery, initialRole, initialStatus }: UsersLis
                           </div>
                         </div>
                       </TableCell>
+                      <TableCell>{user.email}</TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -312,34 +329,34 @@ export function UsersList({ initialQuery, initialRole, initialStatus }: UsersLis
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" onClick={e => e.stopPropagation()}>
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/admin/users/${user.id}`}>
+                              <Link href={`/admin/users/${user.id}`} onClick={e => e.stopPropagation()}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/admin/users/${user.id}/permissions`}>
+                              <Link href={`/admin/users/${user.id}/permissions`} onClick={e => e.stopPropagation()}>
                                 <Shield className="mr-2 h-4 w-4" />
                                 Permissions
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleStatusUpdate(user.id, "active")}
+                              onClick={e => { e.stopPropagation(); handleStatusUpdate(user.id, "active") }}
                               disabled={user.status === "active"}
                             >
                               <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                               Set Active
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleStatusUpdate(user.id, "inactive")}
+                              onClick={e => { e.stopPropagation(); handleStatusUpdate(user.id, "inactive") }}
                               disabled={user.status === "inactive"}
                             >
                               <XCircle className="mr-2 h-4 w-4 text-red-500" />
@@ -347,7 +364,7 @@ export function UsersList({ initialQuery, initialRole, initialStatus }: UsersLis
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleDeleteClick(user.id)}
+                              onClick={e => { e.stopPropagation(); handleDeleteClick(user.id) }}
                               className="text-red-600 focus:text-red-600"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />

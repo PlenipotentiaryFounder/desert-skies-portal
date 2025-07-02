@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { getInstructorPerformanceReport, type ReportTimeframe } from "@/lib/report-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -12,10 +11,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDate } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { Download, Users } from "lucide-react"
+import type { ReportTimeframe } from "@/lib/report-service"
 
-export function InstructorPerformanceReport() {
+interface InstructorPerformanceReportProps {
+  userId?: string
+}
+
+export function InstructorPerformanceReport({ userId }: InstructorPerformanceReportProps) {
   const [timeframe, setTimeframe] = useState<ReportTimeframe>("month")
-  const [selectedInstructor, setSelectedInstructor] = useState<string>("")
+  const [selectedInstructor, setSelectedInstructor] = useState<string>(userId || "")
   const [instructors, setInstructors] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [report, setReport] = useState<any>(null)
@@ -33,19 +37,19 @@ export function InstructorPerformanceReport() {
 
       if (data && data.length > 0) {
         setInstructors(data)
-        setSelectedInstructor(data[0].id)
+        if (!userId) setSelectedInstructor(data[0].id)
       }
     }
 
     fetchInstructors()
-  }, [supabase])
+  }, [supabase, userId])
 
-  const generateReport = async () => {
-    if (!selectedInstructor) return
-
+  const generateReport = async (instructorId: string, tf: ReportTimeframe) => {
+    if (!instructorId) return
     setIsLoading(true)
     try {
-      const data = await getInstructorPerformanceReport(selectedInstructor, timeframe)
+      const res = await fetch(`/api/admin/reports/instructor-performance?instructorId=${instructorId}&timeframe=${tf}`)
+      const data = await res.json()
       setReport(data)
     } catch (error) {
       console.error("Error generating report:", error)
@@ -57,7 +61,7 @@ export function InstructorPerformanceReport() {
   // Generate report when instructor or timeframe changes
   useEffect(() => {
     if (selectedInstructor) {
-      generateReport()
+      generateReport(selectedInstructor, timeframe)
     }
   }, [selectedInstructor, timeframe])
 
@@ -297,7 +301,7 @@ export function InstructorPerformanceReport() {
           <div className="flex flex-col items-center text-center">
             <h3 className="text-lg font-semibold">No report data available</h3>
             <p className="text-sm text-muted-foreground">Select an instructor and timeframe to generate a report</p>
-            <Button className="mt-4" onClick={generateReport}>
+            <Button className="mt-4" onClick={() => generateReport(selectedInstructor, timeframe)}>
               Generate Report
             </Button>
           </div>

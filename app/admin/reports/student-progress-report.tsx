@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { getStudentProgressReport } from "@/lib/report-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -12,8 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDate } from "@/lib/utils"
 import { Download, GraduationCap } from "lucide-react"
 
-export function StudentProgressReport() {
-  const [selectedStudent, setSelectedStudent] = useState<string>("")
+interface StudentProgressReportProps {
+  userId?: string
+}
+
+export function StudentProgressReport({ userId }: StudentProgressReportProps) {
+  const [selectedStudent, setSelectedStudent] = useState<string>(userId || "")
   const [students, setStudents] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [report, setReport] = useState<any>(null)
@@ -29,19 +32,19 @@ export function StudentProgressReport() {
 
       if (data && data.length > 0) {
         setStudents(data)
-        setSelectedStudent(data[0].id)
+        if (!userId) setSelectedStudent(data[0].id)
       }
     }
 
     fetchStudents()
-  }, [supabase])
+  }, [supabase, userId])
 
-  const generateReport = async () => {
-    if (!selectedStudent) return
-
+  const generateReport = async (studentId: string) => {
+    if (!studentId) return
     setIsLoading(true)
     try {
-      const data = await getStudentProgressReport(selectedStudent)
+      const res = await fetch(`/api/admin/reports/student-progress?studentId=${studentId}`)
+      const data = await res.json()
       setReport(data)
     } catch (error) {
       console.error("Error generating report:", error)
@@ -53,7 +56,7 @@ export function StudentProgressReport() {
   // Generate report when student changes
   useEffect(() => {
     if (selectedStudent) {
-      generateReport()
+      generateReport(selectedStudent)
     }
   }, [selectedStudent])
 
@@ -348,7 +351,7 @@ export function StudentProgressReport() {
                 : "Select a student to view their progress"}
             </p>
             {selectedStudent && (
-              <Button className="mt-4" onClick={generateReport}>
+              <Button className="mt-4" onClick={() => generateReport(selectedStudent)}>
                 Refresh Data
               </Button>
             )}

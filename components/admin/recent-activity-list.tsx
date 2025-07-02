@@ -15,7 +15,11 @@ interface Activity {
   icon: React.ReactNode
 }
 
-export function RecentActivityList() {
+interface RecentActivityListProps {
+  userId?: string
+}
+
+export function RecentActivityList({ userId }: RecentActivityListProps) {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -24,7 +28,7 @@ export function RecentActivityList() {
     async function fetchActivity() {
       try {
         // Get recent enrollments
-        const { data: enrollments } = await supabase
+        let enrollmentsQuery = supabase
           .from("student_enrollments")
           .select(`
             id,
@@ -39,9 +43,13 @@ export function RecentActivityList() {
           `)
           .order("created_at", { ascending: false })
           .limit(3)
+        if (userId) {
+          enrollmentsQuery = enrollmentsQuery.eq("student_id", userId)
+        }
+        const { data: enrollments } = await enrollmentsQuery
 
         // Get recent flight sessions
-        const { data: sessions } = await supabase
+        let sessionsQuery = supabase
           .from("flight_sessions")
           .select(`
             id,
@@ -58,9 +66,19 @@ export function RecentActivityList() {
           `)
           .order("created_at", { ascending: false })
           .limit(3)
+        if (userId) {
+          // Need to join through enrollment to student_id
+          sessionsQuery = sessionsQuery.in("enrollment_id", (
+            await supabase
+              .from("student_enrollments")
+              .select("id")
+              .eq("student_id", userId)
+          ).data?.map((e: any) => e.id) || [""])
+        }
+        const { data: sessions } = await sessionsQuery
 
         // Get recent user registrations
-        const { data: users } = await supabase
+        let usersQuery = supabase
           .from("profiles")
           .select(`
             id,
@@ -71,6 +89,10 @@ export function RecentActivityList() {
           `)
           .order("created_at", { ascending: false })
           .limit(3)
+        if (userId) {
+          usersQuery = usersQuery.eq("id", userId)
+        }
+        const { data: users } = await usersQuery
 
         // Transform data into activities
         const enrollmentActivities =
@@ -114,7 +136,7 @@ export function RecentActivityList() {
     }
 
     fetchActivity()
-  }, [supabase])
+  }, [supabase, userId])
 
   if (loading) {
     return <div className="flex items-center justify-center h-[300px]">Loading activity data...</div>

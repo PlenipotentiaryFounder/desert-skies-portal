@@ -28,6 +28,7 @@ interface User {
 interface DocumentFormProps {
   users: User[]
   document?: any
+  onSuccess?: () => void
 }
 
 const documentTypes: { value: DocumentType; label: string }[] = [
@@ -62,7 +63,7 @@ const formSchema = z.object({
     .optional(),
 })
 
-export function DocumentForm({ users, document }: DocumentFormProps) {
+export function DocumentForm({ users, document, onSuccess }: DocumentFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -136,8 +137,12 @@ export function DocumentForm({ users, document }: DocumentFormProps) {
         })
       }
 
-      router.push("/admin/documents")
-      router.refresh()
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push("/admin/documents")
+        router.refresh()
+      }
     } catch (error) {
       console.error("Error submitting document:", error)
       toast({

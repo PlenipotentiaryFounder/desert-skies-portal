@@ -5,12 +5,18 @@ import { cookies } from "next/headers"
 import { BookOpen, Calendar, ClipboardCheck, FileText, Home, Plane, Settings, User } from "lucide-react"
 import { DashboardShell } from "@/components/shared/dashboard-shell"
 import { getUserProfileWithRoles } from "@/lib/user-service"
+import Link from 'next/link'
 
 const navItems = [
   {
     title: "Dashboard",
     href: "/student/dashboard",
     icon: "home",
+  },
+  {
+    title: "Logbook",
+    href: "/student/logbook",
+    icon: "bookOpen",
   },
   {
     title: "Syllabus",

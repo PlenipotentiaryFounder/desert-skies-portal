@@ -314,9 +314,9 @@ export function FlightSessionForm({ enrollments, instructors, aircraft, initialD
                   name="start_time"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Time</FormLabel>
+                      <FormLabel>Start Time (24-hour)</FormLabel>
                       <FormControl>
-                        <Input type="time" {...field} />
+                        <Input type="time" step="60" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -328,9 +328,9 @@ export function FlightSessionForm({ enrollments, instructors, aircraft, initialD
                   name="end_time"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Time</FormLabel>
+                      <FormLabel>End Time (24-hour)</FormLabel>
                       <FormControl>
-                        <Input type="time" {...field} />
+                        <Input type="time" step="60" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

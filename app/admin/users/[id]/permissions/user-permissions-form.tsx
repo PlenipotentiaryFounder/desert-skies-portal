@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { getUserPermissions, updateUserPermissions } from "@/lib/user-service"
+import { Badge } from "@/components/ui/badge"
 
 interface Permission {
   id: string
@@ -334,117 +335,96 @@ const getAvailablePermissions = (role: "admin" | "instructor" | "student"): Perm
   }
 }
 
+// Gather all unique permissions across all roles
+const ALL_ROLE_PERMISSIONS = [
+  ...getAvailablePermissions("admin"),
+  ...getAvailablePermissions("instructor"),
+  ...getAvailablePermissions("student"),
+]
+
+// Flatten and deduplicate permissions by id
+const ALL_PERMISSIONS_MAP = new Map<string, Permission>()
+ALL_ROLE_PERMISSIONS.forEach(cat => {
+  cat.permissions.forEach(perm => {
+    if (!ALL_PERMISSIONS_MAP.has(perm.id)) {
+      ALL_PERMISSIONS_MAP.set(perm.id, perm)
+    }
+  })
+})
+const ALL_PERMISSIONS = Array.from(ALL_PERMISSIONS_MAP.values())
+
+// Map of default permissions for each role
+const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: getAvailablePermissions("admin").flatMap(cat => cat.permissions.map(p => p.id)),
+  instructor: getAvailablePermissions("instructor").flatMap(cat => cat.permissions.map(p => p.id)),
+  student: getAvailablePermissions("student").flatMap(cat => cat.permissions.map(p => p.id)),
+}
+
 export function UserPermissionsForm({ userId, userName, userRole }: UserPermissionsFormProps) {
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [permissions, setPermissions] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
 
-  const availablePermissions = getAvailablePermissions(userRole)
-
   useEffect(() => {
-    const loadPermissions = async () => {
-      try {
-        const permissions = await getUserPermissions(userId)
-        setSelectedPermissions(permissions)
-      } catch (err) {
-        setError("Failed to load user permissions")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadPermissions()
+    setLoading(true)
+    getUserPermissions(userId)
+      .then(perms => setPermissions(perms))
+      .catch(() => setPermissions([]))
+      .finally(() => setLoading(false))
   }, [userId])
 
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedPermissions([...selectedPermissions, permissionId])
-    } else {
-      setSelectedPermissions(selectedPermissions.filter((id) => id !== permissionId))
-    }
-  }
-
-  const handleSelectAllInCategory = (category: string, checked: boolean) => {
-    const categoryPermissions =
-      availablePermissions.find((cat) => cat.name === category)?.permissions.map((p) => p.id) || []
-
-    if (checked) {
-      // Add all permissions in this category that aren't already selected
-      const newPermissions = [...selectedPermissions]
-      categoryPermissions.forEach((id) => {
-        if (!newPermissions.includes(id)) {
-          newPermissions.push(id)
-        }
-      })
-      setSelectedPermissions(newPermissions)
-    } else {
-      // Remove all permissions in this category
-      setSelectedPermissions(selectedPermissions.filter((id) => !categoryPermissions.includes(id)))
-    }
-  }
-
-  const isCategoryFullySelected = (category: string) => {
-    const categoryPermissions =
-      availablePermissions.find((cat) => cat.name === category)?.permissions.map((p) => p.id) || []
-
-    return categoryPermissions.every((id) => selectedPermissions.includes(id))
-  }
-
-  const isCategoryPartiallySelected = (category: string) => {
-    const categoryPermissions =
-      availablePermissions.find((cat) => cat.name === category)?.permissions.map((p) => p.id) || []
-
-    return (
-      categoryPermissions.some((id) => selectedPermissions.includes(id)) &&
-      !categoryPermissions.every((id) => selectedPermissions.includes(id))
+    setPermissions(prev =>
+      checked ? [...prev, permissionId] : prev.filter(p => p !== permissionId)
     )
+    setSuccess(null)
+    setError(null)
+  }
+
+  const handleResetToDefault = () => {
+    setPermissions(DEFAULT_ROLE_PERMISSIONS[userRole] || [])
+    setSuccess(null)
+    setError(null)
   }
 
   const handleSubmit = async () => {
-    setIsSubmitting(true)
+    setIsSaving(true)
     setError(null)
-
+    setSuccess(null)
     try {
-      const result = await updateUserPermissions(userId, selectedPermissions)
-
+      const result = await updateUserPermissions(userId, permissions)
       if (result.success) {
+        setSuccess("Permissions updated successfully.")
         router.push(`/admin/users/${userId}`)
         router.refresh()
       } else {
-        setError(result.error || "Failed to update permissions")
+        setError(result.error || "Failed to update permissions.")
       }
-    } catch (err) {
-      setError("An unexpected error occurred")
+    } catch (err: any) {
+      setError(err.message || "Failed to update permissions.")
     } finally {
-      setIsSubmitting(false)
+      setIsSaving(false)
     }
   }
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Loading Permissions</CardTitle>
-          <CardDescription>Please wait while we load the user permissions...</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    )
-  }
+  // Group all permissions by category for display
+  const categories: Record<string, Permission[]> = {}
+  ALL_PERMISSIONS.forEach(perm => {
+    if (!categories[perm.category]) categories[perm.category] = []
+    categories[perm.category].push(perm)
+  })
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Permissions for {userName}</CardTitle>
         <CardDescription>
-          Configure what this user can access and modify in the system. Role-based permissions for {userRole}s.
+          Toggle permissions for this user. Default permissions for the <Badge>{userRole}</Badge> role are highlighted.
         </CardDescription>
       </CardHeader>
-
       <CardContent className="space-y-6">
         {error && (
           <Alert variant="destructive">
@@ -453,57 +433,46 @@ export function UserPermissionsForm({ userId, userName, userRole }: UserPermissi
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-
-        {availablePermissions.map((category) => (
-          <div key={category.name} className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id={`category-${category.name}`}
-                checked={isCategoryFullySelected(category.name)}
-                indeterminate={isCategoryPartiallySelected(category.name)}
-                onCheckedChange={(checked) => handleSelectAllInCategory(category.name, checked === true)}
-              />
-              <label htmlFor={`category-${category.name}`} className="text-lg font-semibold">
-                {category.name}
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-6">
-              {category.permissions.map((permission) => (
-                <div key={permission.id} className="flex items-start space-x-2">
-                  <Checkbox
-                    id={permission.id}
-                    checked={selectedPermissions.includes(permission.id)}
-                    onCheckedChange={(checked) => handlePermissionChange(permission.id, checked === true)}
-                  />
-                  <div className="grid gap-1">
-                    <label
-                      htmlFor={permission.id}
-                      className="font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {permission.name}
-                    </label>
-                    <p className="text-sm text-muted-foreground">{permission.description}</p>
-                  </div>
+        {success && (
+          <Alert variant="success">
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
+        {loading ? (
+          <div className="flex items-center gap-2"><Loader2 className="animate-spin" /> Loading permissions...</div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(categories).map(([category, perms]) => (
+              <div key={category} className="border rounded-md p-4">
+                <div className="font-semibold mb-2">{category}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {perms.map(perm => {
+                    const isDefault = (DEFAULT_ROLE_PERMISSIONS[userRole] || []).includes(perm.id)
+                    return (
+                      <label key={perm.id} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={permissions.includes(perm.id)}
+                          onCheckedChange={checked => handlePermissionChange(perm.id, checked === true)}
+                        />
+                        <span>{perm.name}</span>
+                        {isDefault && <Badge variant="outline" className="ml-2">default</Badge>}
+                        <span className="text-muted-foreground text-xs ml-2">{perm.description}</span>
+                      </label>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </CardContent>
-
-      <CardFooter className="flex justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push(`/admin/users/${userId}`)}
-          disabled={isSubmitting}
-        >
-          Cancel
+      <CardFooter className="flex flex-col md:flex-row gap-2 md:gap-4 justify-between items-center">
+        <Button type="button" variant="outline" onClick={handleResetToDefault} disabled={loading || isSaving}>
+          Reset to {userRole} defaults
         </Button>
-        <Button onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save Permissions
+        <Button type="button" onClick={handleSubmit} disabled={loading || isSaving}>
+          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save Permissions
         </Button>
       </CardFooter>
     </Card>

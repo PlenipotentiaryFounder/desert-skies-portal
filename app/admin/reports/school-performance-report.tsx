@@ -13,13 +13,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { getSchoolPerformanceReport, type ReportTimeframe } from "@/lib/report-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/utils"
 import { Calendar, Download, Users } from "lucide-react"
+import type { ReportTimeframe } from "@/lib/report-service"
 
 export function SchoolPerformanceReport() {
   const [timeframe, setTimeframe] = useState<ReportTimeframe>("month")
@@ -29,7 +29,8 @@ export function SchoolPerformanceReport() {
   const generateReport = async () => {
     setIsLoading(true)
     try {
-      const data = await getSchoolPerformanceReport(timeframe)
+      const res = await fetch(`/api/admin/reports/school-performance?timeframe=${timeframe}`)
+      const data = await res.json()
       setReport(data)
     } catch (error) {
       console.error("Error generating report:", error)

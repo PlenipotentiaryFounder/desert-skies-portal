@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
 
 export type ReportTimeframe = "week" | "month" | "quarter" | "year" | "custom"
 

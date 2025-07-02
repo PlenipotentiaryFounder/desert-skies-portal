@@ -28,7 +28,9 @@ export default async function AdminDashboardPage() {
     redirect("/")
   }
 
+  console.log('ADMIN DASHBOARD: profile:', profile)
   const userRoles = profile.roles || []
+  console.log('ADMIN DASHBOARD: userRoles:', userRoles)
 
   return (
     <div className="flex flex-col gap-6">

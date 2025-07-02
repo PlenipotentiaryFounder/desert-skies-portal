@@ -27,7 +27,11 @@ export default async function LoginPage() {
           <LoginForm />
           <p className="px-8 text-center text-sm text-muted-foreground">
             <Link href="/signup" className="hover:text-brand underline underline-offset-4">
-              Don&apos;t have an account? Sign Up
+              Already have an account? Sign In
+            </Link>
+            <br />
+            <Link href="/forgot-password" className="hover:text-brand underline underline-offset-4">
+              Forgot your password?
             </Link>
           </p>
         </div>

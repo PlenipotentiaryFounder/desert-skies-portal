@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { getAircraftUtilizationReport, type ReportTimeframe } from "@/lib/report-service"
+import type { ReportTimeframe } from "@/lib/report-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -20,7 +20,8 @@ export function AircraftUtilizationReport() {
   const generateReport = async () => {
     setIsLoading(true)
     try {
-      const data = await getAircraftUtilizationReport(timeframe)
+      const res = await fetch(`/api/admin/reports/aircraft-utilization?timeframe=${timeframe}`)
+      const data = await res.json()
       setReport(data)
     } catch (error) {
       console.error("Error generating report:", error)

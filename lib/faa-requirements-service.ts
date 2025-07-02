@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
+import bcrypt from "bcryptjs"
 
 export type CertificateType =
   | "private_pilot"
@@ -330,7 +331,29 @@ export async function getFlightLogEntries(studentId: string) {
     return []
   }
 
-  return data
+  // Fetch signatures for all entries
+  const entryIds = data.map((e: any) => e.id)
+  const { data: sigs } = await supabase
+    .from("flight_log_entry_signatures")
+    .select("entry_id, role, is_current")
+    .in("entry_id", entryIds)
+    .eq("is_current", true)
+
+  // Map signatures to entries
+  const sigMap: Record<string, { student: boolean; instructor: boolean }> = {}
+  for (const entryId of entryIds) {
+    sigMap[entryId] = { student: false, instructor: false }
+  }
+  for (const sig of sigs || []) {
+    if (sig.role === 'student') sigMap[sig.entry_id].student = true
+    if (sig.role === 'instructor') sigMap[sig.entry_id].instructor = true
+  }
+
+  return data.map((entry: any) => ({
+    ...entry,
+    student_signed: sigMap[entry.id]?.student || false,
+    instructor_signed: sigMap[entry.id]?.instructor || false,
+  }))
 }
 
 export async function getFlightLogEntryById(id: string) {
@@ -351,7 +374,24 @@ export async function getFlightLogEntryById(id: string) {
     return null
   }
 
-  return data
+  // Fetch signatures for this entry
+  const { data: sigs } = await supabase
+    .from("flight_log_entry_signatures")
+    .select("role, is_current")
+    .eq("entry_id", id)
+    .eq("is_current", true)
+
+  let student_signed = false, instructor_signed = false
+  for (const sig of sigs || []) {
+    if (sig.role === 'student') student_signed = true
+    if (sig.role === 'instructor') instructor_signed = true
+  }
+
+  return {
+    ...data,
+    student_signed,
+    instructor_signed,
+  }
 }
 
 export async function createFlightLogEntry(entry: Omit<FlightLogEntry, "id" | "created_at" | "updated_at">) {
@@ -824,4 +864,48 @@ export async function getStudentCertificateProgress(studentId: string, certifica
     progressPercentage,
     requirements,
   }
+}
+
+// --- Logbook Signature Logic ---
+export async function addLogbookSignature(entryId: string, userId: string, role: 'student' | 'instructor', pin: string) {
+  const supabase = createClient(await cookies())
+  const pin_hash = await bcrypt.hash(pin, 10)
+  // Invalidate any previous signature for this entry/role/user
+  await supabase.from("flight_log_entry_signatures").update({ is_current: false }).eq("entry_id", entryId).eq("role", role).eq("user_id", userId)
+  // Add new signature
+  const { error } = await supabase.from("flight_log_entry_signatures").insert({ entry_id: entryId, user_id: userId, role, pin_hash, is_current: true })
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+export async function verifyLogbookSignature(entryId: string, userId: string, role: 'student' | 'instructor', pin: string) {
+  const supabase = createClient(await cookies())
+  const { data, error } = await supabase.from("flight_log_entry_signatures").select("pin_hash").eq("entry_id", entryId).eq("user_id", userId).eq("role", role).eq("is_current", true).single()
+  if (error || !data) return false
+  return await bcrypt.compare(pin, data.pin_hash)
+}
+
+export async function invalidateLogbookSignatures(entryId: string, role?: 'student' | 'instructor') {
+  const supabase = createClient(await cookies())
+  let query = supabase.from("flight_log_entry_signatures").update({ is_current: false }).eq("entry_id", entryId)
+  if (role) query = query.eq("role", role)
+  await query
+}
+
+// --- Logbook Audit Logic ---
+export async function logLogbookAudit(entryId: string, action: string, performedBy: string, notes?: string) {
+  const supabase = createClient(await cookies())
+  await supabase.from("flight_log_entry_audit").insert({ entry_id: entryId, action, performed_by: performedBy, notes })
+}
+
+// --- Status Transition Logic ---
+export async function setLogbookEntryStatus(entryId: string, status: 'draft' | 'final' | 'voided', voidedBy?: string, voidReason?: string) {
+  const supabase = createClient(await cookies())
+  const update: any = { status }
+  if (status === 'voided') {
+    update.voided_by = voidedBy
+    update.voided_at = new Date().toISOString()
+    update.void_reason = voidReason
+  }
+  await supabase.from("flight_log_entries").update(update).eq("id", entryId)
 }

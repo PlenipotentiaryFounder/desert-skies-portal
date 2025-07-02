@@ -1,12 +1,9 @@
+'use client'
+
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getStudents } from "@/lib/user-service"
-
-export const metadata = {
-  title: "Students | Admin | Desert Skies",
-  description: "Manage all students in the system.",
-}
 
 export default function AdminStudentsPage() {
   const [students, setStudents] = useState<any[]>([])

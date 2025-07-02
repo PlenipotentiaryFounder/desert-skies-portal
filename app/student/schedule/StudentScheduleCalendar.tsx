@@ -272,12 +272,12 @@ export function StudentScheduleCalendar({ sessions = [] }: { sessions: any[] }) 
                 <Input type="date" name="date" value={rescheduleForm?.date || ""} onChange={e => setRescheduleForm((f: any) => ({ ...f, date: e.target.value }))} required />
               </div>
               <div>
-                <label>Start Time</label>
-                <Input type="time" name="start_time" value={rescheduleForm?.start_time || ""} onChange={e => setRescheduleForm((f: any) => ({ ...f, start_time: e.target.value }))} required />
+                <label>Start Time (24-hour)</label>
+                <Input type="time" name="start_time" value={rescheduleForm?.start_time || ""} onChange={e => setRescheduleForm((f: any) => ({ ...f, start_time: e.target.value }))} required step="60" />
               </div>
               <div>
-                <label>End Time</label>
-                <Input type="time" name="end_time" value={rescheduleForm?.end_time || ""} onChange={e => setRescheduleForm((f: any) => ({ ...f, end_time: e.target.value }))} required />
+                <label>End Time (24-hour)</label>
+                <Input type="time" name="end_time" value={rescheduleForm?.end_time || ""} onChange={e => setRescheduleForm((f: any) => ({ ...f, end_time: e.target.value }))} required step="60" />
               </div>
               <div>
                 <label>Reason for Reschedule</label>

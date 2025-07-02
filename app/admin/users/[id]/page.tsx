@@ -12,6 +12,14 @@ import { Suspense } from "react"
 import UserEnrollmentsTab from "./UserEnrollmentsTab"
 import UserFlightSessionsTab from "./UserFlightSessionsTab"
 import UserDocumentsTab from "./UserDocumentsTab"
+import UserDangerZoneTab from "./UserDangerZoneTab"
+import { RecentActivityList } from "@/components/admin/recent-activity-list"
+import { StudentProgressReport } from "@/app/admin/reports/student-progress-report"
+import { InstructorPerformanceReport } from "@/app/admin/reports/instructor-performance-report"
+import { SchoolPerformanceReport } from "@/app/admin/reports/school-performance-report"
+import { AircraftUtilizationReport } from "@/app/admin/reports/aircraft-utilization-report"
+import { AdminPasswordReset } from "./AdminPasswordReset"
+import UserReportsTab from "./UserReportsTab"
 
 // Placeholder imports for components to be integrated
 // import { EnrollmentsList } from "@/app/admin/enrollments/enrollments-list"
@@ -89,14 +97,13 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           <TabsTrigger value="danger">Danger Zone</TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
-          <UserForm user={user} />
+          <UserForm user={user} hidePasswordReset />
         </TabsContent>
         <TabsContent value="permissions">
           <UserPermissionsForm userId={user.id} userName={`${user.first_name} ${user.last_name}`} userRole={user.role} />
         </TabsContent>
         <TabsContent value="password">
-          {/* Password reset is integrated in UserForm, but can be moved here if needed */}
-          <Card><CardContent className="py-8">Password reset functionality is available in the profile form.</CardContent></Card>
+          <AdminPasswordReset user={user} />
         </TabsContent>
         <TabsContent value="enrollments">
           <UserEnrollmentsTab
@@ -117,24 +124,20 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           <UserDocumentsTab userId={user.id} userRole={user.role} />
         </TabsContent>
         <TabsContent value="reports">
-          {/* {user.role === "student" ? <StudentProgressReport studentId={user.id} /> : null}
-          {user.role === "instructor" ? <InstructorPerformanceReport instructorId={user.id} /> : null} */}
-          <Card><CardContent className="py-8">Reports tab coming soon.</CardContent></Card>
+          <UserReportsTab user={user} />
         </TabsContent>
         <TabsContent value="activity">
-          {/* <RecentActivityList userId={user.id} /> */}
-          <Card><CardContent className="py-8">Activity tab coming soon.</CardContent></Card>
-        </TabsContent>
-        <TabsContent value="danger">
           <Card>
             <CardContent className="py-8">
-              <h2 className="text-xl font-bold text-red-600 mb-4">Danger Zone</h2>
-              <p className="mb-4">Delete this user and all associated data. This action cannot be undone.</p>
-              <Suspense fallback={<div>Loading...</div>}>
-                <DeleteUserDialog isOpen={false} userId={user.id} onComplete={() => {}} />
+              <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+              <Suspense fallback={<div>Loading activity...</div>}>
+                <RecentActivityList userId={user.id} />
               </Suspense>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="danger">
+          <UserDangerZoneTab userId={user.id} userName={`${user.first_name} ${user.last_name}`} />
         </TabsContent>
       </Tabs>
     </div>

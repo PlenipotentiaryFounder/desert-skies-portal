@@ -13,7 +13,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { createUser, updateUser, type User } from "@/lib/user-service"
+import { createUser, updateUser, type User, updateUserRole, updateUserPermissions, getUserById } from "@/lib/user-service"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
 
 const userFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -34,12 +37,26 @@ type UserFormValues = z.infer<typeof userFormSchema>
 
 interface UserFormProps {
   user?: User
+  hidePasswordReset?: boolean
 }
 
-export function UserForm({ user }: UserFormProps) {
+// Define default permissions for each role
+const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ["manage_users", "view_reports", "edit_settings"],
+  instructor: ["view_students", "edit_lessons", "grade_sessions"],
+  student: ["view_lessons", "submit_assignments", "view_progress"],
+}
+
+export function UserForm({ user, hidePasswordReset = false }: UserFormProps & { hidePasswordReset?: boolean }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const [showResetDialog, setShowResetDialog] = useState(false)
+  const [resetPassword, setResetPassword] = useState("")
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetError, setResetError] = useState("")
+  const [resetSuccess, setResetSuccess] = useState("")
+  const { toast } = useToast()
 
   const defaultValues: Partial<UserFormValues> = user
     ? {
@@ -73,22 +90,53 @@ export function UserForm({ user }: UserFormProps) {
 
     try {
       if (user) {
-        // Update existing user
+        // Update existing user profile fields
         const result = await updateUser(user.id, data)
 
-        if (result.success) {
-          router.push("/admin/users")
-          router.refresh()
-        } else {
+        if (!result.success) {
           setError(result.error || "Failed to update user")
+          setIsSubmitting(false)
+          return
         }
+
+        // If the role changed, update role and permissions
+        if (user.role !== data.role) {
+          const roleResult = await updateUserRole(user.id, data.role)
+          if (!roleResult.success) {
+            setError(roleResult.error || "Failed to update user role")
+            setIsSubmitting(false)
+            return
+          }
+          // Update permissions to match new role
+          const perms = DEFAULT_ROLE_PERMISSIONS[data.role] || []
+          const permResult = await updateUserPermissions(user.id, perms)
+          if (!permResult.success) {
+            setError(permResult.error || "Failed to update user permissions")
+            setIsSubmitting(false)
+            return
+          }
+        }
+
+        // Fetch latest user data and reset form so role dropdown is correct
+        const latestUser = await getUserById(user.id)
+        if (latestUser) {
+          form.reset({
+            email: latestUser.email,
+            first_name: latestUser.first_name,
+            last_name: latestUser.last_name,
+            role: latestUser.role,
+            phone: latestUser.phone || "",
+            bio: latestUser.bio || "",
+            status: latestUser.status || "active",
+          })
+        }
+        toast({ title: "User updated successfully" })
       } else {
         // Create new user
         const result = await createUser(data)
 
         if (result.success) {
-          router.push("/admin/users")
-          router.refresh()
+          toast({ title: "User created successfully" })
         } else {
           setError(result.error || "Failed to create user")
         }
@@ -97,6 +145,27 @@ export function UserForm({ user }: UserFormProps) {
       setError("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleResetPassword = async () => {
+    setResetLoading(true)
+    setResetError("")
+    setResetSuccess("")
+    try {
+      const res = await fetch(`/api/admin/users/${user?.id}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: resetPassword }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to reset password")
+      setResetSuccess("Password reset successfully.")
+      setResetPassword("")
+    } catch (err: any) {
+      setResetError(err.message)
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -269,6 +338,54 @@ export function UserForm({ user }: UserFormProps) {
           </CardFooter>
         </form>
       </Form>
+      {user && !hidePasswordReset && (
+        <div className="mt-8">
+          <Button variant="outline" type="button" onClick={() => setShowResetDialog(true)}>
+            Reset Password
+          </Button>
+          <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Reset User Password</DialogTitle>
+              </DialogHeader>
+              {resetSuccess && (
+                <Alert variant="success">
+                  <AlertDescription>{resetSuccess}</AlertDescription>
+                </Alert>
+              )}
+              {resetError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{resetError}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="reset-password">New Password</Label>
+                <Input
+                  id="reset-password"
+                  type="password"
+                  value={resetPassword}
+                  onChange={e => setResetPassword(e.target.value)}
+                  minLength={6}
+                  placeholder="Enter new password"
+                  disabled={resetLoading}
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  onClick={handleResetPassword}
+                  disabled={resetLoading || resetPassword.length < 6}
+                >
+                  {resetLoading ? "Resetting..." : "Reset Password"}
+                </Button>
+                <Button type="button" variant="ghost" onClick={() => setShowResetDialog(false)}>
+                  Cancel
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
     </Card>
   )
 }
