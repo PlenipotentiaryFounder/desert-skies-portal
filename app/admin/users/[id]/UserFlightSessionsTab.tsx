@@ -3,9 +3,27 @@
 import dynamic from "next/dynamic"
 import React from "react"
 
-const StudentFlightSessionsList = dynamic(() => import("../../../student/schedule/student-flight-sessions-list").then(m => m.StudentFlightSessionsList))
-const InstructorFlightSessionsList = dynamic(() => import("../../../instructor/schedule/instructor-flight-sessions-list").then(m => m.InstructorFlightSessionsList))
-const FlightSessionsList = dynamic(() => import("@/app/admin/schedule/flight-sessions-list").then(m => m.FlightSessionsList))
+const StudentFlightSessionsList = dynamic(
+  () => import("@/app/student/schedule/student-flight-sessions-list").then(m => m.StudentFlightSessionsList),
+  { 
+    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />,
+    ssr: false 
+  }
+)
+const InstructorFlightSessionsList = dynamic(
+  () => import("@/app/instructor/schedule/instructor-flight-sessions-list").then(m => m.InstructorFlightSessionsList),
+  { 
+    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />,
+    ssr: false 
+  }
+)
+const FlightSessionsList = dynamic(
+  () => import("@/app/admin/schedule/flight-sessions-list").then(m => m.FlightSessionsList),
+  { 
+    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />,
+    ssr: false 
+  }
+)
 
 interface UserFlightSessionsTabProps {
   userRole: string
