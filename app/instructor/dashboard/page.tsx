@@ -19,6 +19,7 @@ import { getInstructorFlightSessions } from '@/lib/flight-session-service'
 import { getInstructorEnrollments } from '@/lib/enrollment-service'
 import { InstructorQuickLinks } from "@/components/instructor/instructor-quick-links"
 import { InstructorProgressWidget } from "@/components/instructor/instructor-progress-widget"
+import { ACSStandardsWidget } from "@/components/shared/acs-standards-widget"
 
 export default async function InstructorDashboardPage() {
   const cookieStore = cookies()
@@ -75,8 +76,19 @@ export default async function InstructorDashboardPage() {
       <InstructorQuickLinks />
       <InstructorProgressWidget enrollments={enrollments} />
       <InstructorStatsCards stats={stats} />
-      <UpcomingInstructorSessions sessions={sessions} />
-      <PendingEndorsements endorsements={endorsements} instructorStatus={instructor.status} instructorId={instructor.id} />
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-6">
+          <UpcomingInstructorSessions sessions={sessions} />
+          <PendingEndorsements endorsements={endorsements} instructorStatus={instructor.status} instructorId={instructor.id} />
+        </div>
+        <ACSStandardsWidget 
+          userRole="instructor" 
+          userId={instructor.id} 
+          certificateType="private_pilot"
+        />
+      </div>
+      
       <InstructorStudentsList enrollments={enrollments} />
     </div>
   )
