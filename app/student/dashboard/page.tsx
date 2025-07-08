@@ -10,6 +10,7 @@ import { UpcomingFlightsList } from "@/components/student/upcoming-flights-list"
 import { RecentManeuverScores } from "@/components/student/recent-maneuver-scores"
 import { DocumentsOverview } from "@/components/student/documents-overview"
 import { CurrentEnrollmentCard } from "./CurrentEnrollmentCard"
+import { ACSStandardsWidget } from "@/components/shared/acs-standards-widget"
 
 export default async function StudentDashboardPage() {
   const cookieStore = cookies()
@@ -73,7 +74,7 @@ export default async function StudentDashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Recent Maneuver Scores</CardTitle>
@@ -97,6 +98,14 @@ export default async function StudentDashboardPage() {
             </Suspense>
           </CardContent>
         </Card>
+
+        <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+          <ACSStandardsWidget 
+            userRole="student" 
+            userId={user.id} 
+            certificateType="private_pilot"
+          />
+        </Suspense>
       </div>
     </div>
   )

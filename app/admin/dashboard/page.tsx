@@ -9,6 +9,7 @@ import { RecentActivityList } from "@/components/admin/recent-activity-list"
 import { ActiveInstructorsList } from "@/components/admin/active-instructors-list"
 import { EnrollmentChart } from "@/components/admin/enrollment-chart"
 import { RoleSwitcher } from "@/components/shared/role-switcher"
+import { ACSStandardsWidget } from "@/components/shared/acs-standards-widget"
 import { cookies } from "next/headers"
 
 export default async function AdminDashboardPage() {
@@ -70,6 +71,28 @@ export default async function AdminDashboardPage() {
             </Suspense>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Enrollment Trends</CardTitle>
+            <CardDescription>Student enrollment over time</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[400px]">
+            <Suspense fallback={<Skeleton className="h-full w-full" />}>
+              <EnrollmentChart />
+            </Suspense>
+          </CardContent>
+        </Card>
+        
+        <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+          <ACSStandardsWidget 
+            userRole="admin" 
+            userId={user.id} 
+            certificateType="private_pilot"
+          />
+        </Suspense>
       </div>
 
       <Card>

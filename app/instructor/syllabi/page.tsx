@@ -5,6 +5,7 @@
 
 import { getSyllabi, getSyllabusLessons } from "@/lib/syllabus-service"
 import { getManeuversForLesson } from "@/lib/maneuver-service"
+import { getACSStandardsForLesson } from "@/lib/acs-service"
 import { Suspense } from "react"
 
 export const metadata = {
@@ -48,6 +49,8 @@ async function SyllabusCard({ syllabus }: { syllabus: any }) {
 
 async function LessonCard({ lesson }: { lesson: any }) {
   const maneuvers = await getManeuversForLesson(lesson.id)
+  const acsStandards = await getACSStandardsForLesson(lesson.id)
+  
   return (
     <div className="border rounded p-4 bg-muted/50">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
@@ -55,8 +58,26 @@ async function LessonCard({ lesson }: { lesson: any }) {
           <div className="font-medium text-lg">{lesson.title}</div>
           <div className="text-sm text-muted-foreground">{lesson.lesson_type} &bull; Est. {lesson.estimated_hours} hrs</div>
         </div>
-        {/* Placeholder for ACS standards */}
-        <div className="text-xs text-blue-700 font-semibold">ACS Standards: <span className="italic">Coming soon</span></div>
+        {/* ACS Standards */}
+        <div className="text-xs">
+          {acsStandards.length > 0 ? (
+            <div className="space-y-1">
+              <div className="font-semibold text-blue-700">ACS Standards:</div>
+              {acsStandards.slice(0, 2).map((standard) => (
+                <div key={standard.id} className="text-blue-600 font-mono">
+                  {standard.code}: {standard.title}
+                </div>
+              ))}
+              {acsStandards.length > 2 && (
+                <div className="text-muted-foreground italic">
+                  +{acsStandards.length - 2} more standards
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-muted-foreground italic">No ACS standards linked</div>
+          )}
+        </div>
       </div>
       <div className="mb-2 text-sm">{lesson.description}</div>
       <div className="text-sm font-medium mb-1">Required Maneuvers:</div>
