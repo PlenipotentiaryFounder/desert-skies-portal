@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getStudentProgressReport } from "@/lib/report-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -10,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatDate } from "@/lib/utils"
 import { Download, GraduationCap } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 interface InstructorStudentsReportProps {
   instructorId: string
@@ -20,46 +20,53 @@ export function InstructorStudentsReport({ instructorId }: InstructorStudentsRep
   const [students, setStudents] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [report, setReport] = useState<any>(null)
+  const { toast } = useToast()
 
   // Fetch instructor's students on component mount
   useEffect(() => {
     async function fetchStudents() {
-      const { data: enrollments } = await supabase
-        .from("student_enrollments")
-        .select(`
-          student_id,
-          student:student_id(id, first_name, last_name)
-        `)
-        .eq("instructor_id", instructorId)
-        .eq("status", "active")
-
-      if (enrollments && enrollments.length > 0) {
-        const uniqueStudents = enrollments.reduce((acc: any[], enrollment) => {
-          if (!acc.some((s) => s.id === enrollment.student.id)) {
-            acc.push(enrollment.student)
-          }
-          return acc
-        }, [])
-
-        setStudents(uniqueStudents)
-        if (uniqueStudents.length > 0) {
-          setSelectedStudent(uniqueStudents[0].id)
+      try {
+        const response = await fetch("/api/instructor/students")
+        if (!response.ok) {
+          throw new Error(`Failed to fetch students: ${response.statusText}`)
         }
+        const data = await response.json()
+        
+        if (data.students && data.students.length > 0) {
+          setStudents(data.students)
+          setSelectedStudent(data.students[0].id)
+        }
+      } catch (error) {
+        console.error("Error fetching students:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch students",
+          variant: "destructive",
+        })
       }
     }
 
     fetchStudents()
-  }, [supabase, instructorId])
+  }, [instructorId])
 
   const generateReport = async () => {
     if (!selectedStudent) return
 
     setIsLoading(true)
     try {
-      const data = await getStudentProgressReport(selectedStudent)
+      const response = await fetch(`/api/instructor/students?action=progress&studentId=${selectedStudent}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch report: ${response.statusText}`)
+      }
+      const data = await response.json()
       setReport(data)
     } catch (error) {
       console.error("Error generating report:", error)
+      toast({
+        title: "Error",
+        description: "Failed to generate student progress report",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -158,7 +165,7 @@ export function InstructorStudentsReport({ instructorId }: InstructorStudentsRep
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{report.totalFlightHours.toFixed(1)}</div>
-                <p className="text-xs text-muted-foreground">Across {report.flightSessions.length} flight sessions</p>
+                <p className="text-xs text-muted-foreground">Across all flight sessions</p>
               </CardContent>
             </Card>
             <Card>
@@ -200,12 +207,17 @@ export function InstructorStudentsReport({ instructorId }: InstructorStudentsRep
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Overall Progress</span>
+                    <span className="text-sm text-muted-foreground">
+                      {report.enrollments[0].progressPercentage.toFixed(1)}%
+                    </span>
+                  </div>
                   <Progress value={report.enrollments[0].progressPercentage} className="h-2" />
-                  <span className="text-sm font-medium">{report.enrollments[0].progressPercentage.toFixed(1)}%</span>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2">
                   <div>
                     <h4 className="mb-2 font-medium">Completed Lessons</h4>
                     <div className="max-h-[200px] overflow-y-auto rounded-md border">
@@ -236,7 +248,7 @@ export function InstructorStudentsReport({ instructorId }: InstructorStudentsRep
                   </div>
 
                   <div>
-                    <h4 className="mb-2 font-medium">Pending Lessons</h4>
+                    <h4 className="mb-2 font-medium">Upcoming Lessons</h4>
                     <div className="max-h-[200px] overflow-y-auto rounded-md border">
                       <Table>
                         <TableHeader>
@@ -246,7 +258,7 @@ export function InstructorStudentsReport({ instructorId }: InstructorStudentsRep
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {report.enrollments[0].pendingLessons.map((lesson: any) => (
+                          {report.enrollments[0].pendingLessons.slice(0, 5).map((lesson: any) => (
                             <TableRow key={lesson.id}>
                               <TableCell>{lesson.order_index}</TableCell>
                               <TableCell>{lesson.title}</TableCell>
@@ -267,57 +279,13 @@ export function InstructorStudentsReport({ instructorId }: InstructorStudentsRep
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Flight Sessions</CardTitle>
-              <CardDescription>Last 10 flight sessions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Aircraft</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {report.flightSessions.slice(0, 10).map((session: any) => (
-                    <TableRow key={session.id}>
-                      <TableCell>{formatDate(session.date)}</TableCell>
-                      <TableCell>{session.duration.toFixed(1)} hours</TableCell>
-                      <TableCell>{session.aircraft?.registration || "N/A"}</TableCell>
-                    </TableRow>
-                  ))}
-                  {report.flightSessions.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center">
-                        No flight sessions recorded
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
         </>
       ) : (
-        <div className="flex h-[400px] items-center justify-center rounded-lg border border-dashed">
-          <div className="flex flex-col items-center text-center">
-            <h3 className="text-lg font-semibold">No enrollment data available</h3>
-            <p className="text-sm text-muted-foreground">
-              {selectedStudent
-                ? `${getStudentName(selectedStudent)} is not currently enrolled in any syllabus`
-                : "Select a student to view their progress"}
-            </p>
-            {selectedStudent && (
-              <Button className="mt-4" onClick={generateReport}>
-                Refresh Data
-              </Button>
-            )}
-          </div>
-        </div>
+        <Card>
+          <CardContent className="flex h-[200px] items-center justify-center">
+            <p className="text-muted-foreground">No report data available for selected student</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

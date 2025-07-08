@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { getFlightSessionById } from "@/lib/flight-session-service"
 import { getEnrollments } from "@/lib/enrollment-service"
 import { FlightSessionForm } from "../../flight-session-form"
@@ -20,7 +21,8 @@ export default async function EditFlightSessionPage({
     notFound()
   }
 
-  const supabase = createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = await createClient(cookieStore)
 
   // Get all active enrollments with student and syllabus info
   const enrollments = await getEnrollments()

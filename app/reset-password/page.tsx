@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [password, setPassword] = useState("")
@@ -29,7 +30,7 @@ export default function ResetPasswordPage() {
       setIsLoading(false)
       return
     }
-    const supabase = await createClient()
+    const supabase = createClient()
     const { error } = await supabase.auth.updateUser({ password })
     if (error) {
       setError(error.message)
@@ -46,7 +47,7 @@ export default function ResetPasswordPage() {
         <h1 className="text-2xl font-bold text-center mb-4">Reset your password</h1>
         <p className="text-center text-muted-foreground mb-6">Enter your new password below.</p>
         {success && (
-          <Alert variant="success">
+          <Alert>
             <AlertDescription>{success}</AlertDescription>
           </Alert>
         )}
@@ -75,5 +76,26 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+function ResetPasswordSkeleton() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8">
+      <div className="mx-auto w-full max-w-md space-y-6 bg-white rounded-lg shadow p-8">
+        <Skeleton className="h-8 w-3/4 mx-auto" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordSkeleton />}>
+      <ResetPasswordForm />
+    </Suspense>
   )
 } 

@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getStudentProgressReport } from "@/lib/report-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -9,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatDate } from "@/lib/utils"
 import { Download, GraduationCap } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 interface StudentProgressReportProps {
   studentId: string
@@ -17,15 +17,25 @@ interface StudentProgressReportProps {
 export function StudentProgressReport({ studentId }: StudentProgressReportProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [report, setReport] = useState<any>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     async function fetchReport() {
       setIsLoading(true)
       try {
-        const data = await getStudentProgressReport(studentId)
+        const response = await fetch(`/api/student/reports?type=progress`)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch report: ${response.statusText}`)
+        }
+        const data = await response.json()
         setReport(data)
       } catch (error) {
         console.error("Error fetching student progress:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch progress report",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }

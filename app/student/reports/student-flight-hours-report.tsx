@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { getFlightHoursReport } from "@/lib/report-service"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/utils"
 import { Download } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 interface StudentFlightHoursReportProps {
   studentId: string
@@ -17,22 +17,32 @@ export function StudentFlightHoursReport({ studentId }: StudentFlightHoursReport
   const [timeframe, setTimeframe] = useState("month")
   const [isLoading, setIsLoading] = useState(true)
   const [report, setReport] = useState<any>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     async function fetchReport() {
       setIsLoading(true)
       try {
-        const data = await getFlightHoursReport(timeframe as any, { studentId })
+        const response = await fetch(`/api/student/reports?timeframe=${timeframe}`)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch report: ${response.statusText}`)
+        }
+        const data = await response.json()
         setReport(data)
       } catch (error) {
         console.error("Error fetching flight hours:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch flight hours report",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchReport()
-  }, [studentId, timeframe])
+  }, [timeframe])
 
   const handleTimeframeChange = (value: string) => {
     setTimeframe(value)

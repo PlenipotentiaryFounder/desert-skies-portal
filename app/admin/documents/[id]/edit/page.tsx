@@ -1,6 +1,6 @@
-import { notFound, redirect } from "next/navigation"
-import { getDocumentById } from "@/lib/document-service"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { notFound } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { DocumentForm } from "../../document-form"
 
 export const metadata = {
@@ -9,7 +9,8 @@ export const metadata = {
 }
 
 export default async function EditDocumentPage({ params }: { params: { id: string } }) {
-  const supabase = createServerSupabaseClient()
+  const cookieStore = await cookies()
+  const supabase = await createClient(cookieStore)
   const {
     data: { session },
   } = await supabase.auth.getSession()

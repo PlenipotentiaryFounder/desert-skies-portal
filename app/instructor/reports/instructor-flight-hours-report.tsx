@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { getInstructorPerformanceReport, type ReportTimeframe } from "@/lib/report-service"
+import { type ReportTimeframe } from "@/lib/report-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatDate } from "@/lib/utils"
 import { Calendar, Download } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 interface InstructorFlightHoursReportProps {
   instructorId: string
@@ -19,27 +20,36 @@ export function InstructorFlightHoursReport({ instructorId }: InstructorFlightHo
   const [timeframe, setTimeframe] = useState<ReportTimeframe>("month")
   const [isLoading, setIsLoading] = useState(false)
   const [report, setReport] = useState<any>(null)
+  const { toast } = useToast()
 
   const generateReport = async () => {
     setIsLoading(true)
     try {
-      const data = await getInstructorPerformanceReport(instructorId, timeframe)
+      const response = await fetch(`/api/instructor/reports?timeframe=${timeframe}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch report: ${response.statusText}`)
+      }
+      const data = await response.json()
       setReport(data)
     } catch (error) {
       console.error("Error generating report:", error)
+      toast({
+        title: "Error",
+        description: "Failed to generate flight hours report",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
   // Generate report on initial load and when timeframe changes
-  useState(() => {
+  useEffect(() => {
     generateReport()
-  })
+  }, [timeframe])
 
   const handleTimeframeChange = (value: string) => {
     setTimeframe(value as ReportTimeframe)
-    generateReport()
   }
 
   const exportReport = () => {
@@ -198,8 +208,8 @@ export function InstructorFlightHoursReport({ instructorId }: InstructorFlightHo
                   ))}
                   {report.rawData.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">
-                        No flight sessions recorded in this period
+                      <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        No flight sessions found for the selected timeframe.
                       </TableCell>
                     </TableRow>
                   )}
@@ -209,15 +219,11 @@ export function InstructorFlightHoursReport({ instructorId }: InstructorFlightHo
           </Card>
         </>
       ) : (
-        <div className="flex h-[400px] items-center justify-center rounded-lg border border-dashed">
-          <div className="flex flex-col items-center text-center">
-            <h3 className="text-lg font-semibold">No report data available</h3>
-            <p className="text-sm text-muted-foreground">Select a timeframe and generate a report</p>
-            <Button className="mt-4" onClick={generateReport}>
-              Generate Report
-            </Button>
-          </div>
-        </div>
+        <Card>
+          <CardContent className="flex h-[200px] items-center justify-center">
+            <p className="text-muted-foreground">No report data available</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   )
