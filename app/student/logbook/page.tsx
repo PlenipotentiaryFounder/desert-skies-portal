@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plane, ChevronDown, ChevronUp, Edit, Trash2, CheckCircle, Loader2, Plus, Download, Printer, Paperclip } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Tooltip } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 // TODO: Import API hooks and UI components for logbook
 
 const DESERT_SKIES_COLORS = {
@@ -610,131 +610,133 @@ export default function StudentLogbookPage() {
   const recentFlights = entries.slice(0, 3)
 
   return (
-    <div className="relative flex flex-col gap-6">
-      {/* Glassmorphic summary card */}
-      <div className="backdrop-blur-md bg-white/60 dark:bg-zinc-900/60 rounded-2xl shadow-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-zinc-200 dark:border-zinc-800">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-1">My Flight Logbook</h1>
-          <p className="text-muted-foreground">Track your flights, hours, and endorsements</p>
-        </div>
-        <div className="flex gap-4 items-center">
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold">{totalHours}</span>
-            <span className="text-xs text-muted-foreground">Total Hours</span>
+    <TooltipProvider>
+      <div className="relative flex flex-col gap-6">
+        {/* Glassmorphic summary card */}
+        <div className="backdrop-blur-md bg-white/60 dark:bg-zinc-900/60 rounded-2xl shadow-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-zinc-200 dark:border-zinc-800">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-1">My Flight Logbook</h1>
+            <p className="text-muted-foreground">Track your flights, hours, and endorsements</p>
           </div>
-          <Button variant="ghost" size="icon" aria-label="Export Logbook">
-            <Download className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Print Logbook">
-            <Printer className="h-5 w-5" />
-          </Button>
+          <div className="flex gap-4 items-center">
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold">{totalHours}</span>
+              <span className="text-xs text-muted-foreground">Total Hours</span>
+            </div>
+            <Button variant="ghost" size="icon" aria-label="Export Logbook">
+              <Download className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Print Logbook">
+              <Printer className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Analytics/Charts */}
-      <div className="rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60 p-4 flex flex-col md:flex-row gap-6">
-        <div className="flex-1">
-          {/* Placeholder for analytics chart */}
-          <div className="flex items-center gap-2 mb-2">
-            <Plane className="h-5 w-5 text-sky-500" />
-            <span className="font-semibold">Recent Activity</span>
+        {/* Analytics/Charts */}
+        <div className="rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60 p-4 flex flex-col md:flex-row gap-6">
+          <div className="flex-1">
+            {/* Placeholder for analytics chart */}
+            <div className="flex items-center gap-2 mb-2">
+              <Plane className="h-5 w-5 text-sky-500" />
+              <span className="font-semibold">Recent Activity</span>
+            </div>
+            <div className="h-32 flex items-center justify-center text-muted-foreground">[Chart Coming Soon]</div>
           </div>
-          <div className="h-32 flex items-center justify-center text-muted-foreground">[Chart Coming Soon]</div>
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <Plane className="h-5 w-5 text-sky-500" />
-            <span className="font-semibold">Flight Time by Type</span>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Plane className="h-5 w-5 text-sky-500" />
+              <span className="font-semibold">Flight Time by Type</span>
+            </div>
+            <div className="h-32 flex items-center justify-center text-muted-foreground">[Chart Coming Soon]</div>
           </div>
-          <div className="h-32 flex items-center justify-center text-muted-foreground">[Chart Coming Soon]</div>
         </div>
-      </div>
 
-      {/* Logbook Table (to be enhanced next) */}
-      <h1 className="text-3xl font-bold mb-6">Flight Logbook</h1>
-      <button className="btn btn-primary mb-4" onClick={() => { setSelectedEntry(null); setShowModal(true); }}>New Entry</button>
-      {error && <div className="text-red-600 mb-2">{error}</div>}
-      {loading ? (
-        <AviationSkeleton />
-      ) : (
-        <table className="min-w-full bg-white border rounded shadow">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Aircraft</th>
-              <th>Total Time</th>
-              <th>Status</th>
-              <th>
-                <Tooltip>
-                  <span tabIndex={0} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded cursor-help">
-                    Signatures
-                  </span>
-                  <span className="sr-only">Signatures: Student and Instructor sign-off</span>
-                </Tooltip>
-              </th>
-              <th>
-                <Tooltip>
-                  <span tabIndex={0} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded cursor-help">
-                    Actions
-                  </span>
-                  <span className="sr-only">Actions: Edit, Sign, Void</span>
-                </Tooltip>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry: any) => (
-              <AviationLogbookRow
-                key={entry.id}
-                entry={entry}
-                expanded={false} // Initially collapsed
-                onExpand={() => {}} // No expand/collapse for now
-                onEdit={(e) => { setSelectedEntry(e); setShowModal(true); }}
-                onSign={(e, r) => { setSignatureEntry(e); setSignatureRole(r); setShowSignatureModal(true); }}
-                onVoid={(e) => { setVoidEntry(e); setShowVoidModal(true); }}
-                userRole={userRole}
-              />
-            ))}
-          </tbody>
-        </table>
-      )}
-      {showModal && (
-        <LogbookEntryForm
-          entry={selectedEntry}
-          onSave={handleSave}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-      {showSignatureModal && signatureEntry && (
-        <SignatureModal
-          entry={signatureEntry}
-          role={signatureRole}
-          onClose={() => setShowSignatureModal(false)}
-          onSigned={handleSigned}
-        />
-      )}
-      {showVoidModal && voidEntry && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow max-w-xs w-full space-y-4">
-            <h2 className="text-lg font-bold">Void Logbook Entry</h2>
-            <div>Are you sure you want to void this entry?</div>
-            <textarea className="input w-full" placeholder="Reason for voiding" value={voidReason} onChange={e => setVoidReason(e.target.value)} required />
-            {voidError && <div className="text-red-600">{voidError}</div>}
-            <div className="flex justify-end gap-2 mt-4">
-              <button className="btn btn-secondary" onClick={() => setShowVoidModal(false)}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleVoid} disabled={voidLoading}>{voidLoading ? 'Voiding...' : 'Void'}</button>
+        {/* Logbook Table (to be enhanced next) */}
+        <h1 className="text-3xl font-bold mb-6">Flight Logbook</h1>
+        <button className="btn btn-primary mb-4" onClick={() => { setSelectedEntry(null); setShowModal(true); }}>New Entry</button>
+        {error && <div className="text-red-600 mb-2">{error}</div>}
+        {loading ? (
+          <AviationSkeleton />
+        ) : (
+          <table className="min-w-full bg-white border rounded shadow">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Aircraft</th>
+                <th>Total Time</th>
+                <th>Status</th>
+                <th>
+                  <Tooltip>
+                    <span tabIndex={0} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded cursor-help">
+                      Signatures
+                    </span>
+                    <span className="sr-only">Signatures: Student and Instructor sign-off</span>
+                  </Tooltip>
+                </th>
+                <th>
+                  <Tooltip>
+                    <span tabIndex={0} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded cursor-help">
+                      Actions
+                    </span>
+                    <span className="sr-only">Actions: Edit, Sign, Void</span>
+                  </Tooltip>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry: any) => (
+                <AviationLogbookRow
+                  key={entry.id}
+                  entry={entry}
+                  expanded={false} // Initially collapsed
+                  onExpand={() => {}} // No expand/collapse for now
+                  onEdit={(e) => { setSelectedEntry(e); setShowModal(true); }}
+                  onSign={(e, r) => { setSignatureEntry(e); setSignatureRole(r); setShowSignatureModal(true); }}
+                  onVoid={(e) => { setVoidEntry(e); setShowVoidModal(true); }}
+                  userRole={userRole}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
+        {showModal && (
+          <LogbookEntryForm
+            entry={selectedEntry}
+            onSave={handleSave}
+            onClose={() => setShowModal(false)}
+          />
+        )}
+        {showSignatureModal && signatureEntry && (
+          <SignatureModal
+            entry={signatureEntry}
+            role={signatureRole}
+            onClose={() => setShowSignatureModal(false)}
+            onSigned={handleSigned}
+          />
+        )}
+        {showVoidModal && voidEntry && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded shadow max-w-xs w-full space-y-4">
+              <h2 className="text-lg font-bold">Void Logbook Entry</h2>
+              <div>Are you sure you want to void this entry?</div>
+              <textarea className="input w-full" placeholder="Reason for voiding" value={voidReason} onChange={e => setVoidReason(e.target.value)} required />
+              {voidError && <div className="text-red-600">{voidError}</div>}
+              <div className="flex justify-end gap-2 mt-4">
+                <button className="btn btn-secondary" onClick={() => setShowVoidModal(false)}>Cancel</button>
+                <button className="btn btn-danger" onClick={handleVoid} disabled={voidLoading}>{voidLoading ? 'Voiding...' : 'Void'}</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Floating Action Button for mobile */}
-      <AviationFAB onClick={() => setShowModal(true)} />
-      <AviationToast message="Entry saved!" />
-      <AviationToast message="Signed!" />
-      <AviationToast message="Entry voided!" />
-      <AviationToast message="Error saving entry" />
-      <AviationToast message="Error voiding entry" />
-    </div>
+        {/* Floating Action Button for mobile */}
+        <AviationFAB onClick={() => setShowModal(true)} />
+        <AviationToast message="Entry saved!" />
+        <AviationToast message="Signed!" />
+        <AviationToast message="Entry voided!" />
+        <AviationToast message="Error saving entry" />
+        <AviationToast message="Error voiding entry" />
+      </div>
+    </TooltipProvider>
   );
 } 
