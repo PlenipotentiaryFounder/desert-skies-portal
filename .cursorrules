@@ -1,0 +1,145 @@
+# MCP GitHub-Only Policy (Enforced)
+
+**All version control operations for this project MUST use MCP GitHub tools exclusively.**
+
+- Do NOT use local git commands or terminal-based git operations for any reason.
+- All commits, pushes, branch management, pull requests, and file updates must be performed using MCP GitHub tools (e.g., mcp_github_push_files, mcp_github_create_or_update_file, mcp_github_create_branch, etc.).
+- The GitHub repository is the sole source of truth for all code and version history.
+- This policy is mandatory and overrides any other workflow or tool usage for version control in this project.
+
+---
+
+# Desert Skies Portal - Cursor AI Rules
+
+## 🚀 MCP TOOLS: ALWAYS USE FIRST (CRITICAL)
+
+**ALWAYS prioritize MCP (Model Context Protocol) tools over terminal commands.** MCP tools provide direct API access, better error handling, and structured interactions designed for AI agents.
+
+### Available MCP Tools (Configured in mcp.json):
+- **GitHub MCP**: `mcp_github_*` tools for all Git operations
+- **Supabase MCP**: `mcp_supabase_*` tools for database operations  
+- **Vercel MCP**: For deployment management
+
+### MCP Tool Priorities:
+1. **GitHub Operations**: Use `mcp_github_push_files`, `mcp_github_create_or_update_file`, `mcp_github_list_commits` instead of `git` commands
+2. **Database Operations**: Use `mcp_supabase_execute_sql`, `mcp_supabase_list_tables` instead of direct SQL clients
+3. **Deployment**: Use Vercel MCP tools instead of manual deployment commands
+4. **File Operations**: Use `mcp_github_get_file_contents` for reading repository files when possible
+
+### Why MCP Tools Are Superior:
+- ✅ **No-code integrations** - Pre-built, optimized for AI agents
+- ✅ **Better error handling** - Structured responses with clear error messages
+- ✅ **Context awareness** - Tools understand project structure and relationships
+- ✅ **Authentication handled** - No need to manage API keys in commands
+- ✅ **Parallel operations** - Can execute multiple operations simultaneously
+- ✅ **Structured data** - Returns JSON instead of unstructured terminal output
+
+### Terminal Commands: Last Resort Only
+Only use `run_terminal_cmd` when:
+- No equivalent MCP tool exists
+- Local development server operations (pnpm dev, etc.)
+- File system operations that MCP can't handle
+- Always prefer `pnpm` over `npm` (project uses pnpm-lock.yaml)
+
+## 🏗️ Development Patterns & Architecture
+
+### Next.js App Directory Structure
+- **API Route Colocation**: Colocate API routes with pages that use them (e.g., `/app/instructor/students/new/api/route.ts`)
+- **Use `/app/api/...`** for general, reusable, or public API endpoints
+- **Use colocated routes** for internal, page-specific actions
+
+### Package Management
+- **Always use `pnpm`** - Project uses pnpm-lock.yaml
+- Commands: `pnpm install`, `pnpm run dev`, `pnpm run build`
+
+### Component Organization
+- **Shared components**: `/components/shared/` for cross-role components
+- **Role-specific**: `/components/student/`, `/components/instructor/`, `/components/admin/`
+- **UI primitives**: `/components/ui/` for base UI components
+
+### Service Layer Pattern
+- **Service files**: `/lib/*-service.ts` for business logic
+- **API integration**: Services handle Supabase operations
+- **Type safety**: Use TypeScript interfaces for all data structures
+
+## 🔧 Technical Guidelines
+
+### Supabase Integration
+- Use MCP Supabase tools for database operations
+- Server components: Use `createClient(await cookies())` 
+- Client components: Use `createClientComponentClient()`
+- Row Level Security (RLS) enabled on all tables
+
+### TypeScript Standards
+- Strict TypeScript configuration
+- Export interfaces from service files
+- Use proper typing for Supabase responses
+
+### Authentication & Authorization
+- Role-based access: `student`, `instructor`, `admin`
+- User profiles with roles in `user_profiles` table
+- Middleware handles route protection
+
+### Error Handling
+- Use structured error responses
+- Implement proper loading states
+- Show user-friendly error messages
+
+## 🎯 Current Features & Context
+
+### ACS Standards Integration
+- Complete ACS (Airman Certification Standards) integration across all dashboards
+- ACS service (`lib/acs-service.ts`) handles all ACS operations
+- ACS Standards Widget available for all user types
+- Real-time progress tracking and monitoring
+
+### User Types & Dashboards
+- **Student**: Progress tracking, scheduling, requirements, documents
+- **Instructor**: Student management, scheduling, endorsements, syllabi  
+- **Admin**: System management, reporting, user administration
+
+### Key Services
+- `acs-service.ts` - ACS standards management
+- `user-service.ts` - User profile management
+- `flight-session-service.ts` - Flight scheduling
+- `enrollment-service.ts` - Student enrollments
+- `document-service.ts` - Document management
+
+## 📝 Code Style & Practices
+
+### React/Next.js
+- Use Server Components by default
+- Client Components only when necessary (user interactions, state)
+- Proper loading states with Skeleton components
+- Error boundaries for graceful error handling
+
+### Styling
+- Tailwind CSS for all styling
+- shadcn/ui components as base
+- Consistent spacing and color schemes
+- Responsive design (mobile-first)
+
+### Database
+- Use Supabase MCP tools for all database operations
+- RLS policies for security
+- Proper foreign key relationships
+- Use `select('*')` sparingly - specify needed columns
+
+## 🚨 Critical Rules
+
+1. **MCP FIRST**: Always check for MCP tools before using terminal commands
+2. **No Hardcoded Values**: Use environment variables and configuration
+3. **Type Safety**: All functions must have proper TypeScript types
+4. **Security**: Never expose sensitive data, use RLS
+5. **Performance**: Use Suspense for loading states, parallel data fetching
+6. **Error Handling**: Always handle errors gracefully with user feedback
+
+## 🔄 Workflow Priorities
+
+1. **Code Changes**: Use MCP GitHub tools (`mcp_github_create_or_update_file`)
+2. **Database Operations**: Use MCP Supabase tools (`mcp_supabase_execute_sql`)
+3. **Repository Management**: Use MCP GitHub tools (`mcp_github_push_files`)
+4. **Deployment**: Use Vercel MCP tools when available
+5. **Terminal Commands**: Only as last resort
+
+Remember: MCP tools are specifically designed for AI agents and provide superior integration, error handling, and context awareness compared to terminal commands. 

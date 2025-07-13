@@ -14,7 +14,8 @@ export const metadata = {
 }
 
 export default async function StudentRequirementsPage() {
-  const supabase = createClient(await cookies())
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
   
   const {
     data: { user },

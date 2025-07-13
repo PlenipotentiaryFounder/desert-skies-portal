@@ -17,14 +17,14 @@ export default async function StudentSyllabusPage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
-  const enrollments = await getStudentEnrollments(session.user.id)
+  const enrollments = await getStudentEnrollments(user.id)
   const activeEnrollment = enrollments.find((e) => e.status === "active")
 
   if (!activeEnrollment) {

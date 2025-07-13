@@ -59,41 +59,50 @@ export async function middleware(request: NextRequest) {
   }
   
   if (user && (isAuthRoute || path === '/')) {
-     try {
-        console.log("--- User Authentication Success: Starting Dashboard Redirect Logic ---");
-        const { data: userRoles, error: rolesError } = await supabase.rpc('get_user_roles_for_middleware', { 
-          p_user_id: user.id 
-        })
+    try {
+      console.log("--- User Authentication Success: Starting Dashboard Redirect Logic ---");
+      const { data: userRoles, error: rolesError } = await supabase.rpc('get_user_roles_for_middleware', { 
+        p_user_id: user.id 
+      })
 
-        if (rolesError) {
-          console.error("Error fetching user roles:", rolesError);
-          return response; // Exit gracefully, allowing navigation
-        }
-
-        const roles = userRoles as { role_name: string }[] || []
-        const hasAdmin = roles.some(r => r.role_name === 'admin')
-        const hasInstructor = roles.some(r => r.role_name === 'instructor')
-        const hasStudent = roles.some(r => r.role_name === 'student')
-        
-        console.log("User Roles:", roles.map(r => r.role_name));
-
-        let redirectUrl = "";
-        // Default admin/instructors to instructor dashboard
-        if (hasAdmin && hasInstructor) redirectUrl = "/instructor/dashboard";
-        else if (hasAdmin) redirectUrl = "/admin/dashboard";
-        else if (hasInstructor) redirectUrl = "/instructor/dashboard";
-        else if (hasStudent) redirectUrl = "/student/dashboard";
-
-        if (redirectUrl && path !== redirectUrl) {
-          console.log(`Redirecting authenticated user from "${path}" to: ${redirectUrl}`);
-          return NextResponse.redirect(new URL(redirectUrl, request.url))
-        } else {
-           console.warn(`Authenticated user with roles (${roles.map(r=>r.role_name).join(', ')}) on auth route but no redirect rule matched.`);
-        }
-      } catch (error) {
-        console.error("Error during dashboard redirect logic:", error)
-        // allow request to continue
+      if (rolesError) {
+        console.error("Error fetching user roles:", rolesError);
+        return response; // Exit gracefully, allowing navigation
       }
+
+      const roles = userRoles as { role_name: string }[] || [];
+      const hasAdmin = roles.some(r => r.role_name === 'admin');
+      const hasInstructor = roles.some(r => r.role_name === 'instructor');
+      const hasStudent = roles.some(r => r.role_name === 'student');
+      console.log("User Roles:", roles.map(r => r.role_name));
+
+      // List of dashboards the user can access
+      const validDashboards = [];
+      if (hasAdmin) validDashboards.push('/admin/dashboard');
+      if (hasInstructor) validDashboards.push('/instructor/dashboard');
+      if (hasStudent) validDashboards.push('/student/dashboard');
+
+      // Pick a default dashboard (priority: instructor > admin > student)
+      let defaultDashboard = '';
+      if (hasInstructor) defaultDashboard = '/instructor/dashboard';
+      else if (hasAdmin) defaultDashboard = '/admin/dashboard';
+      else if (hasStudent) defaultDashboard = '/student/dashboard';
+
+      // If already on a dashboard the user can access, do not redirect
+      if (validDashboards.includes(path)) {
+        return response;
+      }
+
+      // Otherwise, redirect to the default dashboard
+      if (defaultDashboard && path !== defaultDashboard) {
+        console.log(`Redirecting authenticated user from "${path}" to: ${defaultDashboard}`);
+        return NextResponse.redirect(new URL(defaultDashboard, request.url));
+      }
+      // If no dashboard, allow navigation
+    } catch (error) {
+      console.error("Error during dashboard redirect logic:", error);
+      // allow request to continue
+    }
   }
 
   if (user && isProtectedRoute) {

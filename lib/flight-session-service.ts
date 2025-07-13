@@ -13,7 +13,8 @@ export type FlightSession = {
   created_at: string
   updated_at: string
   enrollment_id: string
-  lesson_id: string
+  lesson_id: string | null
+  custom_lesson_id: string | null
   instructor_id: string
   aircraft_id: string
   date: string
@@ -61,6 +62,11 @@ export type FlightSession = {
     description: string
     lesson_type: string
   }
+  custom_lesson?: {
+    title: string
+    description: string
+    lesson_type: string
+  }
   enrollment?: {
     student_id: string
     syllabus_id: string
@@ -70,6 +76,9 @@ export type FlightSession = {
     maneuver_id: string
     score: number
     notes: string | null
+    acs_task_id: string | null
+    meets_acs_standard: boolean | null
+    areas_for_improvement: string | null
     maneuver: {
       name: string
       category: string
@@ -79,7 +88,8 @@ export type FlightSession = {
 
 export type FlightSessionFormData = {
   enrollment_id: string
-  lesson_id: string
+  lesson_id?: string | null
+  custom_lesson_id?: string | null
   instructor_id: string
   aircraft_id: string
   date: string
@@ -137,6 +147,11 @@ export async function getFlightSessions() {
         model
       ),
       lesson:lesson_id (
+        title,
+        description,
+        lesson_type
+      ),
+      custom_lesson:custom_lesson_id (
         title,
         description,
         lesson_type
@@ -199,11 +214,19 @@ export async function getFlightSessionById(id: string) {
         description,
         lesson_type
       ),
+      custom_lesson:custom_lesson_id (
+        title,
+        description,
+        lesson_type
+      ),
       maneuver_scores:maneuver_scores (
         id,
         maneuver_id,
         score,
         notes,
+        acs_task_id,
+        meets_acs_standard,
+        areas_for_improvement,
         maneuver:maneuver_id (
           name,
           category
@@ -270,6 +293,11 @@ export async function getStudentFlightSessions(studentId: string) {
         title,
         description,
         lesson_type
+      ),
+      custom_lesson:custom_lesson_id (
+        title,
+        description,
+        lesson_type
       )
     `)
     // @ts-expect-error Supabase type system is too strict, but this is safe
@@ -313,6 +341,11 @@ export async function getInstructorFlightSessions(instructorId: string) {
         model
       ),
       lesson:lesson_id (
+        title,
+        description,
+        lesson_type
+      ),
+      custom_lesson:custom_lesson_id (
         title,
         description,
         lesson_type
@@ -475,6 +508,9 @@ export async function saveManeuverScores(
     maneuver_id: string
     score: number
     notes?: string | null
+    acs_task_id?: string | null
+    meets_acs_standard?: boolean | null
+    areas_for_improvement?: string | null
   }>,
 ) {
   const cookieStore = await cookies()
@@ -495,6 +531,9 @@ export async function saveManeuverScores(
     maneuver_id: score.maneuver_id,
     score: score.score,
     notes: score.notes || null,
+    acs_task_id: score.acs_task_id || null,
+    meets_acs_standard: score.meets_acs_standard || null,
+    areas_for_improvement: score.areas_for_improvement || null,
   }))
 
   // @ts-expect-error Supabase type system is too strict, but this is safe
@@ -509,4 +548,42 @@ export async function saveManeuverScores(
   revalidatePath(`/instructor/schedule/${flightSessionId}`)
   revalidatePath(`/student/schedule/${flightSessionId}`)
   return { success: true, data: data }
+}
+
+// Helper function to get lesson details (either template or custom)
+export async function getLessonDetails(lessonId: string | null, customLessonId: string | null) {
+  const cookieStore = await cookies()
+  const supabase = await createClient(cookieStore)
+
+  if (lessonId) {
+    const { data, error } = await supabase
+      .from("syllabus_lessons")
+      .select("*")
+      .eq("id", lessonId)
+      .single()
+    
+    if (error) {
+      console.error("Error fetching lesson details:", error)
+      return null
+    }
+    
+    return { ...data, lesson_source: "template" as const }
+  }
+  
+  if (customLessonId) {
+    const { data, error } = await supabase
+      .from("custom_lessons")
+      .select("*")
+      .eq("id", customLessonId)
+      .single()
+    
+    if (error) {
+      console.error("Error fetching custom lesson details:", error)
+      return null
+    }
+    
+    return { ...data, lesson_source: "custom" as const }
+  }
+  
+  return null
 }

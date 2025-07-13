@@ -1,132 +1,142 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { BookOpen, CheckCircle2, Clock, Users } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { CheckCircle, Clock, AlertCircle, XCircle } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+
+interface ACSArea {
+  id: string
+  area_code: string
+  title: string
+  description: string | null
+  tasks: ACSTask[]
+  completion_percentage: number
+  tasks_completed: number
+  total_tasks: number
+}
+
+interface ACSTask {
+  id: string
+  task_code: string
+  title: string
+  description: string | null
+  proficiency_level: number
+  last_evaluated: string | null
+  meets_standard: boolean
+}
+
+interface ACSProgressResponse {
+  certificate_type: string
+  overall_completion: number
+  checkride_ready: boolean
+  total_tasks: number
+  completed_tasks: number
+  areas_of_operation: ACSArea[]
+}
 
 interface ACSStandardsWidgetProps {
   userRole: "student" | "instructor" | "admin"
   userId: string
-  certificateType?: string
-  compact?: boolean
+  certificateType: string
 }
 
-interface ACSProgress {
-  overall_completion: number
-  areas_of_operation: {
-    area_id: string
-    title: string
-    completion_percentage: number
-    tasks_completed: number
-    total_tasks: number
-  }[]
-}
-
-export function ACSStandardsWidget({ 
-  userRole, 
-  userId, 
-  certificateType = "private_pilot",
-  compact = false 
-}: ACSStandardsWidgetProps) {
-  const [progress, setProgress] = useState<ACSProgress | null>(null)
+export function ACSStandardsWidget({ userRole, userId, certificateType }: ACSStandardsWidgetProps) {
+  const [areas, setAreas] = useState<ACSArea[]>([])
+  const [overallProgress, setOverallProgress] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Mock data for demonstration
-    // In production, this would fetch from the ACS service
-    setTimeout(() => {
-      setProgress({
-        overall_completion: 67,
-        areas_of_operation: [
-          {
-            area_id: "1",
-            title: "Preflight Preparation",
-            completion_percentage: 85,
-            tasks_completed: 3,
-            total_tasks: 4
-          },
-          {
-            area_id: "2", 
-            title: "Preflight Procedures",
-            completion_percentage: 75,
-            tasks_completed: 3,
-            total_tasks: 4
-          },
-          {
-            area_id: "3",
-            title: "Airport and Seaplane Base Operations",
-            completion_percentage: 45,
-            tasks_completed: 2,
-            total_tasks: 4
-          },
-          {
-            area_id: "4",
-            title: "Takeoffs, Landings, and Go-Arounds",
-            completion_percentage: 60,
-            tasks_completed: 3,
-            total_tasks: 5
-          }
-        ]
-      })
-      setLoading(false)
-    }, 1000)
-  }, [userId, certificateType])
+    async function fetchACSProgress() {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const response = await fetch(`/api/student/acs-progress?certificateType=${certificateType}`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data: ACSProgressResponse = await response.json()
+        
+        if (data.error) {
+          throw new Error(data.error)
+        }
+
+        setAreas(data.areas_of_operation || [])
+        setOverallProgress(data.overall_completion || 0)
+        
+      } catch (error) {
+        console.error("Error fetching ACS progress:", error)
+        setError(error instanceof Error ? error.message : "Failed to fetch ACS progress")
+        setAreas([])
+        setOverallProgress(0)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchACSProgress()
+  }, [certificateType, userId])
+
+  const getTaskStatusIcon = (task: ACSTask) => {
+    if (task.proficiency_level >= 3 && task.meets_standard) {
+      return <CheckCircle className="h-4 w-4 text-green-500" />
+    } else if (task.proficiency_level >= 2) {
+      return <Clock className="h-4 w-4 text-yellow-500" />
+    } else if (task.proficiency_level >= 1) {
+      return <AlertCircle className="h-4 w-4 text-orange-500" />
+    } else {
+      return <XCircle className="h-4 w-4 text-red-500" />
+    }
+  }
+
+  const getTaskStatusBadge = (task: ACSTask) => {
+    if (task.proficiency_level >= 3 && task.meets_standard) {
+      return <Badge variant="default" className="bg-green-500">Proficient</Badge>
+    } else if (task.proficiency_level >= 2) {
+      return <Badge variant="secondary">Developing</Badge>
+    } else if (task.proficiency_level >= 1) {
+      return <Badge variant="outline">Introduced</Badge>
+    } else {
+      return <Badge variant="destructive">Not Started</Badge>
+    }
+  }
 
   if (loading) {
-    return <ACSWidgetSkeleton compact={compact} />
-  }
-
-  if (!progress) {
-    return <ACSWidgetError userRole={userRole} />
-  }
-
-  const getStatusColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600"
-    if (percentage >= 60) return "text-yellow-600" 
-    return "text-red-600"
-  }
-
-  const getStatusBadge = (percentage: number) => {
-    if (percentage >= 80) return <Badge variant="default" className="bg-green-100 text-green-800">Excellent</Badge>
-    if (percentage >= 60) return <Badge variant="default" className="bg-yellow-100 text-yellow-800">Good</Badge>
-    return <Badge variant="default" className="bg-red-100 text-red-800">Needs Work</Badge>
-  }
-
-  if (compact) {
     return (
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-sm">ACS Progress</span>
-            </div>
-            {getStatusBadge(progress.overall_completion)}
+        <CardHeader>
+          <CardTitle>ACS Standards Progress</CardTitle>
+          <CardDescription>Loading your progress...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span>Overall Completion</span>
-              <span className={`font-semibold ${getStatusColor(progress.overall_completion)}`}>
-                {progress.overall_completion}%
-              </span>
-            </div>
-            <Progress value={progress.overall_completion} className="h-2" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>ACS Standards Progress</CardTitle>
+          <CardDescription>Error loading progress</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">
+            <AlertCircle className="h-4 w-4 inline mr-2" />
+            {error}
           </div>
-          <Button 
-            asChild 
-            variant="outline" 
-            size="sm" 
-            className="w-full mt-3"
-          >
-            <Link href={`/${userRole}/requirements`}>
-              View Details
-            </Link>
-          </Button>
         </CardContent>
       </Card>
     )
@@ -135,120 +145,70 @@ export function ACSStandardsWidget({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-blue-600" />
-          ACS Standards Progress
-        </CardTitle>
+        <CardTitle>ACS Standards Progress</CardTitle>
         <CardDescription>
-          {userRole === "student" 
-            ? "Your progress through Airman Certification Standards"
-            : userRole === "instructor"
-            ? "Student ACS progress overview"
-            : "System-wide ACS compliance tracking"
-          }
+          Your progress toward Private Pilot certification standards
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Overall Progress */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Overall Completion</span>
-            <div className="flex items-center gap-2">
-              <span className={`font-semibold ${getStatusColor(progress.overall_completion)}`}>
-                {progress.overall_completion}%
-              </span>
-              {getStatusBadge(progress.overall_completion)}
-            </div>
+          <div className="flex justify-between text-sm">
+            <span>Overall Progress</span>
+            <span>{overallProgress}%</span>
           </div>
-          <Progress value={progress.overall_completion} className="h-3" />
+          <Progress value={overallProgress} className="h-2" />
         </div>
 
         {/* Areas of Operation */}
-        <div className="space-y-3">
-          <h4 className="font-medium">Areas of Operation</h4>
-          <div className="space-y-3">
-            {progress.areas_of_operation.slice(0, 4).map((area) => (
-              <div key={area.area_id} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{area.title}</span>
-                  <span className={`text-xs ${getStatusColor(area.completion_percentage)}`}>
-                    {area.tasks_completed}/{area.total_tasks} tasks
-                  </span>
+        <div className="space-y-4">
+          {areas.map((area) => (
+            <div key={area.id} className="border rounded-lg p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h4 className="font-medium">{area.area_code} - {area.title}</h4>
+                  {area.description && (
+                    <p className="text-sm text-muted-foreground mt-1">{area.description}</p>
+                  )}
                 </div>
-                <Progress value={area.completion_percentage} className="h-2" />
+                <div className="text-right">
+                  <div className="text-sm font-medium">{area.completion_percentage.toFixed(0)}%</div>
+                  <div className="text-xs text-muted-foreground">
+                    {area.tasks_completed}/{area.total_tasks} tasks
+                  </div>
+                </div>
               </div>
-            ))}
+              
+              <Progress value={area.completion_percentage} className="h-1 mb-3" />
+              
+              {/* Tasks */}
+              <div className="space-y-2">
+                {area.tasks.map((task) => (
+                  <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="flex items-center space-x-2">
+                      {getTaskStatusIcon(task)}
+                      <div>
+                        <div className="text-sm font-medium">{task.task_code} - {task.title}</div>
+                        {task.last_evaluated && (
+                          <div className="text-xs text-muted-foreground">
+                            Last evaluated: {new Date(task.last_evaluated).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {getTaskStatusBadge(task)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {areas.length === 0 && (
+          <div className="text-center text-muted-foreground py-8">
+            No ACS areas found for {certificateType}
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <Button asChild className="flex-1">
-            <Link href={`/${userRole}/requirements`}>
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              View Requirements
-            </Link>
-          </Button>
-          {userRole === "admin" && (
-            <Button asChild variant="outline" className="flex-1">
-              <Link href="/admin/requirements">
-                <Users className="h-4 w-4 mr-2" />
-                Manage ACS
-              </Link>
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ACSWidgetSkeleton({ compact }: { compact?: boolean }) {
-  if (compact) {
-    return (
-      <Card>
-        <CardContent className="p-4 space-y-3">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-6 w-full" />
-          <Skeleton className="h-8 w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-full" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Skeleton className="h-8 w-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-        <Skeleton className="h-10 w-full" />
-      </CardContent>
-    </Card>
-  )
-}
-
-function ACSWidgetError({ userRole }: { userRole: string }) {
-  return (
-    <Card>
-      <CardContent className="p-6 text-center">
-        <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="font-semibold mb-2">ACS Data Loading</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          ACS standards are being synchronized with the FAA monitoring system.
-        </p>
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/${userRole}/requirements`}>
-            View Requirements
-          </Link>
-        </Button>
+        )}
       </CardContent>
     </Card>
   )

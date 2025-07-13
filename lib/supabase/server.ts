@@ -1,20 +1,17 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { type ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies'
 import type { Database } from '@/types/supabase'
-import { cookies } from 'next/headers'
 
-export const createClient = async (cookieStore: ReadonlyRequestCookies) => {
+export const createClient = (cookieStore: ReadonlyRequestCookies) => {
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: async (name: string) => {
-          const cookieStore = await cookies()
+        get: (name: string) => {
           return cookieStore.get(name)?.value
         },
-        set: async (name: string, value: string, options: CookieOptions) => {
-          const cookieStore = await cookies()
+        set: (name: string, value: string, options: CookieOptions) => {
           try {
             cookieStore.set({ name, value, ...options })
           } catch (error) {
@@ -23,8 +20,7 @@ export const createClient = async (cookieStore: ReadonlyRequestCookies) => {
             // user sessions.
           }
         },
-        remove: async (name: string, options: CookieOptions) => {
-          const cookieStore = await cookies()
+        remove: (name: string, options: CookieOptions) => {
           try {
             cookieStore.set({ name, value: '', ...options })
           } catch (error) {
