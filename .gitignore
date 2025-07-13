@@ -28,3 +28,27 @@ next-env.d.ts
 
 # cursor configuration with sensitive data
 .cursor/mcp.json
+.cursor/workspace/
+.cursorrules
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and runtime data
+*.log
+logs/
+runtime/
+tmp/
