@@ -12,10 +12,11 @@ interface SyllabusDetailPageProps {
 }
 
 export default async function SyllabusDetailPage({ params }: SyllabusDetailPageProps) {
+  const { id } = await params
   const [syllabus, lessons, statistics] = await Promise.all([
-    getSyllabusById(params.id),
-    getSyllabusLessons(params.id),
-    getSyllabusStatistics(params.id)
+    getSyllabusById(id),
+    getSyllabusLessons(id),
+    getSyllabusStatistics(id)
   ])
 
   if (!syllabus) {
@@ -33,13 +34,13 @@ export default async function SyllabusDetailPage({ params }: SyllabusDetailPageP
           </Button>
         </Link>
         <div className="flex gap-2">
-          <Link href={`/admin/syllabi/${params.id}/lessons/new`}>
+          <Link href={`/admin/syllabi/${id}/lessons/new`}>
             <Button variant="outline" size="sm">
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Lesson
             </Button>
           </Link>
-          <Link href={`/admin/syllabi/${params.id}/edit`}>
+          <Link href={`/admin/syllabi/${id}/edit`}>
             <Button size="sm">
               <Settings className="mr-2 h-4 w-4" />
               Syllabus Settings
@@ -53,7 +54,7 @@ export default async function SyllabusDetailPage({ params }: SyllabusDetailPageP
         syllabus={syllabus}
         lessons={lessons}
         statistics={statistics}
-        syllabusId={params.id}
+        syllabusId={id}
       />
     </div>
   )

@@ -26,6 +26,14 @@ export type SyllabusLesson = {
   estimated_hours: number
   created_at: string
   updated_at: string
+  maneuvers?: Array<{
+    id: string
+    name: string
+    description: string
+    category: string
+    faa_reference: string
+    is_required: boolean
+  }>
 }
 
 export type SyllabusFormData = {
@@ -144,7 +152,8 @@ export async function deleteSyllabus(id: string) {
 export async function getSyllabusLessons(syllabusId: string) {
   const supabase = await createClient(await cookies())
 
-  const { data, error } = await supabase
+  // First get the lessons
+  const { data: lessons, error } = await supabase
     .from("syllabus_lessons")
     .select("*")
     .eq("syllabus_id", syllabusId as any)
@@ -155,7 +164,75 @@ export async function getSyllabusLessons(syllabusId: string) {
     return []
   }
 
-  return data as unknown as SyllabusLesson[]
+  if (!lessons || lessons.length === 0) {
+    return []
+  }
+
+  // Get lesson IDs for maneuver lookup
+  const lessonIds = lessons.map(lesson => lesson.id)
+
+  // Fetch lesson-maneuver relationships
+  const { data: lessonManeuverData, error: maneuverError } = await supabase
+    .from("lesson_maneuvers")
+    .select("lesson_id, is_required, maneuver_id")
+    .in("lesson_id", lessonIds)
+
+  if (maneuverError) {
+    console.error("Error fetching lesson maneuvers:", maneuverError)
+    // Return lessons without maneuvers rather than failing completely
+    return lessons.map(lesson => ({
+      ...lesson,
+      maneuvers: []
+    })) as SyllabusLesson[]
+  }
+
+  // Get all unique maneuver IDs
+  const maneuverIds = lessonManeuverData?.map(lm => lm.maneuver_id) || []
+  const uniqueManeuverIds = [...new Set(maneuverIds)]
+
+  // Fetch maneuver details
+  const { data: maneuverData, error: maneuverDetailsError } = await supabase
+    .from("maneuvers")
+    .select("id, name, description, category, faa_reference")
+    .in("id", uniqueManeuverIds)
+
+  if (maneuverDetailsError) {
+    console.error("Error fetching maneuver details:", maneuverDetailsError)
+    return lessons.map(lesson => ({
+      ...lesson,
+      maneuvers: []
+    })) as SyllabusLesson[]
+  }
+
+  // Create maneuver lookup map
+  const maneuverMap = new Map()
+  maneuverData?.forEach(maneuver => {
+    maneuverMap.set(maneuver.id, maneuver)
+  })
+
+  // Group lesson-maneuver relationships by lesson_id
+  const maneuversByLesson = new Map()
+  lessonManeuverData?.forEach(lm => {
+    if (!maneuversByLesson.has(lm.lesson_id)) {
+      maneuversByLesson.set(lm.lesson_id, [])
+    }
+    
+    const maneuverDetails = maneuverMap.get(lm.maneuver_id)
+    if (maneuverDetails) {
+      maneuversByLesson.get(lm.lesson_id).push({
+        ...maneuverDetails,
+        is_required: lm.is_required
+      })
+    }
+  })
+
+  // Combine lessons with their maneuvers
+  const lessonsWithManeuvers = lessons.map(lesson => ({
+    ...lesson,
+    maneuvers: maneuversByLesson.get(lesson.id) || []
+  }))
+
+  return lessonsWithManeuvers as SyllabusLesson[]
 }
 
 export async function getSyllabusLessonById(id: string) {

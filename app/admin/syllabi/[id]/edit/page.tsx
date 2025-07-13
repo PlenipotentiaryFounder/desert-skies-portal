@@ -12,9 +12,10 @@ interface EditSyllabusPageProps {
 }
 
 export default async function EditSyllabusPage({ params }: EditSyllabusPageProps) {
+  const { id } = await params
   const [syllabus, lessons] = await Promise.all([
-    getSyllabusById(params.id),
-    getSyllabusLessons(params.id)
+    getSyllabusById(id),
+    getSyllabusLessons(id)
   ])
 
   if (!syllabus) {
@@ -24,7 +25,7 @@ export default async function EditSyllabusPage({ params }: EditSyllabusPageProps
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
-        <Link href={`/admin/syllabi/${params.id}`}>
+        <Link href={`/admin/syllabi/${id}`}>
           <Button variant="ghost" size="sm">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back to Syllabus
@@ -43,7 +44,7 @@ export default async function EditSyllabusPage({ params }: EditSyllabusPageProps
         <SyllabusEditClient
           syllabus={syllabus}
           lessons={lessons}
-          syllabusId={params.id}
+          syllabusId={id}
         />
       </div>
     </div>
