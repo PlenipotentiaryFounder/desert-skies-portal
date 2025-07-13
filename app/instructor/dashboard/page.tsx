@@ -22,7 +22,7 @@ import { InstructorProgressWidget } from "@/components/instructor/instructor-pro
 import { ACSStandardsWidget } from "@/components/shared/acs-standards-widget"
 
 export default async function InstructorDashboardPage() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const {
@@ -35,34 +35,64 @@ export default async function InstructorDashboardPage() {
 
   // Get instructor profile
   const instructor = await getUserProfileWithRoles(user.id)
-  if (!instructor) return <div>Not authorized. You must have role 'instructor', 'admin', or 'instructor' in additional_roles.</div>
-  
-  const roles = instructor.roles.map(r => r.role_name)
+  if (!instructor) {
+    console.error('No instructor profile found for user:', user.id)
+    return <div>Not authorized. You must have role 'instructor', 'admin', or 'instructor' in additional_roles.</div>
+  }
+
+  // Defensive: ensure roles is always an array of strings
+  const roles = Array.isArray(instructor.roles)
+    ? instructor.roles.map((r: any) => typeof r === 'string' ? r : (r?.role_name ?? ''))
+    : [];
 
   // Get all enrollments for this instructor
-  const enrollments = await getInstructorEnrollments(instructor.id)
+  let enrollments: any[] = [];
+  try {
+    enrollments = await getInstructorEnrollments(instructor.id) ?? [];
+  } catch (e) {
+    console.error('Error fetching enrollments:', e)
+    enrollments = [];
+  }
 
   // Get all sessions for this instructor
-  const sessions = await getInstructorFlightSessions(instructor.id)
+  let sessions: any[] = [];
+  try {
+    sessions = await getInstructorFlightSessions(instructor.id) ?? [];
+  } catch (e) {
+    console.error('Error fetching sessions:', e)
+    sessions = [];
+  }
 
   // Get pending endorsements for this instructor
-  const { data: endorsements = [] } = await supabase
-    .from('endorsements')
-    .select('id, created_at, type, status, student_id, students:student_id (first_name, last_name)')
-    .eq('instructor_id', instructor.id)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false })
+  let endorsements: any[] = [];
+  try {
+    const { data } = await supabase
+      .from('endorsements')
+      .select('id, created_at, type, status, student_id, students:student_id (first_name, last_name)')
+      .eq('instructor_id', instructor.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    endorsements = Array.isArray(data) ? data : [];
+  } catch (e) {
+    console.error('Error fetching endorsements:', e)
+    endorsements = [];
+  }
 
   // Compute stats
-  const stats = {
-    totalStudents: enrollments.length,
-    totalSessions: sessions.length,
-    totalEndorsements: (await supabase
-      .from('endorsements')
-      .select('id', { count: 'exact', head: true })
-      .eq('instructor_id', instructor.id)
-      .eq('status', 'approved')
-    ).count || 0,
+  let stats = { totalStudents: 0, totalSessions: 0, totalEndorsements: 0 };
+  try {
+    stats = {
+      totalStudents: enrollments.length,
+      totalSessions: sessions.length,
+      totalEndorsements: (await supabase
+        .from('endorsements')
+        .select('id', { count: 'exact', head: true })
+        .eq('instructor_id', instructor.id)
+        .eq('status', 'approved')
+      ).count || 0,
+    }
+  } catch (e) {
+    console.error('Error computing stats:', e)
   }
 
   return (
@@ -76,11 +106,10 @@ export default async function InstructorDashboardPage() {
       <InstructorQuickLinks />
       <InstructorProgressWidget enrollments={enrollments} />
       <InstructorStatsCards stats={stats} />
-      
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-6">
           <UpcomingInstructorSessions sessions={sessions} />
-          <PendingEndorsements endorsements={endorsements} instructorStatus={instructor.status} instructorId={instructor.id} />
+          <PendingEndorsements endorsements={endorsements} instructorStatus={(instructor as any).status ?? ''} instructorId={instructor.id} />
         </div>
         <ACSStandardsWidget 
           userRole="instructor" 
@@ -88,7 +117,6 @@ export default async function InstructorDashboardPage() {
           certificateType="private_pilot"
         />
       </div>
-      
       <InstructorStudentsList enrollments={enrollments} />
     </div>
   )

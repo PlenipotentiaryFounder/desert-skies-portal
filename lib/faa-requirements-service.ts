@@ -182,7 +182,7 @@ export async function deleteFAARequirement(id: string) {
 export async function getStudentRequirements(studentId: string, certificateType?: CertificateType) {
   const supabase = await createClient(await cookies())
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("student_requirements")
     .select(`
       *,
@@ -190,18 +190,21 @@ export async function getStudentRequirements(studentId: string, certificateType?
     `)
     .eq("student_id", studentId)
 
-  if (certificateType) {
-    query = query.eq("requirement.certificate_type", certificateType)
-  }
-
-  const { data, error } = await query
-
   if (error) {
     console.error("Error fetching student requirements:", error)
     return []
   }
 
-  return data as StudentRequirement[]
+  let filteredData = data as StudentRequirement[]
+
+  // Filter by certificate type in JavaScript if specified
+  if (certificateType && filteredData) {
+    filteredData = filteredData.filter(req => 
+      req.requirement && req.requirement.certificate_type === certificateType
+    )
+  }
+
+  return filteredData || []
 }
 
 export async function getStudentRequirementById(id: string) {
@@ -313,8 +316,11 @@ export async function verifyStudentRequirement(id: string, instructorId: string)
   return { success: true }
 }
 
-export async function getFlightLogEntries(studentId: string) {
-  const supabase = await createClient(await cookies())
+// Accept supabase client as a parameter
+export async function getFlightLogEntries(supabase: any, studentId: string) {
+  // Debug: log the authenticated user
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  console.log('getFlightLogEntries: Supabase user:', userData, 'Error:', userError);
 
   const { data, error } = await supabase
     .from("flight_log_entries")
@@ -324,36 +330,42 @@ export async function getFlightLogEntries(studentId: string) {
       instructor:instructor_id(id, first_name, last_name)
     `)
     .eq("student_id", studentId)
-    .order("date", { ascending: false })
+    .order("date", { ascending: false });
 
   if (error) {
-    console.error("Error fetching flight log entries:", error)
-    return []
+    console.error("Error fetching flight log entries:", error);
+    return [];
   }
 
   // Fetch signatures for all entries
-  const entryIds = data.map((e: any) => e.id)
+  const entryIds = data.map((e: any) => e.id);
   const { data: sigs } = await supabase
     .from("flight_log_entry_signatures")
     .select("entry_id, role, is_current")
     .in("entry_id", entryIds)
-    .eq("is_current", true)
+    .eq("is_current", true);
 
   // Map signatures to entries
-  const sigMap: Record<string, { student: boolean; instructor: boolean }> = {}
+  const sigMap: Record<string, { student: boolean; instructor: boolean }> = {};
   for (const entryId of entryIds) {
-    sigMap[entryId] = { student: false, instructor: false }
+    sigMap[entryId] = { student: false, instructor: false };
   }
   for (const sig of sigs || []) {
-    if (sig.role === 'student') sigMap[sig.entry_id].student = true
-    if (sig.role === 'instructor') sigMap[sig.entry_id].instructor = true
+    if (sig.role === 'student') sigMap[sig.entry_id].student = true;
+    if (sig.role === 'instructor') sigMap[sig.entry_id].instructor = true;
   }
 
   return data.map((entry: any) => ({
     ...entry,
     student_signed: sigMap[entry.id]?.student || false,
     instructor_signed: sigMap[entry.id]?.instructor || false,
-  }))
+  }));
+}
+
+// Backward compatible wrapper for existing usages
+export async function getFlightLogEntriesOld(studentId: string) {
+  const supabase = await createClient(await cookies());
+  return getFlightLogEntries(supabase, studentId);
 }
 
 export async function getFlightLogEntryById(id: string) {

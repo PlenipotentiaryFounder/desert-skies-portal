@@ -3,12 +3,15 @@
 // 2. Allow editing all fields and maneuvers
 // 3. On submit, update DB 
 
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { getFlightSessionById } from "@/lib/flight-session-service"
 import { getInstructorEnrollments } from "@/lib/enrollment-service"
 import { getSyllabusLessons } from "@/lib/syllabus-service"
 import { getManeuvers } from "@/lib/maneuver-service"
 import { MissionForm } from "@/components/instructor/mission-form"
+import { updateFlightSession } from "@/lib/flight-session-service"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export const metadata = {
   title: "Edit Mission | Desert Skies",
@@ -27,10 +30,30 @@ export default async function EditMissionPage({ params }: { params: { id: string
 
   // Handler for updating a mission (calls server action)
   async function handleUpdateMission(form: any) {
-    // TODO: Implement call to updateMissionServerAction (move to server action file if needed)
-    // await updateMissionServerAction(params.id, form)
-    // For now, just log
-    console.log("Updating mission:", form)
+    "use server"
+    const cookieStore = await cookies()
+    const supabase = await createClient(cookieStore)
+
+    try {
+      // Update the flight session
+      const result = await updateFlightSession(params.id, {
+        aircraft_id: form.aircraftId,
+        date: form.date,
+        start_time: form.startTime,
+        end_time: form.endTime,
+        notes: form.notes,
+      })
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update mission")
+      }
+
+      // Redirect to the schedule page on success
+      redirect("/instructor/schedule")
+    } catch (error) {
+      console.error("Error updating mission:", error)
+      throw error
+    }
   }
 
   // Prefill MissionForm with session data

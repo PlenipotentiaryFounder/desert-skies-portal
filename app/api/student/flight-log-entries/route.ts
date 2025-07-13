@@ -12,7 +12,6 @@ import {
   setLogbookEntryStatus
 } from '@/lib/faa-requirements-service';
 import { getUserFromApiRequest, requireRole } from '@/lib/user-service';
-// TODO: Import and implement signature and audit logic
 
 // GET: List all logbook entries for the current student
 export async function GET(req: NextRequest) {
@@ -90,38 +89,6 @@ export async function DELETE(req: NextRequest) {
     console.error('DELETE /api/student/flight-log-entries error:', err);
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
   }
-}
-
-// POST /sign: Add a signature (student or instructor)
-export async function POST_sign(req: NextRequest) {
-  const user = await getUserFromApiRequest(req);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { entry_id, pin, role } = await req.json();
-  // Only allow signing if user matches role and is related to entry
-  const entry = await getFlightLogEntryById(entry_id);
-  if (!entry) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  if (role === 'student' && entry.student_id !== user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  if (role === 'instructor' && entry.instructor_id !== user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  const result = await addLogbookSignature(entry_id, user.id, role, pin);
-  if (result.success) {
-    // If both signatures present, set status to final
-    // (Signature check logic would be here)
-    await setLogbookEntryStatus(entry_id, 'final');
-  }
-  return NextResponse.json(result);
-}
-
-// POST /verify-signature: Verify a signature (for PIN entry modal)
-export async function POST_verify_signature(req: NextRequest) {
-  const user = await getUserFromApiRequest(req);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { entry_id, pin, role } = await req.json();
-  const valid = await verifyLogbookSignature(entry_id, user.id, role, pin);
-  return NextResponse.json({ valid });
 }
 
 // Additional endpoints for signature and audit actions can be added as needed. 

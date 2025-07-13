@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface StudentProgressChartProps {
   studentId: string
@@ -11,6 +12,7 @@ interface StudentProgressChartProps {
 export function StudentProgressChart({ studentId }: StudentProgressChartProps) {
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -63,6 +65,7 @@ export function StudentProgressChart({ studentId }: StudentProgressChartProps) {
         setData(chartData)
       } catch (error) {
         console.error("Error fetching progress data:", error)
+        setError("Failed to load progress data. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -72,7 +75,11 @@ export function StudentProgressChart({ studentId }: StudentProgressChartProps) {
   }, [supabase, studentId])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-[300px]">Loading progress data...</div>
+    return <Skeleton className="h-[300px] w-full" />
+  }
+
+  if (error) {
+    return <div className="flex items-center justify-center h-[300px] text-destructive">{error}</div>
   }
 
   if (data.length === 0) {
@@ -80,7 +87,8 @@ export function StudentProgressChart({ studentId }: StudentProgressChartProps) {
   }
 
   return (
-    <div className="h-[300px] w-full">
+    <div className="h-[300px] w-full" role="img" aria-label="Student training progress bar chart">
+      <span className="sr-only">Bar chart showing progress through syllabus lessons. Each bar represents a lesson and its completion status.</span>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
@@ -114,6 +122,11 @@ export function StudentProgressChart({ studentId }: StudentProgressChartProps) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      <ul className="sr-only">
+        {data.map((entry, idx) => (
+          <li key={idx}>{entry.name}: {entry.status.replace('_', ' ')}</li>
+        ))}
+      </ul>
     </div>
   )
 }

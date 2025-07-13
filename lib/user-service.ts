@@ -349,7 +349,8 @@ export async function getUserProfileWithRoles(userId: string): Promise<User | nu
     return { ...profile, roles: [] } as User
   }
 
-  const roles = rolesData.map((r: any) => r.role_name)
+  // Return as array of objects with role_name property
+  const roles = rolesData.map((r: any) => ({ role_name: r.role_name }))
 
   return { ...profile, roles } as User
 }

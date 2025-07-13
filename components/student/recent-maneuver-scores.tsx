@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { getScoreLabel } from "@/lib/utils"
 import { Progress } from "@/components/ui/progress"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface RecentManeuverScoresProps {
   studentId: string
@@ -24,6 +27,7 @@ interface ManeuverScore {
 export function RecentManeuverScores({ studentId }: RecentManeuverScoresProps) {
   const [scores, setScores] = useState<ManeuverScore[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -80,6 +84,7 @@ export function RecentManeuverScores({ studentId }: RecentManeuverScoresProps) {
         setScores((data as unknown as ManeuverScore[]) || [])
       } catch (error) {
         console.error("Error fetching maneuver scores:", error)
+        setError("Failed to load maneuver scores. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -89,7 +94,11 @@ export function RecentManeuverScores({ studentId }: RecentManeuverScoresProps) {
   }, [supabase, studentId])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-[300px]">Loading maneuver scores...</div>
+    return <Skeleton className="h-[300px] w-full" />
+  }
+
+  if (error) {
+    return <div className="flex items-center justify-center h-[300px] text-destructive">{error}</div>
   }
 
   if (scores.length === 0) {
@@ -97,25 +106,32 @@ export function RecentManeuverScores({ studentId }: RecentManeuverScoresProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <ul className="space-y-4" role="list">
       {scores.map((score) => {
         const { label, color } = getScoreLabel(score.score)
         const progressValue = (score.score / 5) * 100
 
         return (
-          <div key={score.id} className="space-y-2">
+          <li key={score.id} className="space-y-2">
             <div className="flex justify-between items-center">
               <div className="font-medium">{score.maneuver.name}</div>
-              <div className={`text-sm font-medium ${color}`}>{label}</div>
+              <div className={`text-sm font-medium ${color}`}>{label}<span className="sr-only">Score: {score.score} out of 5</span></div>
             </div>
-            <Progress value={progressValue} className="h-2" />
+            <div role="progressbar" aria-valuenow={progressValue} aria-valuemin={0} aria-valuemax={100} aria-label={`Score for ${score.maneuver.name}`}> 
+              <Progress value={progressValue} className="h-2" />
+            </div>
             <div className="flex justify-between text-xs text-muted-foreground">
               <div>{score.maneuver.category}</div>
               <div>{new Date(score.flight_session.date).toLocaleDateString()}</div>
             </div>
-          </div>
+          </li>
         )
       })}
-    </div>
+      <li>
+        <Button asChild variant="link" className="text-xs p-0 h-auto">
+          <Link href="/student/logbook">View all scores</Link>
+        </Button>
+      </li>
+    </ul>
   )
 }

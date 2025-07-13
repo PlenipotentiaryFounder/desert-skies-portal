@@ -1,57 +1,20 @@
-import { getInstructorEnrollments } from "@/lib/enrollment-service"
-import { getSyllabusLessons } from "@/lib/syllabus-service"
-import { getManeuvers } from "@/lib/maneuver-service"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
-import { MissionFormClient } from "@/components/instructor/mission-form-client"
+import { getUserFromApiRequest } from "@/lib/user-service"
 import { revalidatePath } from "next/cache"
 
-export const metadata = {
-  title: "Schedule New Mission | Desert Skies",
-  description: "Schedule a new mission (flight session) for a student",
-}
-
-export default async function ScheduleNewMissionPage() {
-  const cookieStore = await cookies()
-  const supabase = await createClient(cookieStore)
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  if (!session) return <div>You must be logged in as an instructor.</div>
-
-  // Fetch all enrollments for this instructor
-  const enrollments = await getInstructorEnrollments(session.user.id)
-  // For simplicity, fetch all lessons and maneuvers (could be filtered by selected enrollment/syllabus in a client component)
-  const allLessonsRaw = (await Promise.all(enrollments.map((e) => getSyllabusLessons(e.syllabus_id)))).flat()
-  const allLessons = Array.from(new Map(allLessonsRaw.map(l => [l.id, l])).values())
-  const maneuvers = await getManeuvers()
-
-  return (
-    <div className="max-w-xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-4">Schedule New Mission</h1>
-      <MissionFormClient
-        enrollments={enrollments}
-        lessons={allLessons}
-        maneuvers={maneuvers}
-      />
-    </div>
-  )
-}
-
-// Server action to schedule a new mission
-export async function scheduleMissionServerAction(formData: any) {
-  const cookieStore = await cookies()
-  const supabase = await createClient(cookieStore)
-  
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" }
-  }
-
+export async function POST(req: NextRequest) {
   try {
+    const user = await getUserFromApiRequest(req)
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const formData = await req.json()
+    const cookieStore = await cookies()
+    const supabase = await createClient(cookieStore)
+
     let lessonId = formData.lessonId
     
     // If custom mission, create a custom lesson first
@@ -77,14 +40,14 @@ export async function scheduleMissionServerAction(formData: any) {
           instructor_role: formData.custom.role || "",
           student_materials: formData.custom.whatToBring || "",
           notes: formData.custom.notes || "",
-          created_by: session.user.id,
+          created_by: user.id,
         })
         .select()
         .single()
 
       if (lessonError) {
         console.error("Error creating custom lesson:", lessonError)
-        return { success: false, error: "Failed to create custom lesson" }
+        return NextResponse.json({ error: "Failed to create custom lesson" }, { status: 500 })
       }
 
       lessonId = customLesson.id
@@ -114,7 +77,7 @@ export async function scheduleMissionServerAction(formData: any) {
       .insert({
         enrollment_id: formData.enrollmentId,
         lesson_id: lessonId,
-        instructor_id: session.user.id,
+        instructor_id: user.id,
         aircraft_id: formData.aircraftId,
         date: formData.date,
         start_time: formData.startTime,
@@ -133,17 +96,12 @@ export async function scheduleMissionServerAction(formData: any) {
 
     if (sessionError) {
       console.error("Error creating flight session:", sessionError)
-      return { success: false, error: "Failed to schedule mission" }
+      return NextResponse.json({ error: "Failed to schedule mission" }, { status: 500 })
     }
 
-    // Revalidate relevant paths
-    revalidatePath("/instructor/schedule")
-    revalidatePath("/student/schedule")
-    revalidatePath("/admin/schedule")
-
-    return { success: true, data: flightSession }
+    return NextResponse.json({ success: true, data: flightSession })
   } catch (error) {
-    console.error("Error in scheduleMissionServerAction:", error)
-    return { success: false, error: "Internal server error" }
+    console.error("Error in schedule POST:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-} 
+}

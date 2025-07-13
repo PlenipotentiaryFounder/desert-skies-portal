@@ -6,6 +6,8 @@ import { FileText, Upload } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface DocumentsOverviewProps {
   userId: string
@@ -24,6 +26,7 @@ interface Document {
 export function DocumentsOverview({ userId }: DocumentsOverviewProps) {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -39,6 +42,7 @@ export function DocumentsOverview({ userId }: DocumentsOverviewProps) {
         setDocuments(data || [])
       } catch (error) {
         console.error("Error fetching documents:", error)
+        setError("Failed to load documents. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -48,16 +52,22 @@ export function DocumentsOverview({ userId }: DocumentsOverviewProps) {
   }, [supabase, userId])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-[300px]">Loading documents...</div>
+    return <Skeleton className="h-[300px] w-full" />
+  }
+
+  if (error) {
+    return <div className="flex items-center justify-center h-[300px] text-destructive">{error}</div>
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-medium">Recent Documents</h3>
-        <Button size="sm" variant="outline">
-          <Upload className="mr-2 h-4 w-4" />
-          Upload
+        <Button asChild size="sm" variant="outline" aria-label="Upload Document">
+          <Link href="/student/documents/upload">
+            <Upload className="mr-2 h-4 w-4" />
+            Upload
+          </Link>
         </Button>
       </div>
 
@@ -67,9 +77,9 @@ export function DocumentsOverview({ userId }: DocumentsOverviewProps) {
           <p className="text-muted-foreground">No documents uploaded yet</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <ul className="space-y-2" role="list">
           {documents.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
+            <li key={doc.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
               <div className="flex items-center">
                 <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
                 <div>
@@ -82,10 +92,11 @@ export function DocumentsOverview({ userId }: DocumentsOverviewProps) {
               </div>
               <Badge variant={doc.is_verified ? "default" : "outline"}>
                 {doc.is_verified ? "Verified" : "Pending"}
+                <span className="sr-only">{doc.is_verified ? "Document verified" : "Document pending verification"}</span>
               </Badge>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       <Button variant="link" className="text-xs p-0 h-auto" asChild>

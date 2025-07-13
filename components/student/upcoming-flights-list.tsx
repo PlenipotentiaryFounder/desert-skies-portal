@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client"
 import { Calendar, Clock } from "lucide-react"
 import { formatDate, formatTime } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface UpcomingFlightsListProps {
   studentId: string
@@ -34,6 +36,7 @@ const supabase = createClient()
 export function UpcomingFlightsList({ studentId }: UpcomingFlightsListProps) {
   const [flights, setFlights] = useState<FlightSession[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchFlights() {
@@ -83,6 +86,7 @@ export function UpcomingFlightsList({ studentId }: UpcomingFlightsListProps) {
         setFlights((data as unknown as FlightSession[]) || [])
       } catch (error) {
         console.error("Error fetching upcoming flights:", error)
+        setError("Failed to load upcoming flights. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -92,22 +96,28 @@ export function UpcomingFlightsList({ studentId }: UpcomingFlightsListProps) {
   }, [studentId])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-[300px]">Loading upcoming flights...</div>
+    return <Skeleton className="h-[300px] w-full" />
+  }
+
+  if (error) {
+    return <div className="flex items-center justify-center h-[300px] text-destructive">{error}</div>
   }
 
   if (flights.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[300px] text-center">
         <p className="text-muted-foreground mb-4">No upcoming flights scheduled</p>
-        <Button variant="outline">Schedule a Flight</Button>
+        <Button asChild variant="outline" aria-label="Schedule a Flight">
+          <Link href="/student/schedule/new">Schedule a Flight</Link>
+        </Button>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <ul className="space-y-4" role="list">
       {flights.map((flight) => (
-        <div key={flight.id} className="flex flex-col space-y-2 pb-4 border-b last:border-0">
+        <li key={flight.id} className="flex flex-col space-y-2 pb-4 border-b last:border-0">
           <div className="font-medium">{flight.lesson.title}</div>
           <div className="flex items-center text-sm text-muted-foreground">
             <Calendar className="mr-2 h-4 w-4" />
@@ -125,8 +135,13 @@ export function UpcomingFlightsList({ studentId }: UpcomingFlightsListProps) {
             <span className="text-muted-foreground">Aircraft:</span> {flight.aircraft.tail_number} (
             {flight.aircraft.make} {flight.aircraft.model})
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+      <li>
+        <Button asChild variant="link" className="text-xs p-0 h-auto">
+          <Link href="/student/schedule">View all flights</Link>
+        </Button>
+      </li>
+    </ul>
   )
 }

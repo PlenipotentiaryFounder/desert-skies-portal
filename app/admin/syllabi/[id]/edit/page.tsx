@@ -1,9 +1,9 @@
-import { getSyllabusById } from "@/lib/syllabus-service"
-import { SyllabusForm } from "../../syllabus-form"
+import { getSyllabusById, getSyllabusLessons } from "@/lib/syllabus-service"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 import { notFound } from "next/navigation"
+import { SyllabusEditClient } from "./syllabus-edit-client"
 
 interface EditSyllabusPageProps {
   params: {
@@ -12,7 +12,10 @@ interface EditSyllabusPageProps {
 }
 
 export default async function EditSyllabusPage({ params }: EditSyllabusPageProps) {
-  const syllabus = await getSyllabusById(params.id)
+  const [syllabus, lessons] = await Promise.all([
+    getSyllabusById(params.id),
+    getSyllabusLessons(params.id)
+  ])
 
   if (!syllabus) {
     notFound()
@@ -29,9 +32,19 @@ export default async function EditSyllabusPage({ params }: EditSyllabusPageProps
         </Link>
       </div>
 
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Edit Syllabus</h1>
-        <SyllabusForm syllabus={syllabus} />
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Edit Syllabus</h1>
+          <p className="text-gray-600">
+            Configure syllabus settings and manage lesson structure
+          </p>
+        </div>
+
+        <SyllabusEditClient
+          syllabus={syllabus}
+          lessons={lessons}
+          syllabusId={params.id}
+        />
       </div>
     </div>
   )

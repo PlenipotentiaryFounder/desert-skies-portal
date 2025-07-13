@@ -11,9 +11,14 @@ import { RecentManeuverScores } from "@/components/student/recent-maneuver-score
 import { DocumentsOverview } from "@/components/student/documents-overview"
 import { CurrentEnrollmentCard } from "./CurrentEnrollmentCard"
 import { ACSStandardsWidget } from "@/components/shared/acs-standards-widget"
+import { getExpiringDocuments } from "@/lib/document-service"
+import { getStudentFlightSessions } from "@/lib/flight-session-service"
+import { getStudentACSProgress } from "@/lib/acs-service"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { AlertTriangle as ExclamationTriangleIcon, Calendar as CalendarIcon, ClipboardList as ClipboardListIcon } from "lucide-react"
 
 export default async function StudentDashboardPage() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies();
   const supabase = await createClient(cookieStore)
 
   const {
@@ -37,8 +42,54 @@ export default async function StudentDashboardPage() {
     redirect(`/${highestRole}/dashboard`)
   }
 
+  // --- ALERT LOGIC ---
+  // Expiring documents (next 30 days)
+  const expiringDocs = (await getExpiringDocuments(30)).filter((doc: any) => doc.user_id === user.id)
+  // Upcoming flights (next 7 days)
+  const allFlights = await getStudentFlightSessions(user.id)
+  const today = new Date()
+  const weekFromNow = new Date()
+  weekFromNow.setDate(today.getDate() + 7)
+  const upcomingFlights = allFlights.filter((flight: any) => {
+    const flightDate = new Date(flight.date)
+    return flight.status === "scheduled" && flightDate >= today && flightDate <= weekFromNow
+  })
+  // Incomplete requirements
+  const acsProgress = await getStudentACSProgress(user.id, "private_pilot")
+  const incompleteRequirements = acsProgress && acsProgress.overall_completion < 100
+
   return (
     <div className="flex flex-col gap-6">
+      {/* ALERTS */}
+      <div className="flex flex-col gap-2">
+        {expiringDocs.length > 0 && (
+          <Alert variant="destructive">
+            <ExclamationTriangleIcon className="h-5 w-5" />
+            <AlertTitle>Expiring Documents</AlertTitle>
+            <AlertDescription>
+              You have {expiringDocs.length} document(s) expiring soon. <a href="/student/documents" className="underline">Review now</a>.
+            </AlertDescription>
+          </Alert>
+        )}
+        {upcomingFlights.length > 0 && (
+          <Alert variant="default">
+            <CalendarIcon className="h-5 w-5" />
+            <AlertTitle>Upcoming Flights</AlertTitle>
+            <AlertDescription>
+              You have {upcomingFlights.length} flight(s) scheduled in the next 7 days. <a href="/student/schedule" className="underline">View schedule</a>.
+            </AlertDescription>
+          </Alert>
+        )}
+        {incompleteRequirements && (
+          <Alert variant="warning">
+            <ClipboardListIcon className="h-5 w-5" />
+            <AlertTitle>Incomplete Requirements</AlertTitle>
+            <AlertDescription>
+              You have incomplete ACS requirements. <a href="/student/requirements" className="underline">View requirements</a>.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.first_name}</h1>
         <p className="text-muted-foreground">Here's an overview of your flight training progress</p>

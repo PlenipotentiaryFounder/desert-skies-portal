@@ -22,7 +22,7 @@ interface StudentRequirementsListProps {
   studentId: string
 }
 
-export async function StudentRequirementsList({ studentId }: StudentRequirementsListProps) {
+export function StudentRequirementsList({ studentId }: StudentRequirementsListProps) {
   const [activeTab, setActiveTab] = useState<CertificateType>("private_pilot")
   const [requirements, setRequirements] = useState<StudentRequirement[]>([])
   const [progress, setProgress] = useState({
@@ -32,7 +32,7 @@ export async function StudentRequirementsList({ studentId }: StudentRequirements
   })
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = await createClient()
+  const supabase = createClient()
 
   useEffect(() => {
     async function fetchRequirements() {
@@ -52,7 +52,10 @@ export async function StudentRequirementsList({ studentId }: StudentRequirements
       }
     }
 
-    fetchRequirements()
+    fetchRequirements().catch((error) => {
+      console.error("Unhandled error in fetchRequirements:", error)
+      setLoading(false)
+    })
   }, [studentId, activeTab])
 
   const certificateLabels: Record<CertificateType, string> = {

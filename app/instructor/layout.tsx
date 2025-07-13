@@ -72,8 +72,8 @@ export default async function InstructorLayout({
   const profile = await getUserProfileWithRoles(user.id)
   const roles = profile?.roles || []
 
-  const canAccessInstructor = roles.includes("instructor")
-  const canAccessAdmin = roles.includes("admin")
+  const canAccessInstructor = roles.some((r: any) => (typeof r === 'string' ? r : r.role_name) === "instructor")
+  const canAccessAdmin = roles.some((r: any) => (typeof r === 'string' ? r : r.role_name) === "admin")
 
   if (!canAccessInstructor && !canAccessAdmin) {
     redirect("/")
