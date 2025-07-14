@@ -7,15 +7,28 @@ export async function POST(request: Request) {
     const requestData = await request.json()
     const { userId, email, firstName, lastName, role, status = "active" } = requestData
 
+    console.log("Creating profile for user:", { userId, email, firstName, lastName, role, status })
+
+    // Validate required fields
+    if (!userId || !email || !firstName || !lastName || !role) {
+      console.error("Missing required fields:", { userId, email, firstName, lastName, role })
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
+
     // Create a Supabase client with the service role key
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase environment variables")
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Insert the profile with the appropriate status
     // Instructors start with "pending" status by default
-    const { error } = await supabase.from("profiles").insert({
+    const profileData = {
       id: userId,
       email,
       first_name: firstName,
@@ -24,17 +37,28 @@ export async function POST(request: Request) {
       status: role === "instructor" ? "pending" : status,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    })
-
-    if (error) {
-      console.error("Server profile creation error:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    console.log("Inserting profile:", profileData)
+
+    const { data: profileResult, error: profileError } = await supabase
+      .from("profiles")
+      .insert(profileData)
+      .select()
+      .single()
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError)
+      return NextResponse.json({ error: `Profile creation failed: ${profileError.message}` }, { status: 500 })
+    }
+
+    console.log("Profile created successfully:", profileResult)
 
     // If this is an instructor, create a notification for admins
     if (role === "instructor") {
       try {
-        await supabase.from("notifications").insert({
+        console.log("Creating instructor notification...")
+        const { error: notificationError } = await supabase.from("notifications").insert({
           type: "instructor_approval",
           title: "New Instructor Registration",
           message: `${firstName} ${lastName} has registered as an instructor and is awaiting approval.`,
@@ -43,6 +67,12 @@ export async function POST(request: Request) {
           created_at: new Date().toISOString(),
           metadata: JSON.stringify({ instructor_id: userId }),
         })
+
+        if (notificationError) {
+          console.error("Notification creation error:", notificationError)
+        } else {
+          console.log("Instructor notification created successfully")
+        }
       } catch (notificationError) {
         console.error("Error creating notification:", notificationError)
         // Continue even if notification creation fails
@@ -52,23 +82,34 @@ export async function POST(request: Request) {
     // If this is a student, create an onboarding record
     if (role === "student") {
       try {
-        await supabase.from("student_onboarding").insert({
+        console.log("Creating student onboarding record...")
+        const onboardingData = {
           user_id: userId,
           current_step: 'welcome',
           step_number: 1,
           completed_steps: {},
           created_at: new Date().toISOString(),
           last_activity_at: new Date().toISOString(),
-        })
+        }
+
+        const { error: onboardingError } = await supabase
+          .from("student_onboarding")
+          .insert(onboardingData)
+
+        if (onboardingError) {
+          console.error("Onboarding record creation error:", onboardingError)
+        } else {
+          console.log("Student onboarding record created successfully")
+        }
       } catch (onboardingError) {
         console.error("Error creating onboarding record:", onboardingError)
         // Continue even if onboarding creation fails
       }
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, profile: profileResult })
   } catch (error) {
-    console.error("Error setting up Thomas's roles:", error)
+    console.error("Error creating profile:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
