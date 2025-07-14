@@ -49,6 +49,23 @@ export async function POST(request: Request) {
       }
     }
 
+    // If this is a student, create an onboarding record
+    if (role === "student") {
+      try {
+        await supabase.from("student_onboarding").insert({
+          user_id: userId,
+          current_step: 'welcome',
+          step_number: 1,
+          completed_steps: {},
+          created_at: new Date().toISOString(),
+          last_activity_at: new Date().toISOString(),
+        })
+      } catch (onboardingError) {
+        console.error("Error creating onboarding record:", onboardingError)
+        // Continue even if onboarding creation fails
+      }
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error setting up Thomas's roles:", error)

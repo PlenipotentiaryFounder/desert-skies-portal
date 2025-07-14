@@ -80,17 +80,48 @@ export async function middleware(request: NextRequest) {
       const validDashboards = [];
       if (hasAdmin) validDashboards.push('/admin/dashboard');
       if (hasInstructor) validDashboards.push('/instructor/dashboard');
-      if (hasStudent) validDashboards.push('/student/dashboard');
+      if (hasStudent) {
+        validDashboards.push('/student/dashboard');
+        validDashboards.push('/student/onboarding');
+      }
 
       // Pick a default dashboard (priority: instructor > admin > student)
       let defaultDashboard = '';
       if (hasInstructor) defaultDashboard = '/instructor/dashboard';
       else if (hasAdmin) defaultDashboard = '/admin/dashboard';
-      else if (hasStudent) defaultDashboard = '/student/dashboard';
+      else if (hasStudent) {
+        // Check if student has completed onboarding
+        try {
+          const { data: onboardingData } = await supabase
+            .from('student_onboarding')
+            .select('completed_at')
+            .eq('user_id', user.id)
+            .single();
+
+          if (!onboardingData?.completed_at) {
+            // Student hasn't completed onboarding
+            defaultDashboard = '/student/onboarding';
+            console.log(`Student has not completed onboarding, redirecting to: ${defaultDashboard}`);
+          } else {
+            // Student has completed onboarding
+            defaultDashboard = '/student/dashboard';
+          }
+        } catch (onboardingError) {
+          console.error("Error checking onboarding status:", onboardingError);
+          // If there's an error, default to onboarding to be safe
+          defaultDashboard = '/student/onboarding';
+        }
+      }
 
       // If already on a dashboard the user can access, do not redirect
       if (validDashboards.includes(path)) {
         return response;
+      }
+
+      // Special case: if user is on onboarding page and has completed it, redirect to dashboard
+      if (path === '/student/onboarding' && hasStudent && defaultDashboard === '/student/dashboard') {
+        console.log(`Student has completed onboarding, redirecting from onboarding to dashboard`);
+        return NextResponse.redirect(new URL('/student/dashboard', request.url));
       }
 
       // Otherwise, redirect to the default dashboard
