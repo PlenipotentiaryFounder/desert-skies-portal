@@ -10,8 +10,23 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2 } from "lucide-react"
+import { 
+  Loader2, 
+  User, 
+  Mail, 
+  Lock, 
+  Plane, 
+  Shield, 
+  AlertCircle,
+  CheckCircle,
+  Users,
+  GraduationCap
+} from "lucide-react"
+import Link from "next/link"
 
 const formSchema = z.object({
   firstName: z.string().min(2, {
@@ -105,11 +120,11 @@ export function SignupForm() {
         }
 
         toast({
-          title: "Account created",
+          title: "Account created successfully!",
           description:
             values.role === "instructor"
               ? "Your instructor account has been created and is pending approval by an administrator."
-              : "Your account has been created successfully.",
+              : "Welcome to Desert Skies Aviation! You can now access your training portal.",
         })
 
         // Sign in the user immediately after signup
@@ -144,94 +159,204 @@ export function SignupForm() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <div className="w-full max-w-md mx-auto">
+      {/* Header with Aviation Theme */}
+      <div className="text-center mb-8">
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-full flex items-center justify-center shadow-lg">
+            <Plane className="w-8 h-8 text-white" />
+          </div>
         </div>
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="email@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>I am a</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="student">Student Pilot</SelectItem>
-                  <SelectItem value="instructor">Flight Instructor</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating account...
-            </>
-          ) : (
-            "Create Account"
-          )}
-        </Button>
-      </form>
-    </Form>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Desert Skies</h1>
+        <p className="text-gray-600">
+          Start your aviation journey with professional flight training
+        </p>
+      </div>
+
+      <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <CardHeader className="space-y-1 pb-6">
+          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+          <CardDescription className="text-center">
+            Sign up for your flight training account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">First Name</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input 
+                            placeholder="John" 
+                            {...field} 
+                            className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Last Name</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input 
+                            placeholder="Doe" 
+                            {...field} 
+                            className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Email Address</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input 
+                          placeholder="pilot@example.com" 
+                          {...field} 
+                          className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          {...field} 
+                          className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">I am a</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Select your role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="student">
+                          <div className="flex items-center gap-2">
+                            <GraduationCap className="w-4 h-4" />
+                            <span>Student Pilot</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="instructor">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span>Flight Instructor</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button 
+                type="submit" 
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg transition-all duration-200" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Create Account
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+
+          {/* Role Information */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-blue-900">Account Types</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  <strong>Student:</strong> Access flight training, scheduling, and progress tracking<br />
+                  <strong>Instructor:</strong> Requires admin approval before activation
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Sign In Link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link 
+                href="/login" 
+                className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                Sign In
+              </Link>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Footer */}
+      <div className="mt-8 text-center">
+        <div className="flex justify-center items-center gap-2 text-sm text-gray-500">
+          <Badge variant="outline" className="text-xs">
+            FAA Part 141 Certified
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            Professional Training
+          </Badge>
+        </div>
+      </div>
+    </div>
   )
 }
