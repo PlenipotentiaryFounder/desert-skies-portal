@@ -233,7 +233,6 @@ export async function getFlightSessionById(id: string) {
         )
       )
     `)
-    // @ts-expect-error Supabase type system is too strict, but this is safe
     .eq("id", id as Database["public"]["Tables"]["flight_sessions"]["Row"]["id"])
     .single()
 
@@ -262,7 +261,6 @@ export async function getStudentFlightSessions(studentId: string) {
   const { data: enrollments, error: enrollmentsError } = await supabase
     .from("student_enrollments")
     .select("id")
-    // @ts-expect-error Supabase type system is too strict, but this is safe
     .eq("student_id", studentId as Database["public"]["Tables"]["student_enrollments"]["Row"]["student_id"])
 
   if (enrollmentsError || !enrollments || !Array.isArray(enrollments) || enrollments.length === 0) {
@@ -300,7 +298,6 @@ export async function getStudentFlightSessions(studentId: string) {
         lesson_type
       )
     `)
-    // @ts-expect-error Supabase type system is too strict, but this is safe
     .in("enrollment_id", enrollmentIds as Database["public"]["Tables"]["flight_sessions"]["Row"]["enrollment_id"][])
     .order("date", { ascending: false })
     .order("start_time", { ascending: false })
@@ -351,7 +348,6 @@ export async function getInstructorFlightSessions(instructorId: string) {
         lesson_type
       )
     `)
-    // @ts-expect-error Supabase type system is too strict, but this is safe
     .eq("instructor_id", instructorId as Database["public"]["Tables"]["flight_sessions"]["Row"]["instructor_id"])
     .order("date", { ascending: false })
     .order("start_time", { ascending: false })
@@ -380,19 +376,27 @@ export async function createFlightSession(formData: FlightSessionFormData) {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
-  // Set sensible defaults for new fields
-  const insertData: FlightSessionInsert = {
-    ...formData,
-    session_type: formData.session_type || "mission",
-    prebrief_minutes: formData.prebrief_minutes ?? 30,
-    postbrief_minutes: formData.postbrief_minutes ?? 30,
-    location_id: formData.location_id || null,
-    recurrence_rule: formData.recurrence_rule || null,
-    requested_by: formData.requested_by || null,
-    request_status: formData.request_status || "pending",
+  if (!formData.lesson_id || typeof formData.lesson_id !== 'string') {
+    throw new Error("lesson_id is required for flight_sessions and must be a string")
   }
 
-  // @ts-expect-error Supabase type system is too strict, but this is safe
+  const insertData: FlightSessionInsert = {
+    ...formData,
+    lesson_id: formData.lesson_id,
+    custom_lesson_id: formData.custom_lesson_id ?? null,
+    start_time: formData.start_time ?? null,
+    end_time: formData.end_time ?? null,
+    session_type: formData.session_type ?? "mission",
+    prebrief_minutes: formData.prebrief_minutes ?? 30,
+    postbrief_minutes: formData.postbrief_minutes ?? 30,
+    location_id: formData.location_id ?? null,
+    recurrence_rule: formData.recurrence_rule ?? null,
+    requested_by: formData.requested_by ?? null,
+    request_status: formData.request_status ?? "pending",
+    notes: formData.notes ?? null,
+    weather_conditions: formData.weather_conditions ?? null,
+  }
+
   const { data, error } = await supabase.from("flight_sessions").insert([insertData]).select()
 
   if (error) {
@@ -410,20 +414,25 @@ export async function updateFlightSession(id: string, formData: Partial<FlightSe
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
-  // Allow updating new fields as well
+  // Only include fields that are defined and valid for the DB
   const updateData: FlightSessionUpdate = {
     ...formData,
-    session_type: formData.session_type,
-    prebrief_minutes: formData.prebrief_minutes,
-    postbrief_minutes: formData.postbrief_minutes,
-    location_id: formData.location_id,
-    recurrence_rule: formData.recurrence_rule,
-    requested_by: formData.requested_by,
-    request_status: formData.request_status,
+    lesson_id: typeof formData.lesson_id === 'string' ? formData.lesson_id : undefined,
+    custom_lesson_id: formData.custom_lesson_id ?? null,
+    start_time: formData.start_time ?? null,
+    end_time: formData.end_time ?? null,
+    session_type: formData.session_type ?? undefined,
+    prebrief_minutes: formData.prebrief_minutes ?? undefined,
+    postbrief_minutes: formData.postbrief_minutes ?? undefined,
+    location_id: formData.location_id ?? null,
+    recurrence_rule: formData.recurrence_rule ?? null,
+    requested_by: formData.requested_by ?? null,
+    request_status: formData.request_status ?? undefined,
+    notes: formData.notes ?? null,
+    weather_conditions: formData.weather_conditions ?? null,
   }
 
-  // @ts-expect-error Supabase type system is too strict, but this is safe
-  const { data, error } = await supabase.from("flight_sessions").update(updateData).eq("id", id as Database["public"]["Tables"]["flight_sessions"]["Row"]["id"]).select()
+  const { data, error } = await supabase.from("flight_sessions").update(updateData).eq("id", id).select()
 
   if (error) {
     console.error("Error updating flight session:", error)
@@ -444,7 +453,6 @@ export async function deleteFlightSession(id: string) {
   const supabase = await createClient(cookieStore)
 
   // First delete any maneuver scores associated with this session
-  // @ts-expect-error Supabase type system is too strict, but this is safe
   const { error: scoresError } = await supabase.from("maneuver_scores").delete().eq("flight_session_id", id as Database["public"]["Tables"]["maneuver_scores"]["Row"]["flight_session_id"])
 
   if (scoresError) {
@@ -453,7 +461,6 @@ export async function deleteFlightSession(id: string) {
   }
 
   // Then delete the flight session
-  // @ts-expect-error Supabase type system is too strict, but this is safe
   const { error } = await supabase.from("flight_sessions").delete().eq("id", id as Database["public"]["Tables"]["flight_sessions"]["Row"]["id"])
 
   if (error) {
@@ -485,7 +492,6 @@ export async function getAvailableManeuversForLesson(lessonId: string) {
         faa_reference
       )
     `)
-    // @ts-expect-error Supabase type system is too strict, but this is safe
     .eq("lesson_id", lessonId as Database["public"]["Tables"]["lesson_maneuvers"]["Row"]["lesson_id"])
 
   if (lessonManeuversError) {
@@ -517,7 +523,6 @@ export async function saveManeuverScores(
   const supabase = await createClient(cookieStore)
 
   // First delete any existing scores for this session
-  // @ts-expect-error Supabase type system is too strict, but this is safe
   const { error: deleteError } = await supabase.from("maneuver_scores").delete().eq("flight_session_id", flightSessionId as Database["public"]["Tables"]["maneuver_scores"]["Row"]["flight_session_id"])
 
   if (deleteError) {
@@ -536,7 +541,6 @@ export async function saveManeuverScores(
     areas_for_improvement: score.areas_for_improvement || null,
   }))
 
-  // @ts-expect-error Supabase type system is too strict, but this is safe
   const { data, error: insertError } = await supabase.from("maneuver_scores").insert(scoresToInsert as Database["public"]["Tables"]["maneuver_scores"]["Insert"][])
 
   if (insertError) {

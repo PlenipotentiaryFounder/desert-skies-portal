@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
+import { getSyllabusLessonById } from "@/lib/syllabus-service"
 
 // POST: Create new lesson with tags
 export async function POST(req: NextRequest) {
@@ -49,14 +50,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get("id")
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
-  const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
-  const { data: lesson, error } = await supabase.from("syllabus_lessons").select("*", "id", "title", "objectives", "standards", "email_template").eq("id", id).single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  // Fetch tags
-  const { data: maneuvers } = await supabase.from("lesson_maneuvers").select("*" ).eq("lesson_id", id)
-  const { data: coreTopics } = await supabase.from("lesson_core_topics").select("*" ).eq("lesson_id", id)
-  const { data: resources } = await supabase.from("lesson_resources").select("*" ).eq("lesson_id", id)
-  const { data: whatToBring } = await supabase.from("lesson_what_to_bring").select("*" ).eq("lesson_id", id)
-  return NextResponse.json({ lesson, maneuvers, coreTopics, resources, whatToBring })
+  const lesson = await getSyllabusLessonById(id)
+  if (!lesson) return NextResponse.json({ error: "Lesson not found" }, { status: 404 })
+  return NextResponse.json({ lesson })
 } 

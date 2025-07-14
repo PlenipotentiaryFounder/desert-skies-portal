@@ -642,7 +642,7 @@ async function updateRequirementsFromFlight(studentId: string, flight: any) {
 
     if (valueToAdd > 0) {
       const newValue = (req.current_value || 0) + valueToAdd
-      const isComplete = newValue >= req.requirement.minimum_value
+      const isComplete = newValue >= (req.requirement.minimum_value != null ? req.requirement.minimum_value : 0)
 
       // Update the requirement
       await supabase
@@ -717,7 +717,7 @@ async function updateRequirementsFromFlightUpdate(studentId: string, originalFli
 
     if (valueDifference !== 0) {
       const newValue = Math.max(0, (req.current_value || 0) + valueDifference)
-      const isComplete = newValue >= req.requirement.minimum_value
+      const isComplete = newValue >= (req.requirement.minimum_value != null ? req.requirement.minimum_value : 0)
 
       // Update the requirement
       await supabase
@@ -788,7 +788,7 @@ async function updateRequirementsFromFlightDeletion(studentId: string, flight: a
 
     if (valueToSubtract > 0) {
       const newValue = Math.max(0, (req.current_value || 0) - valueToSubtract)
-      const isComplete = newValue >= req.requirement.minimum_value
+      const isComplete = newValue >= (req.requirement.minimum_value != null ? req.requirement.minimum_value : 0)
 
       // Update the requirement
       await supabase

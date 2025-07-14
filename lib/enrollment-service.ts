@@ -106,7 +106,6 @@ export async function getEnrollmentById(id: string) {
         version
       )
     `)
-    // @ts-expect-error Supabase type system is too strict, but this is safe
     .eq("id", id as Database["public"]["Tables"]["student_enrollments"]["Row"]["id"])
     .single()
 
@@ -137,7 +136,6 @@ export async function getStudentEnrollments(studentId: string) {
         version
       )
     `)
-    // @ts-expect-error Supabase type system is too strict, but this is safe
     .eq("student_id", studentId as Database["public"]["Tables"]["student_enrollments"]["Row"]["student_id"])
     .order("created_at", { ascending: false })
 
@@ -168,7 +166,6 @@ export async function getInstructorEnrollments(instructorId: string) {
         version
       )
     `)
-    // @ts-expect-error Supabase type system is too strict, but this is safe
     .eq("instructor_id", instructorId as Database["public"]["Tables"]["student_enrollments"]["Row"]["instructor_id"])
     .order("created_at", { ascending: false })
 
@@ -192,7 +189,6 @@ export async function createEnrollment(formData: EnrollmentFormData) {
     status: formData.status,
   }
 
-  // @ts-expect-error Supabase type system is too strict, but this is safe
   const { data, error } = await supabase.from("student_enrollments").insert([insertData]).select()
 
   if (error) {
@@ -209,7 +205,6 @@ export async function updateEnrollment(id: string, formData: EnrollmentFormData)
 
   const updateData: StudentEnrollmentUpdate = { ...formData }
 
-  // @ts-expect-error Supabase type system is too strict, but this is safe
   const { data, error } = await supabase.from("student_enrollments").update(updateData).eq("id", id as Database["public"]["Tables"]["student_enrollments"]["Row"]["id"]).select()
 
   if (error) {
@@ -225,7 +220,6 @@ export async function updateEnrollment(id: string, formData: EnrollmentFormData)
 export async function deleteEnrollment(id: string) {
   const supabase = await createClient(await cookies())
 
-  // @ts-expect-error Supabase type system is too strict, but this is safe
   const { error } = await supabase.from("student_enrollments").delete().eq("id", id as Database["public"]["Tables"]["student_enrollments"]["Row"]["id"])
 
   if (error) {

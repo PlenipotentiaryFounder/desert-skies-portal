@@ -4,7 +4,6 @@ import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { getStudentEnrollments } from "@/lib/enrollment-service"
 import { getSyllabusLessonById } from "@/lib/syllabus-service"
-import { getManeuversForLesson } from "@/lib/maneuver-service"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -39,7 +38,7 @@ export default async function StudentLessonDetailPage({
     notFound()
   }
 
-  const maneuvers = await getManeuversForLesson(params.lessonId)
+  const maneuvers = lesson.maneuvers || []
 
   // Get flight sessions for this lesson
   const { data: sessions } = await supabase

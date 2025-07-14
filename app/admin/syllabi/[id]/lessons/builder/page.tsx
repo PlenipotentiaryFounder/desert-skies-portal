@@ -104,7 +104,7 @@ export default function LessonBuilderWorkstation() {
       const data = await res.json()
       if (res.ok) {
         setLessonInfo(data.lesson || {})
-        setManeuvers(data.maneuvers || [])
+        setManeuvers(data.lesson?.maneuvers || [])
         setFeedbackFields(data.feedback_fields || "")
         setFeedbackInstructions(data.feedback_instructions || "")
         setCoreTopics(data.coreTopics || [])

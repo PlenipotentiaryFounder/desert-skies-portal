@@ -102,7 +102,6 @@ export async function getSyllabusById(id: string) {
 export async function createSyllabus(formData: SyllabusFormData) {
   const supabase = await createClient(await cookies())
 
-  // @ts-expect-error Supabase type system is too strict for insert
   const { data, error } = await supabase.from("syllabi").insert([
     formData as import("@/types/supabase").Database["public"]["Tables"]["syllabi"]["Insert"]
   ]).select()
@@ -119,7 +118,6 @@ export async function createSyllabus(formData: SyllabusFormData) {
 export async function updateSyllabus(id: string, formData: SyllabusFormData) {
   const supabase = await createClient(await cookies())
 
-  // @ts-expect-error Supabase type system is too strict for update
   const { data, error } = await supabase.from("syllabi")
     .update(formData as import("@/types/supabase").Database["public"]["Tables"]["syllabi"]["Update"])
     .eq("id", id as any)
@@ -238,20 +236,42 @@ export async function getSyllabusLessons(syllabusId: string) {
 export async function getSyllabusLessonById(id: string) {
   const supabase = await createClient(await cookies())
 
-  const { data, error } = await supabase.from("syllabus_lessons").select("*").eq("id", id as any).single()
+  // Fetch the lesson
+  const { data: lesson, error } = await supabase.from("syllabus_lessons").select("*").eq("id", id as any).single()
 
-  if (error) {
+  if (error || !lesson) {
     console.error("Error fetching syllabus lesson:", error)
     return null
   }
 
-  return data as unknown as SyllabusLesson
+  // Fetch maneuvers for this lesson
+  const { data: lessonManeuvers, error: lessonManeuversError } = await supabase
+    .from("lesson_maneuvers")
+    .select(`
+      is_required,
+      maneuver:maneuver_id (
+        id,
+        name,
+        description,
+        category,
+        faa_reference
+      )
+    `)
+    .eq("lesson_id", id)
+
+  let maneuvers: any[] = []
+  if (!lessonManeuversError && Array.isArray(lessonManeuvers)) {
+    maneuvers = lessonManeuvers
+      .filter((lm: any) => lm.maneuver)
+      .map((lm: any) => ({ ...lm.maneuver, is_required: lm.is_required }))
+  }
+
+  return { ...lesson, maneuvers } as SyllabusLesson
 }
 
 export async function createSyllabusLesson(formData: SyllabusLessonFormData) {
   const supabase = await createClient(await cookies())
 
-  // @ts-expect-error Supabase type system is too strict for insert
   const { data, error } = await supabase.from("syllabus_lessons").insert([
     formData as import("@/types/supabase").Database["public"]["Tables"]["syllabus_lessons"]["Insert"]
   ]).select()
@@ -265,22 +285,45 @@ export async function createSyllabusLesson(formData: SyllabusLessonFormData) {
   return { success: true, data: data?.[0] }
 }
 
-export async function updateSyllabusLesson(id: string, formData: SyllabusLessonFormData) {
-  const supabase = await createClient(await cookies())
+export async function updateSyllabusLesson(id: string, updates: Partial<SyllabusLessonFormData>) {
+  const supabase = await createClient(await cookies());
 
-  // @ts-expect-error Supabase type system is too strict for update
-  const { data, error } = await supabase.from("syllabus_lessons")
-    .update(formData as import("@/types/supabase").Database["public"]["Tables"]["syllabus_lessons"]["Update"])
-    .eq("id", id as any)
-    .select()
+  // Fetch current lesson
+  const { data: current, error: fetchError } = await supabase
+    .from("syllabus_lessons")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  if (error) {
-    console.error("Error updating syllabus lesson:", error)
-    return { success: false, error: error.message }
+  if (fetchError || !current) {
+    return { success: false, error: "Lesson not found" };
   }
 
-  revalidatePath(`/admin/syllabi/${formData.syllabus_id}`)
-  return { success: true, data: data?.[0] }
+  // Merge updates with current
+  const merged = { ...current, ...updates };
+
+  // Validate required fields (use as any for dynamic access)
+  const required = ["title", "description", "order_index", "lesson_type", "estimated_hours", "syllabus_id"];
+  for (const field of required) {
+    if ((merged as any)[field] == null || (merged as any)[field] === "") {
+      return { success: false, error: `Missing required field: ${field}` };
+    }
+  }
+
+  // Update
+  const { data, error } = await supabase
+    .from("syllabus_lessons")
+    .update(merged)
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    console.error("Error updating syllabus lesson:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath(`/admin/syllabi/${(merged as any).syllabus_id}`);
+  return { success: true, data: data?.[0] };
 }
 
 export async function deleteSyllabusLesson(id: string, syllabusId: string) {
@@ -372,11 +415,14 @@ export async function getSyllabusStatistics(syllabusId: string): Promise<Syllabu
   
   if (completedEnrollments.length > 0) {
     const totalDays = completedEnrollments.reduce((sum, enrollment) => {
-      const startDate = new Date(enrollment.start_date)
-      const endDate = new Date(enrollment.completion_date!)
-      const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      return sum + diffDays
+      if (enrollment.start_date && enrollment.completion_date) {
+        const startDate = new Date(enrollment.start_date)
+        const endDate = new Date(enrollment.completion_date)
+        const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        return sum + diffDays
+      }
+      return sum
     }, 0)
     averageCompletionTime = Math.round(totalDays / completedEnrollments.length)
   }
@@ -396,12 +442,13 @@ export async function getSyllabusStatistics(syllabusId: string): Promise<Syllabu
   const thisYear = new Date(now.getFullYear(), 0, 1)
 
   const enrollmentTrends = {
-    thisMonth: enrollments?.filter(e => new Date(e.created_at) >= thisMonth).length || 0,
+    thisMonth: enrollments?.filter(e => e.created_at && new Date(e.created_at) >= thisMonth).length || 0,
     lastMonth: enrollments?.filter(e => {
+      if (!e.created_at) return false;
       const created = new Date(e.created_at)
       return created >= lastMonth && created < thisMonth
     }).length || 0,
-    thisYear: enrollments?.filter(e => new Date(e.created_at) >= thisYear).length || 0,
+    thisYear: enrollments?.filter(e => e.created_at && new Date(e.created_at) >= thisYear).length || 0,
   }
 
   // FAA compliance (basic calculation - can be enhanced based on specific requirements)
@@ -505,16 +552,14 @@ export async function duplicateLesson(lessonId: string, syllabusId: string) {
 
   const newOrderIndex = (lessons?.[0]?.order_index || 0) + 1
 
-  // Create the duplicate lesson
+  // Create the duplicate lesson (omit id, created_at, updated_at)
+  const { id, created_at, updated_at, ...rest } = originalLesson;
   const duplicateData = {
-    ...originalLesson,
+    ...rest,
     title: `${originalLesson.title} (Copy)`,
     order_index: newOrderIndex,
     syllabus_id: syllabusId
   }
-  delete duplicateData.id
-  delete duplicateData.created_at
-  delete duplicateData.updated_at
 
   const { data: newLesson, error: createError } = await supabase
     .from("syllabus_lessons")
@@ -537,7 +582,7 @@ export async function duplicateLesson(lessonId: string, syllabusId: string) {
       lesson_id: newLesson.id,
       maneuver_id: lm.maneuver_id,
       is_required: lm.is_required,
-      instructor_notes: lm.instructor_notes
+      instructor_notes: (lm as any).instructor_notes // type assertion for property not in type
     }))
 
     await supabase.from("lesson_maneuvers").insert(maneuverCopies as any)
@@ -552,7 +597,7 @@ export async function toggleLessonActive(lessonId: string, syllabusId: string, i
 
   const { error } = await supabase
     .from("syllabus_lessons")
-    .update({ is_active: isActive })
+    .update({ is_active: isActive } as any)
     .eq("id", lessonId as any)
 
   if (error) {
