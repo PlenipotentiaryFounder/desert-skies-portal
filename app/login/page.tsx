@@ -1,4 +1,4 @@
-import React from "react"
+import React, { Fragment } from "react"
 import { LoginForm } from "@/components/auth/login-form"
 
 // Separate component for auth check
@@ -22,7 +22,7 @@ async function AuthCheck() {
 
 export default function LoginPage() {
   return (
-    <>
+    <Fragment>
       <AuthCheck />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50 relative overflow-hidden">
         {/* Background Pattern */}
@@ -50,6 +50,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-    </>
+    </Fragment>
   )
 }
