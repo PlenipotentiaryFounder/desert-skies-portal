@@ -157,10 +157,9 @@ export default function LessonBuilderWorkstation() {
                 onFeedbackFieldsChange={setFeedbackFields}
                 feedbackInstructions={feedbackInstructions}
                 onFeedbackInstructionsChange={setFeedbackInstructions}
+                syllabusId={lessonInfo.syllabus_id || ""}
+                lessonId={lessonId}
               />
-              <div className="mt-6 flex justify-end">
-                <button className="btn btn-primary">Save Maneuvers</button>
-              </div>
             </>
           ) : panel === "Core Topics" ? (
             <>

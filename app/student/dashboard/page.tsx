@@ -16,6 +16,7 @@ import { getStudentFlightSessions } from "@/lib/flight-session-service"
 import { getStudentACSProgress } from "@/lib/acs-service"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle as ExclamationTriangleIcon, Calendar as CalendarIcon, ClipboardList as ClipboardListIcon } from "lucide-react"
+import { OnboardingPrompt } from "@/components/student/onboarding/onboarding-prompt"
 
 export default async function StudentDashboardPage() {
   const cookieStore = await cookies();
@@ -94,6 +95,8 @@ export default async function StudentDashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.first_name}</h1>
         <p className="text-muted-foreground">Here's an overview of your flight training progress</p>
       </div>
+
+      <OnboardingPrompt userId={user.id} />
 
       <Suspense fallback={<Skeleton className="h-40 w-full" />}>
         <CurrentEnrollmentCard studentId={user.id} />

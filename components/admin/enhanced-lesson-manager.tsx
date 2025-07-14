@@ -57,6 +57,7 @@ import {
 import type { SyllabusLesson } from "@/lib/syllabus-service"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface LessonWithManeuvers extends SyllabusLesson {
   maneuvers?: Array<{
@@ -94,10 +95,20 @@ export function EnhancedLessonManager({
   const [filterType, setFilterType] = useState<string>("all")
   const [isReordering, setIsReordering] = useState(false)
   const { toast } = useToast()
+  const [allManeuvers, setAllManeuvers] = useState<any[]>([])
+  const [maneuverSearch, setManeuverSearch] = useState("")
+  const [editingManeuvers, setEditingManeuvers] = useState<{[key: string]: any[]}>({})
 
   useEffect(() => {
     setLessons(initialLessons)
   }, [initialLessons])
+
+  // Fetch all maneuvers for the syllabus
+  useEffect(() => {
+    fetch(`/api/admin/syllabus-maneuvers?syllabusId=${syllabusId}`)
+      .then(r => r.json())
+      .then(data => setAllManeuvers(data.maneuvers || []))
+  }, [syllabusId])
 
   const filteredLessons = lessons.filter(lesson => {
     const matchesSearch = lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -165,6 +176,77 @@ export function EnhancedLessonManager({
       toast({
         title: "Error",
         description: "Failed to update lesson. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Helper function to get current maneuvers for a lesson
+  const getCurrentManeuvers = (lessonId: string) => {
+    return editingManeuvers[lessonId] || lessons.find(l => l.id === lessonId)?.maneuvers || []
+  }
+
+  const handleManeuverToggle = (lessonId: string, maneuver: any) => {
+    // Get current maneuvers (either from editing state or lesson state)
+    const currentManeuvers = getCurrentManeuvers(lessonId)
+    const exists = currentManeuvers.find(m => m.id === maneuver.id)
+    let updatedManeuvers
+    
+    if (exists) {
+      updatedManeuvers = currentManeuvers.filter(m => m.id !== maneuver.id)
+    } else {
+      updatedManeuvers = [...currentManeuvers, { ...maneuver, is_required: true }]
+    }
+    
+    setEditingManeuvers(prev => ({ ...prev, [lessonId]: updatedManeuvers }))
+  }
+
+  const handleManeuverChange = (lessonId: string, maneuverId: string, field: string, value: any) => {
+    // Get current maneuvers (either from editing state or lesson state)
+    const currentManeuvers = getCurrentManeuvers(lessonId)
+    const updatedManeuvers = currentManeuvers.map(m => 
+      m.id === maneuverId ? { ...m, [field]: value } : m
+    )
+    setEditingManeuvers(prev => ({ ...prev, [lessonId]: updatedManeuvers }))
+  }
+
+  const saveManeuvers = async (lessonId: string) => {
+    const maneuvers = editingManeuvers[lessonId] || []
+    try {
+      const response = await fetch('/api/admin/syllabus-maneuvers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lessonId,
+          maneuvers
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save maneuvers')
+      }
+
+      // Update the lesson in the local state
+      setLessons(prev => prev.map(lesson => 
+        lesson.id === lessonId 
+          ? { ...lesson, maneuvers: maneuvers.map(m => ({ ...m, is_required: m.is_required || true })) }
+          : lesson
+      ))
+
+      // Clear editing state
+      setEditingManeuvers(prev => ({ ...prev, [lessonId]: [] }))
+      
+      toast({
+        title: "Maneuvers updated",
+        description: "Lesson maneuvers have been saved successfully.",
+      })
+    } catch (error) {
+      console.error('Error saving maneuvers:', error)
+      toast({
+        title: "Error",
+        description: "Failed to save maneuvers. Please try again.",
         variant: "destructive",
       })
     }
@@ -252,7 +334,7 @@ export function EnhancedLessonManager({
               {filteredLessons.map((lesson, index) => (
                 <Draggable key={lesson.id} draggableId={lesson.id} index={index}>
                   {(provided, snapshot) => (
-                    <div
+                    <Card
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       className={cn(
@@ -261,184 +343,224 @@ export function EnhancedLessonManager({
                         lesson.is_active === false && "opacity-60"
                       )}
                     >
-                      <Card className="border-0 shadow-none">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center gap-3">
-                            {/* Drag Handle */}
-                            <div
-                              {...provided.dragHandleProps}
-                              className="cursor-grab hover:cursor-grabbing text-gray-400 hover:text-gray-600"
-                            >
-                              <GripVertical className="w-5 h-5" />
-                            </div>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center gap-3">
+                          {/* Drag Handle */}
+                          <div
+                            {...provided.dragHandleProps}
+                            className="cursor-grab hover:cursor-grabbing text-gray-400 hover:text-gray-600"
+                          >
+                            <GripVertical className="w-5 h-5" />
+                          </div>
 
-                            {/* Lesson Number */}
-                            <div className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center font-semibold text-sm">
-                              {lesson.order_index + 1}
-                            </div>
+                          {/* Lesson Number */}
+                          <div className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center font-semibold text-sm">
+                            {lesson.order_index + 1}
+                          </div>
 
-                            {/* Title and Status */}
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-lg">{lesson.title}</h3>
-                                <Badge className={cn("text-xs", getLessonTypeColor(lesson.lesson_type))}>
-                                  {getLessonTypeIcon(lesson.lesson_type)}
-                                  <span className="ml-1">{lesson.lesson_type}</span>
+                          {/* Title and Status */}
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-lg">{lesson.title}</h3>
+                              <Badge className={cn("text-xs", getLessonTypeColor(lesson.lesson_type))}>
+                                {getLessonTypeIcon(lesson.lesson_type)}
+                                <span className="ml-1">{lesson.lesson_type}</span>
+                              </Badge>
+                              {lesson.is_active === false && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                  Inactive
                                 </Badge>
-                                {lesson.is_active === false && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <XCircle className="w-3 h-3 mr-1" />
-                                    Inactive
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 line-clamp-1">{lesson.description}</p>
-                            </div>
-
-                            {/* Quick Stats */}
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                {lesson.estimated_hours}h
-                              </div>
-                              {lesson.maneuvers && (
-                                <div className="flex items-center gap-1">
-                                  <Target className="w-4 h-4" />
-                                  {lesson.maneuvers.length}
-                                </div>
                               )}
                             </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleExpanded(lesson.id)}
-                              >
-                                {expandedLessons.has(lesson.id) ? (
-                                  <ChevronUp className="w-4 h-4" />
-                                ) : (
-                                  <ChevronDown className="w-4 h-4" />
-                                )}
-                              </Button>
-
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <MoreVertical className="w-4 h-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => setEditingLesson(lesson)}>
-                                    <Pencil className="w-4 h-4 mr-2" />
-                                    Quick Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => onLessonDuplicate(lesson.id)}>
-                                    <Copy className="w-4 h-4 mr-2" />
-                                    Duplicate
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
-                                    onClick={() => onLessonToggleActive(lesson.id, !lesson.is_active)}
-                                  >
-                                    {lesson.is_active === false ? (
-                                      <>
-                                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                                        Activate
-                                      </>
-                                    ) : (
-                                      <>
-                                        <XCircle className="w-4 h-4 mr-2" />
-                                        Deactivate
-                                      </>
-                                    )}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
-                                    className="text-destructive"
-                                    onClick={() => onLessonDelete(lesson.id)}
-                                  >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
+                            <p className="text-sm text-gray-600 line-clamp-1">{lesson.description}</p>
                           </div>
-                        </CardHeader>
 
-                        {/* Expanded Content */}
-                        {expandedLessons.has(lesson.id) && (
-                          <CardContent className="pt-0">
-                            <Tabs defaultValue="details" className="w-full">
-                              <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="details">Details</TabsTrigger>
-                                <TabsTrigger value="maneuvers">
-                                  Maneuvers ({lesson.maneuvers?.length || 0})
-                                </TabsTrigger>
-                                <TabsTrigger value="settings">Settings</TabsTrigger>
-                              </TabsList>
+                          {/* Quick Stats */}
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {lesson.estimated_hours}h
+                            </div>
+                            {lesson.maneuvers && (
+                              <div className="flex items-center gap-1">
+                                <Target className="w-4 h-4" />
+                                {lesson.maneuvers.length}
+                              </div>
+                            )}
+                          </div>
 
-                              <TabsContent value="details" className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm font-medium">Description</Label>
-                                    <p className="text-sm text-gray-600 mt-1">{lesson.description}</p>
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleExpanded(lesson.id)}
+                            >
+                              {expandedLessons.has(lesson.id) ? (
+                                <ChevronUp className="w-4 h-4" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4" />
+                              )}
+                            </Button>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setEditingLesson(lesson)}>
+                                  <Pencil className="w-4 h-4 mr-2" />
+                                  Quick Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onLessonDuplicate(lesson.id)}>
+                                  <Copy className="w-4 h-4 mr-2" />
+                                  Duplicate
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => onLessonToggleActive(lesson.id, !lesson.is_active)}
+                                >
+                                  {lesson.is_active === false ? (
+                                    <>
+                                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                                      Activate
+                                    </>
+                                  ) : (
+                                    <>
+                                      <XCircle className="w-4 h-4 mr-2" />
+                                      Deactivate
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={() => onLessonDelete(lesson.id)}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      {/* Expanded Content */}
+                      {expandedLessons.has(lesson.id) && (
+                        <CardContent className="pt-0">
+                          <Tabs defaultValue="details" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
+                              <TabsTrigger value="details">Details</TabsTrigger>
+                              <TabsTrigger value="maneuvers">
+                                Maneuvers ({lesson.maneuvers?.length || 0})
+                              </TabsTrigger>
+                              <TabsTrigger value="settings">Settings</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="details" className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label className="text-sm font-medium">Description</Label>
+                                  <p className="text-sm text-gray-600 mt-1">{lesson.description}</p>
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span className="text-sm font-medium">Estimated Hours:</span>
+                                    <span className="text-sm">{lesson.estimated_hours}</span>
                                   </div>
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                      <span className="text-sm font-medium">Estimated Hours:</span>
-                                      <span className="text-sm">{lesson.estimated_hours}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-sm font-medium">Lesson Type:</span>
-                                      <span className="text-sm">{lesson.lesson_type}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-sm font-medium">Order:</span>
-                                      <span className="text-sm">{lesson.order_index + 1}</span>
-                                    </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-sm font-medium">Lesson Type:</span>
+                                    <span className="text-sm">{lesson.lesson_type}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-sm font-medium">Order:</span>
+                                    <span className="text-sm">{lesson.order_index + 1}</span>
                                   </div>
                                 </div>
-                              </TabsContent>
+                              </div>
+                            </TabsContent>
 
-                              <TabsContent value="maneuvers" className="space-y-4">
-                                {lesson.maneuvers && lesson.maneuvers.length > 0 ? (
-                                  <div className="grid gap-2">
-                                    {lesson.maneuvers.map((maneuver) => (
-                                      <div
-                                        key={maneuver.id}
-                                        className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <Target className="w-4 h-4 text-blue-500" />
-                                          <span className="font-medium">{maneuver.name}</span>
-                                          {maneuver.is_required && (
-                                            <Badge variant="destructive" className="text-xs">
-                                              Required
+                            <TabsContent value="maneuvers" className="space-y-4">
+                              <div className="space-y-4">
+                                {/* Search and select maneuvers */}
+                                <div>
+                                  <Input
+                                    placeholder="Search maneuvers..."
+                                    value={maneuverSearch}
+                                    onChange={e => setManeuverSearch(e.target.value)}
+                                    className="text-sm"
+                                  />
+                                  <div className="max-h-48 overflow-y-auto border rounded bg-background mt-2 p-2">
+                                    {allManeuvers
+                                      .filter(m => m.name.toLowerCase().includes(maneuverSearch.toLowerCase()))
+                                      .map((maneuver) => {
+                                        const isSelected = getCurrentManeuvers(lesson.id).some(m => m.id === maneuver.id)
+                                        return (
+                                          <label key={maneuver.id} className="flex items-center gap-2 py-1 px-1 text-sm cursor-pointer hover:bg-accent rounded transition">
+                                            <Checkbox
+                                              checked={isSelected}
+                                              onCheckedChange={() => handleManeuverToggle(lesson.id, maneuver)}
+                                              className="w-4 h-4"
+                                            />
+                                            <span className="truncate flex-1">{maneuver.name}</span>
+                                          </label>
+                                        )
+                                      })}
+                                  </div>
+                                </div>
+
+                                {/* Selected maneuvers */}
+                                <div>
+                                  <h4 className="font-medium mb-2">Selected Maneuvers</h4>
+                                  {getCurrentManeuvers(lesson.id).length === 0 ? (
+                                    <div className="text-center py-4 text-gray-500">
+                                      <Target className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                                      <p className="text-sm">No maneuvers selected</p>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {getCurrentManeuvers(lesson.id).map((maneuver) => (
+                                        <div key={maneuver.id} className="border rounded p-2 bg-muted/50">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <span className="font-medium text-sm">{maneuver.name}</span>
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm" 
+                                              onClick={() => handleManeuverToggle(lesson.id, maneuver)}
+                                              className="w-6 h-6 p-0"
+                                            >
+                                              ✕
+                                            </Button>
+                                          </div>
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <Badge 
+                                              variant={maneuver.is_required ? "default" : "secondary"}
+                                              className="cursor-pointer text-xs"
+                                              onClick={() => handleManeuverChange(lesson.id, maneuver.id, "is_required", !maneuver.is_required)}
+                                            >
+                                              {maneuver.is_required ? "Required" : "Optional"}
                                             </Badge>
-                                          )}
+                                          </div>
                                         </div>
-                                        <Button variant="ghost" size="sm">
-                                          <Settings className="w-4 h-4" />
-                                        </Button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div className="text-center py-8 text-gray-500">
-                                    <Target className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>No maneuvers assigned to this lesson</p>
-                                    <Button variant="outline" size="sm" className="mt-2">
-                                      <Plus className="w-4 h-4 mr-2" />
-                                      Add Maneuvers
-                                    </Button>
-                                  </div>
-                                )}
-                              </TabsContent>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
 
-                              <TabsContent value="settings" className="space-y-4">
+                                {/* Save button */}
+                                {editingManeuvers[lesson.id] && (
+                                  <Button onClick={() => saveManeuvers(lesson.id)} size="sm">
+                                    Save Maneuvers
+                                  </Button>
+                                )}
+                              </div>
+                            </TabsContent>
+
+                            <TabsContent value="settings" className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="space-y-2">
                                     <Label>Quick Actions</Label>
@@ -488,11 +610,10 @@ export function EnhancedLessonManager({
                                   </div>
                                 </div>
                               </TabsContent>
-                            </Tabs>
-                          </CardContent>
-                        )}
-                      </Card>
-                    </div>
+                          </Tabs>
+                        </CardContent>
+                      )}
+                    </Card>
                   )}
                 </Draggable>
               ))}
