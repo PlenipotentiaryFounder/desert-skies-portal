@@ -33,7 +33,6 @@ export async function POST(request: Request) {
       email,
       first_name: firstName,
       last_name: lastName,
-      role,
       status: role === "instructor" ? "pending" : status,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -53,6 +52,29 @@ export async function POST(request: Request) {
     }
 
     console.log("Profile created successfully:", profileResult)
+
+    // Assign user role in user_roles table
+    // 1. Look up the role_id from the roles table
+    const { data: roleRow, error: roleLookupError } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("name", role)
+      .single()
+
+    if (roleLookupError || !roleRow) {
+      console.error("Role lookup error:", roleLookupError)
+      return NextResponse.json({ error: `Role lookup failed: ${roleLookupError?.message || 'Role not found'}` }, { status: 500 })
+    }
+
+    // 2. Insert into user_roles
+    const { error: userRoleError } = await supabase
+      .from("user_roles")
+      .insert({ user_id: userId, role_id: roleRow.id })
+
+    if (userRoleError) {
+      console.error("User role assignment error:", userRoleError)
+      return NextResponse.json({ error: `User role assignment failed: ${userRoleError.message}` }, { status: 500 })
+    }
 
     // If this is an instructor, create a notification for admins
     if (role === "instructor") {

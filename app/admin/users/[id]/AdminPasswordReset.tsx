@@ -60,6 +60,7 @@ export function AdminPasswordReset({ user }: { user: any }) {
             <Input
               id="reset-password"
               type="password"
+              autoComplete="new-password"
               value={resetPassword}
               onChange={e => setResetPassword(e.target.value)}
               minLength={6}

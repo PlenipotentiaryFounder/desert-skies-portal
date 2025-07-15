@@ -468,7 +468,7 @@ function SignatureModal({ entry, role, onClose, onSigned }: { entry: any, role: 
         <h2 className="text-lg font-bold">Sign Logbook Entry</h2>
         <div>
           <label>Enter 4-digit PIN</label>
-          <input type="password" value={pin} onChange={e => setPin(e.target.value)} maxLength={4} minLength={4} pattern="[0-9]{4}" className="input w-full" required />
+          <input type="password" autoComplete="current-password" value={pin} onChange={e => setPin(e.target.value)} maxLength={4} minLength={4} pattern="[0-9]{4}" className="input w-full" required />
         </div>
         {error && <div className="text-red-600">{error}</div>}
         {success && <div className="text-green-600">Signed!</div>}

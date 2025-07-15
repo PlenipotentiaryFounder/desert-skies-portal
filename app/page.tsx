@@ -3,11 +3,9 @@ import { LandingFeatures } from "@/components/landing/landing-features"
 import { LandingTestimonials } from "@/components/landing/landing-testimonials"
 import { LandingCta } from "@/components/landing/landing-cta"
 import { createClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
 
 export default async function Home() {
-  const cookieStore = await cookies()
-  const supabase = await createClient(cookieStore)
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

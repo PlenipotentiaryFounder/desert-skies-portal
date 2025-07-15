@@ -257,6 +257,7 @@ export function SignupForm() {
                         <Input 
                           type="password" 
                           placeholder="••••••••" 
+                          autoComplete="new-password"
                           {...field} 
                           className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />

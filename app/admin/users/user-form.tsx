@@ -235,7 +235,7 @@ export function UserForm({ user, hidePasswordReset = false }: UserFormProps & { 
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Enter password (optional)" {...field} />
+                      <Input type="password" autoComplete="new-password" placeholder="Enter password (optional)" {...field} />
                     </FormControl>
                     <FormDescription>
                       Leave blank to generate a random password. The user will need to reset their password.
@@ -363,6 +363,7 @@ export function UserForm({ user, hidePasswordReset = false }: UserFormProps & { 
                 <Input
                   id="reset-password"
                   type="password"
+                  autoComplete="new-password"
                   value={resetPassword}
                   onChange={e => setResetPassword(e.target.value)}
                   minLength={6}
