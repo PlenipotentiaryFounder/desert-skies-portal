@@ -18,6 +18,9 @@ import {
   BookOpen,
   Award
 } from 'lucide-react'
+// Add import for useContext if needed
+// import { useContext } from 'react'
+// import { OnboardingContext } from '../onboarding-flow'
 
 interface ProgramSelectionStepProps {
   onboardingData: any
@@ -122,6 +125,13 @@ const TRAINING_PROGRAMS = [
   }
 ]
 
+const SYLLABUS_MAP: Record<string, string> = {
+  private_pilot: '11111111-1111-1111-1111-111111111111',
+  instrument_rating: '22222222-2222-2222-2222-222222222222',
+  commercial_pilot: 'ab399a65-ea7e-4560-bd02-55a0e15c41c1',
+  discovery_flight: '56ce2fe4-b63d-4f58-9755-0ccf4c2adf18',
+}
+
 export function ProgramSelectionStep({
   onboardingData,
   userProfile,
@@ -153,7 +163,8 @@ export function ProgramSelectionStep({
     if (!validateForm()) return
     
     const programData = {
-      desired_program: selectedProgram
+      desired_program: selectedProgram,
+      syllabus_id: SYLLABUS_MAP[selectedProgram] || null,
     }
     
     onComplete(programData)

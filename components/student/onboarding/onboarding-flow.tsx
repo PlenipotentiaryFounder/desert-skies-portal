@@ -135,6 +135,15 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
     return Math.round((completedCount / ONBOARDING_STEPS.length) * 100)
   }
 
+  // Syllabus mapping for program selection
+  const SYLLABUS_MAP: Record<string, string> = {
+    private_pilot: '11111111-1111-1111-1111-111111111111',
+    instrument_rating: '22222222-2222-2222-2222-222222222222',
+    commercial_pilot: 'ab399a65-ea7e-4560-bd02-55a0e15c41c1',
+    discovery_flight: '56ce2fe4-b63d-4f58-9755-0ccf4c2adf18',
+  }
+  const DEFAULT_INSTRUCTOR_ID = '7e6acaad-5d48-46e3-ad10-fa9144c541dc'
+
   const saveProgress = async (stepId: string, data: any, isComplete: boolean = false) => {
     setIsSaving(true)
     
@@ -149,15 +158,44 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
         ? { ...completedSteps, [stepId]: true }
         : completedSteps
 
-      // Prepare the data payload
-      const payload = {
+      // --- PROGRAM SELECTION LOGIC ---
+      let payload = {
         user_id: userId,
         current_step: stepId,
         completed_steps: updatedCompletedSteps,
         last_activity_at: new Date().toISOString(),
         ...(data && typeof data === 'object' ? data : {})
       }
-
+      // If this is the program-selection step, map to syllabus_id and create enrollment
+      if (stepId === 'program-selection' && data?.desired_program) {
+        const syllabus_id = SYLLABUS_MAP[data.desired_program]
+        if (syllabus_id) {
+          payload = { ...payload, syllabus_id }
+          // Check if enrollment already exists for this user and syllabus
+          const { data: existing, error: existingError } = await supabase
+            .from('student_enrollments')
+            .select('id')
+            .eq('student_id', userId)
+            .eq('syllabus_id', syllabus_id)
+            .maybeSingle()
+          if (!existing && !existingError) {
+            // Insert new pending enrollment
+            const { error: enrollError } = await supabase
+              .from('student_enrollments')
+              .insert({
+                student_id: userId,
+                syllabus_id,
+                instructor_id: DEFAULT_INSTRUCTOR_ID,
+                start_date: new Date().toISOString().slice(0, 10),
+                status: 'pending',
+              })
+            if (enrollError) {
+              console.error('Failed to create enrollment:', enrollError)
+              toast.error('Failed to create enrollment: ' + enrollError.message)
+            }
+          }
+        }
+      }
       if (isComplete && stepId === 'completion') {
         payload.completed_at = new Date().toISOString()
       }
@@ -215,7 +253,7 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
 
       // Success - update local state
       setCompletedSteps(updatedCompletedSteps)
-      setOnboardingData(prev => ({ ...prev, ...result }))
+      setOnboardingData((prev: any) => ({ ...prev, ...result }))
 
       console.log('✅ Progress saved successfully:', result)
       
@@ -298,23 +336,23 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
 
     switch (currentStep) {
       case 'welcome':
-        return <WelcomeStep {...stepProps} userProfile={userProfile} />
+        return <WelcomeStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} />
       case 'personal-info':
-        return <PersonalInfoStep {...stepProps} userProfile={userProfile} />
+        return <PersonalInfoStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} />
       case 'aviation-background':
-        return <AviationBackgroundStep {...stepProps} data={onboardingData} />
+        return <AviationBackgroundStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} />
       case 'emergency-contact':
-        return <EmergencyContactStep {...stepProps} data={onboardingData} />
+        return <EmergencyContactStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} />
       case 'liability-waiver':
-        return <LiabilityWaiverStep {...stepProps} data={onboardingData} />
+        return <LiabilityWaiverStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} />
       case 'document-upload':
-        return <DocumentUploadStep {...stepProps} data={onboardingData} />
+        return <DocumentUploadStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} />
       case 'program-selection':
-        return <ProgramSelectionStep {...stepProps} data={onboardingData} />
+        return <ProgramSelectionStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} />
       case 'completion':
-        return <CompletionStep {...stepProps} onExit={exitOnboarding} />
+        return <CompletionStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} onExit={exitOnboarding} />
       default:
-        return <WelcomeStep {...stepProps} userProfile={userProfile} />
+        return <WelcomeStep onboardingData={onboardingData} userProfile={userProfile} {...stepProps} />
     }
   }
 
@@ -394,30 +432,30 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
           </CardContent>
         </Card>
 
-      {/* Navigation Controls */}
-      <div className="flex justify-between items-center">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={getCurrentStepIndex() === 0}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Previous
-        </Button>
-        
-        <div className="flex space-x-2">
-          {ONBOARDING_STEPS.find(step => step.id === currentStep)?.required === false && (
-            <Button variant="ghost" onClick={skipStep}>
-              Skip for Now
-            </Button>
-          )}
+        {/* Navigation Controls */}
+        <div className="flex justify-between items-center">
           <Button
             variant="outline"
-            onClick={handleSaveAndExit}
-            disabled={isSaving}
+            onClick={prevStep}
+            disabled={getCurrentStepIndex() === 0}
           >
-            {isSaving ? 'Saving...' : 'Save & Exit'}
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Previous
           </Button>
+          <div className="flex space-x-2">
+            {ONBOARDING_STEPS.find(step => step.id === currentStep)?.required === false && (
+              <Button variant="ghost" onClick={skipStep}>
+                Skip for Now
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={handleSaveAndExit}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save & Exit'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

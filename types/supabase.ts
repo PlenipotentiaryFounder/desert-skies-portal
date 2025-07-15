@@ -2256,6 +2256,54 @@ export type Database = {
         }
         Relationships: []
       }
+      student_onboarding: {
+        Row: {
+          user_id: string
+          current_step: string | null
+          completed_steps: Json | null
+          last_activity_at: string | null
+          desired_program: string | null
+          syllabus_id: string | null
+          completed_at: string | null
+          // Add any other fields as needed
+        }
+        Insert: {
+          user_id: string
+          current_step?: string | null
+          completed_steps?: Json | null
+          last_activity_at?: string | null
+          desired_program?: string | null
+          syllabus_id?: string | null
+          completed_at?: string | null
+          // Add any other fields as needed
+        }
+        Update: {
+          user_id?: string
+          current_step?: string | null
+          completed_steps?: Json | null
+          last_activity_at?: string | null
+          desired_program?: string | null
+          syllabus_id?: string | null
+          completed_at?: string | null
+          // Add any other fields as needed
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_onboarding_user_id_fkey",
+            columns: ["user_id"],
+            isOneToOne: true,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_onboarding_syllabus_id_fkey",
+            columns: ["syllabus_id"],
+            isOneToOne: false,
+            referencedRelation: "syllabi",
+            referencedColumns: ["id"]
+          }
+        ]
+      },
     }
     Views: {
       active_maneuvers_with_standards: {
