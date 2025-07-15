@@ -1,9 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { OnboardingFlow } from '@/components/student/onboarding/onboarding-flow'
 
 export default async function StudentOnboardingPage() {
-  const supabase = createClient()
+  const supabase = await createServerClient()
   
   const { data: { user } } = await supabase.auth.getUser()
   
@@ -59,4 +59,4 @@ export default async function StudentOnboardingPage() {
       </div>
     </div>
   )
-} 
+}
