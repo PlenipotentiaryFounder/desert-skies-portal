@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import { type ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies'
 import type { Database } from '@/types/supabase'
 
@@ -32,4 +33,10 @@ export const createClient = (cookieStore: ReadonlyRequestCookies) => {
       },
     }
   )
+}
+
+// Helper function for server components that automatically handles cookies
+export const createServerClient = async () => {
+  const cookieStore = await cookies()
+  return createClient(cookieStore)
 }
