@@ -26,8 +26,8 @@ export function StudentProgressReport({ userId }: StudentProgressReportProps) {
     async function fetchStudents() {
       const { data } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name")
-        .eq("role", "student")
+        .select("id, first_name, last_name, user_roles!inner(roles!inner(name))")
+        .eq("user_roles.roles.name", "student")
         .order("last_name", { ascending: true })
 
       if (data && data.length > 0) {

@@ -30,8 +30,8 @@ export async function InstructorPerformanceReport({ userId }: InstructorPerforma
     async function fetchInstructors() {
       const { data } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name")
-        .eq("role", "instructor")
+        .select("id, first_name, last_name, user_roles!inner(roles!inner(name))")
+        .eq("user_roles.roles.name", "instructor")
         .eq("is_active", true)
         .order("last_name", { ascending: true })
 

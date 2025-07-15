@@ -45,15 +45,11 @@ export async function POST() {
 
     const userId = userData.id
 
-    // Update Thomas's profile to be an admin with instructor in additional_roles
+    // Update Thomas's profile to be active (no role or additional_roles update)
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
-        role: "admin",
         status: "active",
-        metadata: {
-          additional_roles: ["instructor"],
-        },
         updated_at: new Date().toISOString(),
       })
       .eq("id", userId)
@@ -61,6 +57,27 @@ export async function POST() {
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
+
+    // Assign admin and instructor roles using user_roles table
+    // 1. Look up role_ids
+    const { data: adminRole, error: adminRoleError } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("name", "admin")
+      .single()
+    const { data: instructorRole, error: instructorRoleError } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("name", "instructor")
+      .single()
+    if (adminRoleError || instructorRoleError || !adminRole || !instructorRole) {
+      return NextResponse.json({ error: "Role lookup failed" }, { status: 500 })
+    }
+    // 2. Insert into user_roles (if not already assigned)
+    await supabase.from("user_roles").upsert([
+      { user_id: userId, role_id: adminRole.id },
+      { user_id: userId, role_id: instructorRole.id },
+    ], { onConflict: "user_id,role_id" })
 
     return NextResponse.json({ success: true, message: "Thomas's roles updated successfully" })
   } catch (error) {

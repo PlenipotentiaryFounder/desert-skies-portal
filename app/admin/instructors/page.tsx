@@ -16,17 +16,19 @@ export default async function InstructorApprovalPage() {
     redirect("/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-  if (profile?.role !== "admin") {
+  const profile = await getUserProfileWithRoles(user.id)
+  const roles = Array.isArray(profile?.roles)
+    ? profile.roles.map((r: any) => typeof r === "string" ? r : r.role_name)
+    : []
+  if (!roles.includes("admin")) {
     redirect("/")
   }
 
-  // Get pending instructors
+  // Get pending instructors using user_roles join
   const { data: pendingInstructors } = await supabase
     .from("profiles")
-    .select("*")
-    .eq("role", "instructor")
+    .select("*, user_roles!inner(roles!inner(name))")
+    .eq("user_roles.roles.name", "instructor")
     .eq("status", "pending")
     .order("created_at", { ascending: false })
 

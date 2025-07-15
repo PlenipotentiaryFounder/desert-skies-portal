@@ -63,7 +63,6 @@ export function UserForm({ user, hidePasswordReset = false }: UserFormProps & { 
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        role: user.role,
         phone: user.phone || "",
         bio: user.bio || "",
         status: user.status || "active",
@@ -72,7 +71,6 @@ export function UserForm({ user, hidePasswordReset = false }: UserFormProps & { 
         email: "",
         first_name: "",
         last_name: "",
-        role: "student",
         phone: "",
         bio: "",
         status: "active",
@@ -99,8 +97,9 @@ export function UserForm({ user, hidePasswordReset = false }: UserFormProps & { 
           return
         }
 
-        // If the role changed, update role and permissions
-        if (user.role !== data.role) {
+        // If the role changed, update user_roles table
+        // (Assume updateUserRole now updates user_roles, not profiles.role)
+        if (user.roles && !user.roles.includes(data.role)) {
           const roleResult = await updateUserRole(user.id, data.role)
           if (!roleResult.success) {
             setError(roleResult.error || "Failed to update user role")
@@ -124,7 +123,6 @@ export function UserForm({ user, hidePasswordReset = false }: UserFormProps & { 
             email: latestUser.email,
             first_name: latestUser.first_name,
             last_name: latestUser.last_name,
-            role: latestUser.role,
             phone: latestUser.phone || "",
             bio: latestUser.bio || "",
             status: latestUser.status || "active",
@@ -262,30 +260,6 @@ export function UserForm({ user, hidePasswordReset = false }: UserFormProps & { 
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="admin">Administrator</SelectItem>
-                        <SelectItem value="instructor">Instructor</SelectItem>
-                        <SelectItem value="student">Student</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>Determines what the user can access in the system.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name="status"

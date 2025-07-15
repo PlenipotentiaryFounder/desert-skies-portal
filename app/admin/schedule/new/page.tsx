@@ -16,11 +16,11 @@ export default async function NewFlightSessionPage() {
   const enrollments = await getEnrollments()
   const activeEnrollments = enrollments.filter((e) => e.status === "active")
 
-  // Get all instructors
+  // Get all instructors using user_roles join
   const { data: instructors } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name")
-    .eq("role", "instructor")
+    .select("id, first_name, last_name, user_roles!inner(roles!inner(name))")
+    .eq("user_roles.roles.name", "instructor")
     .order("last_name", { ascending: true })
 
   // Get all active aircraft

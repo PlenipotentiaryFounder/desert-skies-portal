@@ -59,18 +59,18 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
   // Fetch enrollments for student/instructor
   let studentEnrollments = []
   let instructorEnrollments = []
-  if (user.role === "student") {
+  if (user.roles && user.roles.some((r: any) => r.role_name === "student")) {
     studentEnrollments = await getStudentEnrollments(user.id)
-  } else if (user.role === "instructor") {
+  } else if (user.roles && user.roles.some((r: any) => r.role_name === "instructor")) {
     instructorEnrollments = await getInstructorEnrollments(user.id)
   }
 
   // Fetch flight sessions for student/instructor
   let studentFlightSessions = []
   let instructorFlightSessions = []
-  if (user.role === "student") {
+  if (user.roles && user.roles.some((r: any) => r.role_name === "student")) {
     studentFlightSessions = await getStudentFlightSessions(user.id)
-  } else if (user.role === "instructor") {
+  } else if (user.roles && user.roles.some((r: any) => r.role_name === "instructor")) {
     instructorFlightSessions = await getInstructorFlightSessions(user.id)
   }
 
@@ -100,21 +100,21 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           <UserForm user={user} hidePasswordReset />
         </TabsContent>
         <TabsContent value="permissions">
-          <UserPermissionsForm userId={user.id} userName={`${user.first_name} ${user.last_name}`} userRole={user.role} />
+          <UserPermissionsForm userId={user.id} userName={`${user.first_name} ${user.last_name}`} userRole={user.roles?.map((r: any) => r.role_name).join(', ') || ''} />
         </TabsContent>
         <TabsContent value="password">
           <AdminPasswordReset user={user} />
         </TabsContent>
         <TabsContent value="enrollments">
           <UserEnrollmentsTab
-            userRole={user.role}
+            userRole={user.roles?.map((r: any) => r.role_name).join(', ') || ''}
             studentEnrollments={studentEnrollments}
             instructorEnrollments={instructorEnrollments}
           />
         </TabsContent>
         <TabsContent value="sessions">
           <UserFlightSessionsTab
-            userRole={user.role}
+            userRole={user.roles?.map((r: any) => r.role_name).join(', ') || ''}
             userId={user.id}
             studentSessions={studentFlightSessions}
             instructorSessions={instructorFlightSessions}

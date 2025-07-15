@@ -46,11 +46,19 @@ export async function POST(req: NextRequest) {
           first_name: firstName,
           last_name: lastName,
           phone,
-          role: "student",
           status: "active"
         });
         if (!createRes.success || !createRes.userId) throw new Error(createRes.error || "Failed to create user");
         studentId = createRes.userId;
+        // Assign student role in user_roles table
+        const { data: roleRow, error: roleLookupError } = await supabase
+          .from("roles")
+          .select("id")
+          .eq("name", "student")
+          .single();
+        if (!roleLookupError && roleRow) {
+          await supabase.from("user_roles").insert({ user_id: studentId, role_id: roleRow.id });
+        }
       } catch (err) {
         console.error("Error creating user:", err);
         return NextResponse.json({ success: false, error: "Failed to create user: " + (err?.message || err) }, { status: 500 });
