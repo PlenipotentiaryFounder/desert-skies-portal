@@ -36,27 +36,28 @@ export default async function StudentOnboardingPage() {
     .eq('id', user.id)
     .single()
 
+  // Get user roles
+  const { data: userRoles } = await supabase
+    .from('user_roles')
+    .select(`
+      role:roles(name)
+    `)
+    .eq('user_id', user.id)
+
+  const roles = userRoles?.map(ur => ur.role?.name).filter(Boolean) || []
+
+  // Check if user has student role
+  if (!roles.includes('student')) {
+    redirect('/login')
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Welcome to Desert Skies Aviation Training!
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Let's get you set up for your aviation journey. You can complete this process 
-              at your own pace and return anytime to continue where you left off.
-            </p>
-          </div>
-          
-          <OnboardingFlow 
-            initialOnboarding={onboarding}
-            userProfile={profile}
-            userId={user.id}
-          />
-        </div>
-      </div>
+    <div className="container mx-auto py-8">
+      <OnboardingFlow 
+        user={user} 
+        profile={profile} 
+        initialOnboarding={onboarding}
+      />
     </div>
   )
-} 
+}

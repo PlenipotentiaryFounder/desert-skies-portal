@@ -1,102 +1,134 @@
 "use client"
 
-import { Suspense, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Loader2, AlertCircle } from "lucide-react"
 
-function ResetPasswordForm() {
+export default function ResetPasswordPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [success, setSuccess] = useState("")
-  const [error, setError] = useState("")
-
-  const accessToken = searchParams.get("access_token")
-  console.log('accessToken:', accessToken)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsLoading(true)
-    setSuccess("")
-    setError("")
-    if (!accessToken) {
-      setError("Invalid or missing access token.")
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
       setIsLoading(false)
       return
     }
-    const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({ password })
-    if (error) {
-      setError(error.message)
-    } else {
-      setSuccess("Your password has been reset. You can now log in with your new password.")
-      setTimeout(() => router.push("/login"), 2000)
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long")
+      setIsLoading(false)
+      return
     }
-    setIsLoading(false)
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        setSuccess(true)
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
+      }
+    } catch (error) {
+      setError('An unexpected error occurred')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Password Reset Successful</CardTitle>
+            <CardDescription className="text-center">
+              Your password has been updated successfully. Redirecting to login...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8">
-      <div className="mx-auto w-full max-w-md space-y-6 bg-white rounded-lg shadow p-8">
-        <h1 className="text-2xl font-bold text-center mb-4">Reset your password</h1>
-        <p className="text-center text-muted-foreground mb-6">Enter your new password below.</p>
-        {success && (
-          <Alert>
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="password">New Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              minLength={6}
-              placeholder="••••••••"
-              disabled={isLoading}
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={isLoading || !accessToken}>
-            {isLoading ? "Resetting..." : "Reset Password"}
-          </Button>
-        </form>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
+          <CardDescription className="text-center">
+            Enter your new password below
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="password">New Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="••••••••"
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="••••••••"
+                disabled={isLoading}
+              />
+            </div>
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating Password...
+                </>
+              ) : (
+                "Update Password"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
-
-function ResetPasswordSkeleton() {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8">
-      <div className="mx-auto w-full max-w-md space-y-6 bg-white rounded-lg shadow p-8">
-        <Skeleton className="h-8 w-3/4 mx-auto" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    </div>
-  )
-}
-
-export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={<ResetPasswordSkeleton />}>
-      <ResetPasswordForm />
-    </Suspense>
-  )
-} 

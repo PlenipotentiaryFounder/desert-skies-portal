@@ -146,7 +146,7 @@ export function SignupForm() {
         router.refresh()
         router.push("/")
       }
-    } catch (error) {
+    }
       console.error("Signup error:", error)
       toast({
         variant: "destructive",
