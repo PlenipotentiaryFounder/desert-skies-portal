@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -8,20 +8,17 @@ import { Badge } from '@/components/ui/badge'
 import { 
   CheckCircle, 
   Circle, 
-  Clock, 
-  ArrowLeft, 
-  ArrowRight, 
-  Home,
-  FileText,
-  User,
-  Shield,
-  Upload,
-  Plane,
-  Phone
+  User, 
+  Mail, 
+  Phone, 
+  Plane, 
+  Upload, 
+  FileText, 
+  Shield
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 // Step Components
 import { WelcomeStep } from './steps/welcome-step'
@@ -43,15 +40,15 @@ const ONBOARDING_STEPS = [
   {
     id: 'welcome',
     title: 'Welcome',
-    description: 'Introduction to Desert Skies',
-    icon: Home,
+    description: 'Get started with your onboarding',
+    icon: User,
     required: true,
     stepNumber: 1
   },
   {
     id: 'personal-info',
     title: 'Personal Information',
-    description: 'Basic contact details',
+    description: 'Basic contact information',
     icon: User,
     required: true,
     stepNumber: 2
@@ -114,6 +111,18 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
   
   const router = useRouter()
   const supabase = createClient()
+  
+  // Debounce save operations to prevent rapid-fire saves
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const getCurrentStepIndex = () => {
     return ONBOARDING_STEPS.findIndex(step => step.id === currentStep)
@@ -134,45 +143,124 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
     setIsSaving(true)
     
     try {
+      if (!userId) {
+        throw new Error('User authentication required')
+      }
+
+      console.log('🔄 Starting saveProgress:', { stepId, userId, isComplete })
+
       const updatedCompletedSteps = isComplete 
         ? { ...completedSteps, [stepId]: true }
         : completedSteps
 
-      const updateData = {
+      // Prepare the data payload
+      const payload = {
+        user_id: userId,
         current_step: stepId,
         completed_steps: updatedCompletedSteps,
         last_activity_at: new Date().toISOString(),
-        ...data
+        ...(data && typeof data === 'object' ? data : {})
       }
 
       if (isComplete && stepId === 'completion') {
-        updateData.completed_at = new Date().toISOString()
+        payload.completed_at = new Date().toISOString()
       }
 
-      const { error } = await supabase
+      console.log('📦 Payload to save:', payload)
+
+      // Use upsert with the unique constraint on user_id
+      const { data: result, error, status, statusText } = await supabase
         .from('student_onboarding')
-        .update(updateData)
-        .eq('user_id', userId)
+        .upsert(payload, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single()
 
-      if (error) throw error
+      console.log('📊 Database response:', { result, error, status, statusText })
 
+      if (error) {
+        // Handle different types of errors with comprehensive logging
+        const errorInfo = {
+          message: error.message || 'Unknown database error',
+          details: error.details || 'No additional details',
+          hint: error.hint || 'No hint available',
+          code: error.code || 'UNKNOWN_ERROR',
+          // Additional debugging info
+          originalError: error,
+          payload: payload,
+          userId: userId,
+          stepId: stepId
+        }
+        
+        console.error('❌ Database error details:', errorInfo)
+        
+        // Provide specific error messages based on error codes
+        let userMessage = 'Failed to save progress'
+        if (error.code === '23505') {
+          userMessage = 'Duplicate entry detected'
+        } else if (error.code === '23503') {
+          userMessage = 'Invalid reference data'
+        } else if (error.code === '42501') {
+          userMessage = 'Permission denied - please check your authentication'
+        } else if (error.code === '42703') {
+          userMessage = 'Database column error'
+        } else if (error.message) {
+          userMessage = error.message
+        }
+        
+        throw new Error(userMessage)
+      }
+
+      if (!result) {
+        throw new Error('No data returned from database operation')
+      }
+
+      // Success - update local state
       setCompletedSteps(updatedCompletedSteps)
-      setOnboardingData(prev => ({ ...prev, ...updateData }))
+      setOnboardingData(prev => ({ ...prev, ...result }))
 
+      console.log('✅ Progress saved successfully:', result)
+      
       if (isComplete) {
         toast.success('Step completed successfully!')
       }
+
     } catch (error) {
-      console.error('Error saving progress:', error)
-      toast.error('Failed to save progress. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      console.error('💥 Save progress failed:', {
+        error,
+        stepId,
+        userId,
+        message: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        errorType: typeof error,
+        errorConstructor: error?.constructor?.name
+      })
+      
+      toast.error(`Failed to save progress: ${errorMessage}`)
     } finally {
       setIsSaving(false)
     }
   }
 
+  const debouncedSaveProgress = (stepId: string, data: any, isComplete: boolean = false) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveProgress(stepId, data, isComplete)
+    }, 300) // 300ms debounce
+  }
+
   const goToStep = (stepId: string) => {
     setCurrentStep(stepId)
-    saveProgress(stepId, {}, false)
+    // Only save progress if we're actually moving to a different step
+    if (stepId !== currentStep) {
+      debouncedSaveProgress(stepId, {}, false)
+    }
   }
 
   const nextStep = () => {
@@ -210,8 +298,8 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
 
   const renderCurrentStep = () => {
     const stepProps = {
-      onboardingData,
-      userProfile,
+      onNext: nextStep,
+      onPrev: prevStep,
       onComplete: completeStep,
       onSkip: skipStep,
       onSave: (data: any) => saveProgress(currentStep, data, false),
@@ -220,125 +308,107 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
 
     switch (currentStep) {
       case 'welcome':
-        return <WelcomeStep {...stepProps} />
+        return <WelcomeStep {...stepProps} userProfile={userProfile} />
       case 'personal-info':
-        return <PersonalInfoStep {...stepProps} />
+        return <PersonalInfoStep {...stepProps} userProfile={userProfile} />
       case 'aviation-background':
-        return <AviationBackgroundStep {...stepProps} />
+        return <AviationBackgroundStep {...stepProps} data={onboardingData} />
       case 'emergency-contact':
-        return <EmergencyContactStep {...stepProps} />
+        return <EmergencyContactStep {...stepProps} data={onboardingData} />
       case 'liability-waiver':
-        return <LiabilityWaiverStep {...stepProps} />
+        return <LiabilityWaiverStep {...stepProps} data={onboardingData} />
       case 'document-upload':
-        return <DocumentUploadStep {...stepProps} />
+        return <DocumentUploadStep {...stepProps} data={onboardingData} />
       case 'program-selection':
-        return <ProgramSelectionStep {...stepProps} />
+        return <ProgramSelectionStep {...stepProps} data={onboardingData} />
       case 'completion':
         return <CompletionStep {...stepProps} onExit={exitOnboarding} />
       default:
-        return <WelcomeStep {...stepProps} />
+        return <WelcomeStep {...stepProps} userProfile={userProfile} />
     }
   }
 
   return (
-    <div className="space-y-6">
-      {/* Progress Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl">Student Onboarding</CardTitle>
-            <Badge variant="outline" className="text-sm">
-              Step {getCurrentStepIndex() + 1} of {ONBOARDING_STEPS.length}
-            </Badge>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>Progress: {calculateProgress()}%</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exitOnboarding}
-                className="text-xs"
-              >
-                Exit & Continue Later
-              </Button>
-            </div>
-            <Progress value={calculateProgress()} className="h-2" />
-          </div>
-        </CardHeader>
-      </Card>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <div className="container mx-auto px-4 max-w-4xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Onboarding</h1>
+          <p className="text-gray-600">Complete your profile to get started with Desert Skies</p>
+        </div>
 
-      {/* Step Navigator */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
-        {ONBOARDING_STEPS.map((step, index) => {
-          const status = getStepStatus(step.id)
-          const Icon = step.icon
-          
-          return (
-            <Card 
-              key={step.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                status === 'current' ? 'ring-2 ring-blue-500' : ''
-              }`}
-              onClick={() => goToStep(step.id)}
-            >
-              <CardContent className="p-3">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className={`p-2 rounded-full ${
-                    status === 'completed' ? 'bg-green-100' :
-                    status === 'current' ? 'bg-blue-100' : 'bg-gray-100'
-                  }`}>
-                    {status === 'completed' ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    ) : status === 'current' ? (
-                      <Clock className="w-5 h-5 text-blue-600" />
-                    ) : (
-                      <Icon className="w-5 h-5 text-gray-400" />
-                    )}
-                  </div>
-                  <div className="text-xs font-medium">{step.title}</div>
-                  {!step.required && (
-                    <Badge variant="secondary" className="text-xs">Optional</Badge>
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-sm font-medium text-gray-700">Progress</span>
+            <span className="text-sm font-medium text-gray-700">{calculateProgress()}%</span>
+          </div>
+          <Progress value={calculateProgress()} className="h-2" />
+        </div>
+
+        {/* Step Navigation */}
+        <div className="mb-8">
+          <div className="flex flex-wrap justify-center gap-2">
+            {ONBOARDING_STEPS.map((step) => {
+              const status = getStepStatus(step.id)
+              const Icon = step.icon
+              
+              return (
+                <button
+                  key={step.id}
+                  onClick={() => goToStep(step.id)}
+                  className={`
+                    flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                    ${status === 'completed' ? 'bg-green-100 text-green-800' : ''}
+                    ${status === 'current' ? 'bg-blue-100 text-blue-800' : ''}
+                    ${status === 'pending' ? 'bg-gray-100 text-gray-600' : ''}
+                    hover:bg-opacity-80
+                  `}
+                >
+                  {status === 'completed' ? (
+                    <CheckCircle className="w-4 h-4" />
+                  ) : status === 'current' ? (
+                    <Icon className="w-4 h-4" />
+                  ) : (
+                    <Circle className="w-4 h-4" />
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                  <span className="hidden sm:inline">{step.title}</span>
+                  <span className="sm:hidden">{step.stepNumber}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-      {/* Current Step Content */}
-      <Card>
-        <CardContent className="p-6">
-          {renderCurrentStep()}
-        </CardContent>
-      </Card>
+        {/* Current Step */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {(() => {
+                const currentStepConfig = ONBOARDING_STEPS.find(step => step.id === currentStep)
+                const Icon = currentStepConfig?.icon || User
+                return (
+                  <>
+                    <Icon className="w-5 h-5" />
+                    {currentStepConfig?.title}
+                    {currentStepConfig?.required && (
+                      <Badge variant="destructive" className="ml-2">Required</Badge>
+                    )}
+                  </>
+                )
+              })()} 
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {renderCurrentStep()}
+          </CardContent>
+        </Card>
 
-      {/* Navigation Controls */}
-      <div className="flex justify-between items-center">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={getCurrentStepIndex() === 0}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Previous
-        </Button>
-        
-        <div className="flex space-x-2">
-          {ONBOARDING_STEPS.find(step => step.id === currentStep)?.required === false && (
-            <Button variant="ghost" onClick={skipStep}>
-              Skip for Now
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={exitOnboarding}
-          >
-            Save & Exit
-          </Button>
+        {/* Footer */}
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>Need help? Contact support at support@desertskies.com</p>
         </div>
       </div>
     </div>
   )
-} 
+}
