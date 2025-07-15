@@ -107,20 +107,19 @@ export function DocumentUploadStep({
       }
 
       // Insert metadata into documents table
+      const documentMetadata: import('@/types/supabase').Database['public']['Tables']['documents']['Insert'] = {
+        user_id: userProfile.id,
+        title: file.name,
+        description: '', // or provide a description if available
+        file_path: filePath,
+        file_type: file.type,
+        document_type: documentType,
+        expiration_date: null, // or set if available
+        is_verified: false,
+      }
       const { error: insertError } = await supabase
         .from('documents')
-        .insert([
-          {
-            user_id: userProfile.id,
-            bucket: 'documents',
-            path: filePath,
-            type: documentType,
-            title: file.name,
-            status: 'pending',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
+        .insert([documentMetadata])
       if (insertError) {
         console.error('Failed to insert document metadata:', insertError)
         setErrors(prev => [...prev, `Failed to save document metadata for ${documentType}: ${insertError.message}`])

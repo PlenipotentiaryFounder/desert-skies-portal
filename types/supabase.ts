@@ -373,45 +373,52 @@ export type Database = {
       }
       documents: {
         Row: {
-          id: string
-          user_id: string
-          bucket: string
-          path: string
-          type: string | null
-          title: string | null
-          status: string | null
           created_at: string | null
+          description: string | null
+          document_type: string
+          expiration_date: string | null
+          file_path: string
+          file_type: string
+          id: string
+          is_verified: boolean | null
+          title: string
           updated_at: string | null
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          bucket: string
-          path: string
-          type?: string | null
-          title?: string | null
-          status?: string | null
           created_at?: string | null
+          description?: string | null
+          document_type: string
+          expiration_date?: string | null
+          file_path: string
+          file_type: string
+          id?: string
+          is_verified?: boolean | null
+          title: string
           updated_at?: string | null
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          bucket?: string
-          path?: string
-          type?: string | null
-          title?: string | null
-          status?: string | null
           created_at?: string | null
+          description?: string | null
+          document_type?: string
+          expiration_date?: string | null
+          file_path?: string
+          file_type?: string
+          id?: string
+          is_verified?: boolean | null
+          title?: string
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "documents_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       endorsement_templates: {
