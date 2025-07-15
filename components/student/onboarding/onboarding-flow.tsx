@@ -14,7 +14,8 @@ import {
   Plane, 
   Upload, 
   FileText, 
-  Shield
+  Shield,
+  ArrowLeft
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -112,15 +113,10 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
   const router = useRouter()
   const supabase = createClient()
   
-  // Debounce save operations to prevent rapid-fire saves
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
+      // No longer needed as debouncedSaveProgress is removed
     }
   }, [])
 
@@ -245,29 +241,15 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
     }
   }
 
-  const debouncedSaveProgress = (stepId: string, data: any, isComplete: boolean = false) => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-    
-    saveTimeoutRef.current = setTimeout(() => {
-      saveProgress(stepId, data, isComplete)
-    }, 300) // 300ms debounce
-  }
-
   const goToStep = (stepId: string) => {
     setCurrentStep(stepId)
-    // Only save progress if we're actually moving to a different step
-    if (stepId !== currentStep) {
-      debouncedSaveProgress(stepId, {}, false)
-    }
   }
 
   const nextStep = () => {
     const currentIndex = getCurrentStepIndex()
     if (currentIndex < ONBOARDING_STEPS.length - 1) {
       const nextStepId = ONBOARDING_STEPS[currentIndex + 1].id
-      goToStep(nextStepId)
+      setCurrentStep(nextStepId)
     }
   }
 
@@ -275,8 +257,14 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
     const currentIndex = getCurrentStepIndex()
     if (currentIndex > 0) {
       const prevStepId = ONBOARDING_STEPS[currentIndex - 1].id
-      goToStep(prevStepId)
+      setCurrentStep(prevStepId)
     }
+  }
+
+  // Save & Exit handler
+  const handleSaveAndExit = async () => {
+    await saveProgress(currentStep, onboardingData, false)
+    exitOnboarding()
   }
 
   const skipStep = () => {
@@ -288,7 +276,10 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
   }
 
   const completeStep = async (stepData: any) => {
-    await saveProgress(currentStep, stepData, true)
+    // Merge new step data into the existing onboardingData
+    const mergedData = { ...onboardingData, ...stepData }
+    await saveProgress(currentStep, mergedData, true)
+    setOnboardingData(mergedData)
     nextStep()
   }
 
@@ -302,7 +293,6 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
       onPrev: prevStep,
       onComplete: completeStep,
       onSkip: skipStep,
-      onSave: (data: any) => saveProgress(currentStep, data, false),
       isSaving
     }
 
@@ -404,9 +394,30 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Need help? Contact support at support@desertskies.com</p>
+      {/* Navigation Controls */}
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          onClick={prevStep}
+          disabled={getCurrentStepIndex() === 0}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Previous
+        </Button>
+        
+        <div className="flex space-x-2">
+          {ONBOARDING_STEPS.find(step => step.id === currentStep)?.required === false && (
+            <Button variant="ghost" onClick={skipStep}>
+              Skip for Now
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={handleSaveAndExit}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save & Exit'}
+          </Button>
         </div>
       </div>
     </div>

@@ -54,8 +54,8 @@ export default async function StudentOnboardingPage() {
   return (
     <div className="container mx-auto py-8">
       <OnboardingFlow 
-        user={user} 
-        profile={profile} 
+        userId={user.id} 
+        userProfile={profile} 
         initialOnboarding={onboarding}
       />
     </div>

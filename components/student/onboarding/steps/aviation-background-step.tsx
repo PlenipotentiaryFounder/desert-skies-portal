@@ -22,7 +22,6 @@ interface AviationBackgroundStepProps {
   userProfile: any
   onComplete: (data: any) => void
   onSkip: () => void
-  onSave: (data: any) => void
   isSaving: boolean
 }
 
@@ -55,7 +54,6 @@ export function AviationBackgroundStep({
   userProfile,
   onComplete,
   onSkip,
-  onSave,
   isSaving
 }: AviationBackgroundStepProps) {
   const [formData, setFormData] = useState({
@@ -73,8 +71,6 @@ export function AviationBackgroundStep({
       ...prev,
       [field]: value
     }))
-    // Auto-save on change
-    onSave({ [field]: value })
   }
 
   const validateForm = () => {

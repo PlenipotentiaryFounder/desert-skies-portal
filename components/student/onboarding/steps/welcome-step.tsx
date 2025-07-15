@@ -23,7 +23,6 @@ interface WelcomeStepProps {
   userProfile: any
   onComplete: (data: any) => void
   onSkip: () => void
-  onSave: (data: any) => void
   isSaving: boolean
 }
 
@@ -95,7 +94,6 @@ export function WelcomeStep({
   userProfile,
   onComplete,
   onSkip,
-  onSave,
   isSaving
 }: WelcomeStepProps) {
   

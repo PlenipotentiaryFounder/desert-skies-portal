@@ -20,7 +20,6 @@ interface EmergencyContactStepProps {
   userProfile: any
   onComplete: (data: any) => void
   onSkip: () => void
-  onSave: (data: any) => void
   isSaving: boolean
 }
 
@@ -33,7 +32,6 @@ export function EmergencyContactStep({
   userProfile,
   onComplete,
   onSkip,
-  onSave,
   isSaving
 }: EmergencyContactStepProps) {
   const [formData, setFormData] = useState({
@@ -49,8 +47,6 @@ export function EmergencyContactStep({
       ...prev,
       [field]: value
     }))
-    // Auto-save on change
-    onSave({ [field]: value })
   }
 
   const validateForm = () => {

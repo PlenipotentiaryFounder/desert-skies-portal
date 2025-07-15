@@ -23,7 +23,6 @@ interface PersonalInfoStepProps {
   userProfile: any
   onComplete: (data: any) => void
   onSkip: () => void
-  onSave: (data: any) => void
   isSaving: boolean
 }
 
@@ -42,7 +41,6 @@ export function PersonalInfoStep({
   userProfile,
   onComplete,
   onSkip,
-  onSave,
   isSaving
 }: PersonalInfoStepProps) {
   const [formData, setFormData] = useState({
@@ -64,8 +62,6 @@ export function PersonalInfoStep({
       ...prev,
       [field]: value
     }))
-    // Auto-save on change
-    onSave({ [field]: value })
   }
 
   const validateForm = () => {

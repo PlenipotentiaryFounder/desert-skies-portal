@@ -20,7 +20,6 @@ interface CompletionStepProps {
   userProfile: any
   onComplete: (data: any) => void
   onSkip: () => void
-  onSave: (data: any) => void
   onExit: () => void
   isSaving: boolean
 }
@@ -70,7 +69,6 @@ export function CompletionStep({
   userProfile,
   onComplete,
   onSkip,
-  onSave,
   onExit,
   isSaving
 }: CompletionStepProps) {

@@ -26,7 +26,6 @@ interface LiabilityWaiverStepProps {
   userProfile: any
   onComplete: (data: any) => void
   onSkip: () => void
-  onSave: (data: any) => void
   isSaving: boolean
 }
 
@@ -35,7 +34,6 @@ export function LiabilityWaiverStep({
   userProfile,
   onComplete,
   onSkip,
-  onSave,
   isSaving
 }: LiabilityWaiverStepProps) {
   const [signatureName, setSignatureName] = useState(
@@ -47,6 +45,7 @@ export function LiabilityWaiverStep({
   const [signatureData, setSignatureData] = useState(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
+  const [today, setToday] = useState<string | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isSignaturePadReady, setIsSignaturePadReady] = useState(false)
@@ -64,6 +63,10 @@ export function LiabilityWaiverStep({
       }
     }
   }, [])
+
+  useEffect(() => {
+    setToday(format(new Date(), 'PPP'));
+  }, []);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     setIsDrawing(true)
@@ -378,7 +381,7 @@ invalid or unenforceable, the remainder shall remain in full effect.
             <div className="bg-gray-50 p-4 rounded-lg space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar className="w-4 h-4" />
-                <span>Date: {format(new Date(), 'PPP')}</span>
+                {today && <span>Date: {today}</span>}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <MapPin className="w-4 h-4" />

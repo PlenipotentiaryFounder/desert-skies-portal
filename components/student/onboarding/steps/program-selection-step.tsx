@@ -24,7 +24,6 @@ interface ProgramSelectionStepProps {
   userProfile: any
   onComplete: (data: any) => void
   onSkip: () => void
-  onSave: (data: any) => void
   isSaving: boolean
 }
 
@@ -128,7 +127,6 @@ export function ProgramSelectionStep({
   userProfile,
   onComplete,
   onSkip,
-  onSave,
   isSaving
 }: ProgramSelectionStepProps) {
   const [selectedProgram, setSelectedProgram] = useState(
@@ -138,7 +136,6 @@ export function ProgramSelectionStep({
 
   const handleProgramSelect = (programId: string) => {
     setSelectedProgram(programId)
-    onSave({ desired_program: programId })
   }
 
   const validateForm = () => {

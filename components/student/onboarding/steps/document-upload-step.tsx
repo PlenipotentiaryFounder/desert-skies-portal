@@ -24,7 +24,6 @@ interface DocumentUploadStepProps {
   userProfile: any
   onComplete: (data: any) => void
   onSkip: () => void
-  onSave: (data: any) => void
   isSaving: boolean
 }
 
@@ -64,7 +63,6 @@ export function DocumentUploadStep({
   userProfile,
   onComplete,
   onSkip,
-  onSave,
   isSaving
 }: DocumentUploadStepProps) {
   const [uploadedDocuments, setUploadedDocuments] = useState(
@@ -126,7 +124,7 @@ export function DocumentUploadStep({
       }
 
       setUploadedDocuments(newDocuments)
-      onSave({ uploaded_documents: newDocuments })
+      onComplete({ uploaded_documents: newDocuments })
 
       setTimeout(() => {
         setUploadProgress(prev => ({ ...prev, [documentType]: 0 }))
@@ -153,7 +151,7 @@ export function DocumentUploadStep({
       delete newDocuments[documentType]
 
       setUploadedDocuments(newDocuments)
-      onSave({ uploaded_documents: newDocuments })
+      onComplete({ uploaded_documents: newDocuments })
     } catch (error) {
       console.error('Remove error:', error)
     }
