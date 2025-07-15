@@ -94,6 +94,7 @@ export function DocumentUploadStep({
         })
       }, 200)
 
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file)
@@ -103,6 +104,26 @@ export function DocumentUploadStep({
 
       if (uploadError) {
         throw uploadError
+      }
+
+      // Insert metadata into documents table
+      const { error: insertError } = await supabase
+        .from('documents')
+        .insert([
+          {
+            user_id: userProfile.id,
+            bucket: 'documents',
+            path: filePath,
+            type: documentType,
+            title: file.name,
+            status: 'pending',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ])
+      if (insertError) {
+        console.error('Failed to insert document metadata:', insertError)
+        setErrors(prev => [...prev, `Failed to save document metadata for ${documentType}: ${insertError.message}`])
       }
 
       // Get public URL
@@ -130,9 +151,9 @@ export function DocumentUploadStep({
         setUploadProgress(prev => ({ ...prev, [documentType]: 0 }))
       }, 1000)
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error)
-      setErrors(prev => [...prev, `Failed to upload ${documentType}: ${error.message}`])
+      setErrors(prev => [...prev, `Failed to upload ${documentType}: ${error?.message}`])
     } finally {
       setIsUploading(false)
     }
@@ -191,10 +212,10 @@ export function DocumentUploadStep({
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       onDrop,
-      accept: document.acceptedTypes.reduce((acc, type) => {
+      accept: document.acceptedTypes.reduce((acc: Record<string, string[]>, type: string) => {
         acc[type] = []
         return acc
-      }, {}),
+      }, {} as Record<string, string[]>),
       maxFiles: 1,
       maxSize: 10 * 1024 * 1024 // 10MB
     })
