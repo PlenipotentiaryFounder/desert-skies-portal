@@ -202,7 +202,7 @@ export function DashboardShell({
         
         if (profileData) {
           // Fetch user roles
-          const { data: rolesData } = await supabase.rpc("get_user_roles", { p_user_id: user.id })
+          const { data: rolesData } = await supabase.rpc("get_user_roles_for_middleware", { p_user_id: user.id })
           const roles = rolesData?.map((r: any) => ({ role_name: r.role_name })) || []
           const userProfileWithRoles = { ...profileData, roles }
           console.log('Dashboard Shell Debug:', {
@@ -282,7 +282,7 @@ export function DashboardShell({
               {navigationItems.map((item, index) => {
                 const isActive = currentPath === item.href
                 // Handle both string-based and component-based icons
-                const Icon = typeof item.icon === 'string' ? iconMap[item.icon] : item.icon
+                const Icon = typeof item.icon === 'string' ? iconMap[item.icon as keyof typeof iconMap] : item.icon
                 const itemName = item.name || item.title
                 
                 return (
@@ -411,7 +411,7 @@ export function DashboardShell({
                 {navigationItems.map((item, index) => {
                   const isActive = currentPath === item.href
                   // Handle both string-based and component-based icons
-                  const Icon = typeof item.icon === 'string' ? iconMap[item.icon] : item.icon
+                  const Icon = typeof item.icon === 'string' ? iconMap[item.icon as keyof typeof iconMap] : item.icon
                   const itemName = item.name || item.title
                   
                   return (
