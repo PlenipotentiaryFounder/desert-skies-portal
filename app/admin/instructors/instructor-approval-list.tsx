@@ -23,10 +23,10 @@ interface InstructorApprovalListProps {
   initialInstructors: Instructor[]
 }
 
-export async function InstructorApprovalList({ initialInstructors }: InstructorApprovalListProps) {
+export function InstructorApprovalList({ initialInstructors }: InstructorApprovalListProps) {
   const [instructors, setInstructors] = useState<Instructor[]>(initialInstructors)
   const [processingIds, setProcessingIds] = useState<string[]>([])
-  const supabase = await createClient()
+  const supabase = createClient()
 
   const handleApprove = async (instructor: Instructor) => {
     setProcessingIds((prev) => [...prev, instructor.id])
