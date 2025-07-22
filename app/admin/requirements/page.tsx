@@ -37,8 +37,10 @@ export default async function AdminRequirementsPage() {
         <div className="flex gap-2">
           <Button asChild>
             <Link href="/admin/requirements/new">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Requirement
+              <div className="flex items-center">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Requirement
+              </div>
             </Link>
           </Button>
         </div>

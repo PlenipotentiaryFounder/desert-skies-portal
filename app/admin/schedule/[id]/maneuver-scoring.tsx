@@ -131,7 +131,7 @@ export function ManeuverScoring({ sessionId, maneuvers, existingScores }: Maneuv
               const scoreLabel = getScoreLabel(scoreData?.score || 0)
 
               return (
-                <div key={maneuver.id} className="rounded-lg border p-4">
+                <div key={maneuver.lesson_maneuver_id || maneuver.id} className="rounded-lg border p-4">
                   <div className="space-y-4">
                     {/* Header */}
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">

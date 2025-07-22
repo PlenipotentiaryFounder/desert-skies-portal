@@ -18,9 +18,9 @@ export default function InstructorNotificationsPage() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return setLoading(false)
-      const res = await fetch(`/api/notifications?userId=${session.user.id}`)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return setLoading(false)
+      const res = await fetch(`/api/notifications?userId=${user.id}`)
       const data = await res.json()
       setNotifications(data)
       setLoading(false)
@@ -31,9 +31,9 @@ export default function InstructorNotificationsPage() {
   useEffect(() => {
     async function fetchSettings() {
       setSettingsLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return setSettingsLoading(false)
-      const res = await fetch(`/api/notification-settings?userId=${session.user.id}`)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return setSettingsLoading(false)
+      const res = await fetch(`/api/notification-settings?userId=${user.id}`)
       if (res.ok) {
         setSettings(await res.json())
       }
@@ -43,12 +43,12 @@ export default function InstructorNotificationsPage() {
   }, [supabase])
 
   const handleMarkAllAsRead = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     await fetch("/api/notifications/mark-all-read", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: session.user.id })
+      body: JSON.stringify({ userId: user.id })
     })
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
   }

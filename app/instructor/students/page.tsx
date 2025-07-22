@@ -10,14 +10,14 @@ export default async function InstructorStudentsPage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
-  const enrollments = await getInstructorEnrollments(session.user.id)
+  const enrollments = await getInstructorEnrollments(user.id)
 
   return (
     <div className="flex flex-col gap-6">

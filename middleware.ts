@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Define protected routes that require authentication
-const protectedRoutes = ["/student", "/instructor", "/admin"]
+const protectedRoutes = ["/student", "/instructor", "/admin", "/dashboard"]
 
 // Routes that should redirect to dashboard if user is already authenticated
 const authRoutes = ["/login", "/signup"]

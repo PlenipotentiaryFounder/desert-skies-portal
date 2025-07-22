@@ -6,6 +6,7 @@ import { BookOpen, Calendar, ClipboardCheck, FileText, Home, Plane, Settings, Us
 import { DashboardShell } from "@/components/shared/dashboard-shell"
 import { getUserProfileWithRoles } from "@/lib/user-service"
 import Link from 'next/link'
+import "react-big-calendar/lib/css/react-big-calendar.css"
 
 const navItems = [
   {
@@ -37,6 +38,11 @@ const navItems = [
     title: "Documents",
     href: "/student/documents",
     icon: "fileText",
+  },
+  {
+    title: "Maintenance",
+    href: "/student/maintenance",
+    icon: "wrench",
   },
   {
     title: "FAA Requirements",

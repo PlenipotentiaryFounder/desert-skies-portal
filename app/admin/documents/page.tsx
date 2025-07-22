@@ -21,8 +21,10 @@ export default async function AdminDocumentsPage() {
         </div>
         <Button asChild>
           <Link href="/admin/documents/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Document
+            <div className="flex items-center">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Document
+            </div>
           </Link>
         </Button>
       </div>

@@ -524,7 +524,7 @@ export function EnhancedLessonManager({
                                   ) : (
                                     <div className="space-y-2">
                                       {getCurrentManeuvers(lesson.id).map((maneuver) => (
-                                        <div key={maneuver.id} className="border rounded p-2 bg-muted/50">
+                                        <div key={maneuver.lesson_maneuver_id || maneuver.id} className="border rounded p-2 bg-muted/50">
                                           <div className="flex items-center justify-between mb-2">
                                             <span className="font-medium text-sm">{maneuver.name}</span>
                                             <Button 

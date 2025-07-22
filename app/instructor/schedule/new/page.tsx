@@ -15,12 +15,12 @@ export default async function ScheduleNewMissionPage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  if (!session) return <div>You must be logged in as an instructor.</div>
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return <div>You must be logged in as an instructor.</div>
 
   // Fetch all enrollments for this instructor
-  const enrollments = await getInstructorEnrollments(session.user.id)
+  const enrollments = await getInstructorEnrollments(user.id)
   // For simplicity, fetch all lessons and maneuvers (could be filtered by selected enrollment/syllabus in a client component)
   const allLessonsRaw = (await Promise.all(enrollments.map((e) => getSyllabusLessons(e.syllabus_id)))).flat()
   const allLessons = Array.from(new Map(allLessonsRaw.map(l => [l.id, l])).values())
@@ -44,10 +44,10 @@ export async function scheduleMissionServerAction(formData: any) {
   const supabase = await createClient(cookieStore)
   
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
   
-  if (!session?.user) {
+      if (!user) {
     return { success: false, error: "Unauthorized" }
   }
 
@@ -77,7 +77,7 @@ export async function scheduleMissionServerAction(formData: any) {
           instructor_role: formData.custom.role || "",
           student_materials: formData.custom.whatToBring || "",
           notes: formData.custom.notes || "",
-          created_by: session.user.id,
+          created_by: user.id,
         })
         .select()
         .single()
@@ -114,7 +114,7 @@ export async function scheduleMissionServerAction(formData: any) {
       .insert({
         enrollment_id: formData.enrollmentId,
         lesson_id: lessonId,
-        instructor_id: session.user.id,
+        instructor_id: user.id,
         aircraft_id: formData.aircraftId,
         date: formData.date,
         start_time: formData.startTime,

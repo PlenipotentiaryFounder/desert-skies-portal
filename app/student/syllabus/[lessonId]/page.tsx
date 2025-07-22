@@ -19,14 +19,14 @@ export default async function StudentLessonDetailPage({
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
-  const enrollments = await getStudentEnrollments(session.user.id)
+  const enrollments = await getStudentEnrollments(user.id)
   const activeEnrollment = enrollments.find((e) => e.status === "active")
 
   if (!activeEnrollment) {
@@ -205,7 +205,7 @@ export default async function StudentLessonDetailPage({
                 const scoreInfo = getScoreLabel(latestScore)
 
                 return (
-                  <div key={maneuver.id} className="rounded-lg border p-4">
+                  <div key={maneuver.lesson_maneuver_id || maneuver.id} className="rounded-lg border p-4">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">

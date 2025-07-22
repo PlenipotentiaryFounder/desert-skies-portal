@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import type { Database } from "@/types/supabase"
 
 export type Syllabus = {
   id: string
@@ -103,7 +104,7 @@ export async function createSyllabus(formData: SyllabusFormData) {
   const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase.from("syllabi").insert([
-    formData as import("@/types/supabase").Database["public"]["Tables"]["syllabi"]["Insert"]
+    formData as Database["public"]["Tables"]["syllabi"]["Insert"]
   ]).select()
 
   if (error) {
@@ -119,7 +120,7 @@ export async function updateSyllabus(id: string, formData: SyllabusFormData) {
   const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase.from("syllabi")
-    .update(formData as import("@/types/supabase").Database["public"]["Tables"]["syllabi"]["Update"])
+    .update(formData as Database["public"]["Tables"]["syllabi"]["Update"])
     .eq("id", id as any)
     .select()
 
@@ -263,7 +264,7 @@ export async function getSyllabusLessonById(id: string) {
   if (!lessonManeuversError && Array.isArray(lessonManeuvers)) {
     maneuvers = lessonManeuvers
       .filter((lm: any) => lm.maneuver)
-      .map((lm: any) => ({ ...lm.maneuver, is_required: lm.is_required }))
+      .map((lm: any) => ({ ...lm.maneuver, lesson_maneuver_id: lm.id, is_required: lm.is_required }))
   }
 
   return { ...lesson, maneuvers } as SyllabusLesson
@@ -273,7 +274,7 @@ export async function createSyllabusLesson(formData: SyllabusLessonFormData) {
   const supabase = await createClient(await cookies())
 
   const { data, error } = await supabase.from("syllabus_lessons").insert([
-    formData as import("@/types/supabase").Database["public"]["Tables"]["syllabus_lessons"]["Insert"]
+    formData as Database["public"]["Tables"]["syllabus_lessons"]["Insert"]
   ]).select()
 
   if (error) {

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
+import type { Database } from '@/types/supabase'
 
 interface DocumentUploadStepProps {
   onboardingData: any
@@ -107,7 +108,7 @@ export function DocumentUploadStep({
       }
 
       // Insert metadata into documents table
-      const documentMetadata: import('@/types/supabase').Database['public']['Tables']['documents']['Insert'] = {
+      const documentMetadata: Database['public']['Tables']['documents']['Insert'] = {
         user_id: userProfile.id,
         title: file.name,
         description: '', // or provide a description if available

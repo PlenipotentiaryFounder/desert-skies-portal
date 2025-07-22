@@ -65,8 +65,10 @@ export function DocumentsOverview({ userId }: DocumentsOverviewProps) {
         <h3 className="text-sm font-medium">Recent Documents</h3>
         <Button asChild size="sm" variant="outline" aria-label="Upload Document">
           <Link href="/student/documents/upload">
-            <Upload className="mr-2 h-4 w-4" />
-            Upload
+            <div className="flex items-center">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload
+            </div>
           </Link>
         </Button>
       </div>

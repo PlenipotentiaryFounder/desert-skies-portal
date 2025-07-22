@@ -1,37 +1,339 @@
-'use client'
+"use client"
 
-import React from "react"
-import { LoginForm } from "@/components/auth/login-form"
+import React, { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { LoginForm } from '@/components/auth/login-form'
+import { 
+  Plane, 
+  Cloud, 
+  Sun, 
+  Moon, 
+  CloudRain, 
+  CloudLightning,
+  Navigation,
+  Compass,
+  MapPin,
+  Wind,
+  Thermometer,
+  Shield
+} from 'lucide-react'
 
-export function LoginUI() {
+// Floating Particles Component
+const FloatingParticles = () => {
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+    setDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight
+    })
+    
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      })
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+  
+  const particles = Array.from({ length: 20 }, (_, i) => i)
+  
+  if (!isClient) {
+    return null // Don't render particles during SSR
+  }
+  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-100/20 to-sky-100/20"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(99,102,241,0.1),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(14,165,233,0.1),transparent_50%)]"></div>
-      </div>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-aviation-sunset-400/30 rounded-full"
+          initial={{
+            x: Math.random() * dimensions.width,
+            y: Math.random() * dimensions.height,
+          }}
+          animate={{
+            x: Math.random() * dimensions.width,
+            y: Math.random() * dimensions.height,
+          }}
+          transition={{
+            duration: Math.random() * 20 + 10,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Animated Grid Component
+const AnimatedGrid = () => {
+  return (
+    <div className="absolute inset-0 opacity-20">
+      <div 
+        className="w-full h-full grid-pattern"
+        style={{
+          backgroundSize: '50px 50px',
+          backgroundImage: `
+            linear-gradient(rgba(255, 179, 71, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 179, 71, 0.1) 1px, transparent 1px)
+          `
+        }}
+      />
+    </div>
+  )
+}
+
+// Floating Aircraft Component
+const FloatingAircraft = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <motion.div
+        className="absolute top-20 left-10 text-aviation-sunset-400/20"
+        animate={{
+          x: [0, 100, 0],
+          y: [0, -20, 0],
+          rotate: [0, 5, 0],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <Plane className="w-8 h-8" />
+      </motion.div>
       
-      {/* Content */}
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-12">
+      <motion.div
+        className="absolute top-40 right-20 text-aviation-sky-400/20"
+        animate={{
+          x: [0, -80, 0],
+          y: [0, 30, 0],
+          rotate: [0, -8, 0],
+        }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 2,
+        }}
+      >
+        <Plane className="w-6 h-6" />
+      </motion.div>
+      
+      <motion.div
+        className="absolute bottom-32 left-1/4 text-aviation-sunset-300/15"
+        animate={{
+          x: [0, 60, 0],
+          y: [0, -40, 0],
+          rotate: [0, 3, 0],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 5,
+        }}
+      >
+        <Plane className="w-4 h-4" />
+      </motion.div>
+    </div>
+  )
+}
+
+// Weather Elements Component
+const WeatherElements = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Sun */}
+      <motion.div
+        className="absolute top-10 right-10 text-aviation-sunset-400/30"
+        animate={{
+          scale: [1, 1.1, 1],
+          rotate: [0, 360],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      >
+        <Sun className="w-12 h-12" />
+      </motion.div>
+      
+      {/* Clouds */}
+      <motion.div
+        className="absolute top-20 left-1/3 text-white/10"
+        animate={{
+          x: [0, 100, 0],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <Cloud className="w-16 h-16" />
+      </motion.div>
+      
+      <motion.div
+        className="absolute top-40 right-1/3 text-white/8"
+        animate={{
+          x: [0, -80, 0],
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 5,
+        }}
+      >
+        <Cloud className="w-12 h-12" />
+      </motion.div>
+      
+      {/* Navigation Elements */}
+      <motion.div
+        className="absolute bottom-20 right-10 text-aviation-sky-400/20"
+        animate={{
+          rotate: [0, 360],
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      >
+        <Compass className="w-8 h-8" />
+      </motion.div>
+      
+      <motion.div
+        className="absolute bottom-40 left-10 text-aviation-sunset-400/20"
+        animate={{
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <Navigation className="w-6 h-6" />
+      </motion.div>
+    </div>
+  )
+}
+
+export default function LoginUI() {
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-gradient-night-sky">
+      {/* Background Elements */}
+      <AnimatedGrid />
+      <FloatingParticles />
+      <FloatingAircraft />
+      <WeatherElements />
+      
+      {/* Gradient Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-br from-aviation-sunset-500/5 via-transparent to-aviation-sky-600/5" />
+      <div className="absolute inset-0 bg-gradient-to-t from-aviation-night-900/20 via-transparent to-transparent" />
+      
+      {/* Corner Decorations */}
+      <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-aviation-sunset-500/10 to-transparent rounded-br-full" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-aviation-sky-600/10 to-transparent rounded-bl-full" />
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-aviation-sunset-500/10 to-transparent rounded-tr-full" />
+      <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-aviation-sky-600/10 to-transparent rounded-tl-full" />
+      
+      {/* Main Content */}
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <div className="w-full max-w-md">
+          {/* Logo and Brand */}
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-8"
+          >
+            <motion.div
+              className="flex justify-center mb-6"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="relative">
+                <div className="w-24 h-24 bg-gradient-to-br from-aviation-sunset-500 to-aviation-sunset-600 rounded-2xl flex items-center justify-center shadow-sunset-lg animate-sunset-glow">
+                  <Plane className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute -inset-2 bg-gradient-to-r from-aviation-sunset-400/20 to-aviation-sky-600/20 rounded-2xl blur-xl animate-pulse-soft" />
+              </div>
+            </motion.div>
+            
+            <motion.h1
+              className="text-5xl font-bold text-foreground mb-3 font-display"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+            >
+              Desert Skies
+            </motion.h1>
+            
+            <motion.p
+              className="text-xl text-muted-foreground font-medium"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+            >
+              Aviation Training Portal
+            </motion.p>
+          </motion.div>
+          
+          {/* Login Form */}
           <LoginForm />
-        </div>
-        
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <p className="text-sm text-gray-500">
-            © 2025 Desert Skies Aviation Training. All rights reserved.
-          </p>
-          <div className="mt-2 flex justify-center gap-6 text-xs text-gray-400">
-            <a href="/legal/privacy-policy" className="hover:text-gray-600 transition-colors">
-              Privacy Policy
-            </a>
-            <a href="/legal/terms" className="hover:text-gray-600 transition-colors">
-              Terms & Conditions
-            </a>
-          </div>
+          
+          {/* Footer */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.8 }}
+            className="text-center mt-8"
+          >
+            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+              <motion.a
+                href="/legal/terms"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="hover:text-aviation-sunset-300 transition-colors"
+              >
+                Terms of Service
+              </motion.a>
+              <span>•</span>
+              <motion.a
+                href="/legal/privacy-policy"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="hover:text-aviation-sunset-300 transition-colors"
+              >
+                Privacy Policy
+              </motion.a>
+              <span>•</span>
+              <motion.a
+                href="/support"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="hover:text-aviation-sunset-300 transition-colors"
+              >
+                Support
+              </motion.a>
+            </div>
+            
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Shield className="w-3 h-3" />
+              <span>Secure • Reliable • Professional</span>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

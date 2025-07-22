@@ -15,10 +15,10 @@ export default async function StudentReportsPage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
@@ -30,7 +30,7 @@ export default async function StudentReportsPage() {
       </div>
 
       <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
-        <StudentProgressReport studentId={session.user.id} />
+        <StudentProgressReport studentId={user.id} />
       </Suspense>
 
       <Card>
@@ -40,7 +40,7 @@ export default async function StudentReportsPage() {
         </CardHeader>
         <CardContent>
           <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-            <StudentFlightHoursReport studentId={session.user.id} />
+            <StudentFlightHoursReport studentId={user.id} />
           </Suspense>
         </CardContent>
       </Card>

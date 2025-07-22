@@ -25,8 +25,10 @@ export default async function SchedulePage() {
         </div>
         <Button asChild>
           <Link href="/admin/schedule/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Flight Session
+            <div className="flex items-center">
+              <Plus className="mr-2 h-4 w-4" />
+              New Flight Session
+            </div>
           </Link>
         </Button>
       </div>

@@ -4,8 +4,7 @@ import { NextResponse } from "next/server"
 
 export async function POST() {
   try {
-    const cookieStore = await cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = await createClient()
     const { error } = await supabase.auth.signOut()
 
     if (error) {

@@ -199,6 +199,7 @@ export async function getManeuversForLesson(lessonId: string) {
   // Format the data
   const maneuvers = data.map((lm) => ({
     ...lm.maneuver,
+    lesson_maneuver_id: lm.id, // Keep the lesson_maneuver ID for uniqueness
     is_required: lm.is_required,
   }))
 

@@ -16,10 +16,10 @@ export default async function InstructorReportsPage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
@@ -43,12 +43,12 @@ export default async function InstructorReportsPage() {
             </TabsList>
             <TabsContent value="flight-hours" className="pt-4">
               <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
-                <InstructorFlightHoursReport instructorId={session.user.id} />
+                <InstructorFlightHoursReport instructorId={user.id} />
               </Suspense>
             </TabsContent>
             <TabsContent value="students" className="pt-4">
               <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
-                <InstructorStudentsReport instructorId={session.user.id} />
+                <InstructorStudentsReport instructorId={user.id} />
               </Suspense>
             </TabsContent>
           </Tabs>

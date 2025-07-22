@@ -96,8 +96,10 @@ export function InstructorFlightSessionsList({ initialSessions }: InstructorFlig
           </p>
           <Button asChild>
             <Link href="/instructor/schedule/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New Flight Session
+              <div className="flex items-center">
+                <Plus className="mr-2 h-4 w-4" />
+                New Flight Session
+              </div>
             </Link>
           </Button>
         </div>
@@ -176,8 +178,10 @@ export function InstructorFlightSessionsList({ initialSessions }: InstructorFlig
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/instructor/schedule/${session.id}/edit`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
+                              <div className="flex items-center">
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </div>
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem

@@ -5,10 +5,10 @@ import { SignupUI } from "./signup-ui"
 export default async function SignupPage() {
   const supabase = await createClient()
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (session) {
+  if (user) {
     redirect("/")
   }
 

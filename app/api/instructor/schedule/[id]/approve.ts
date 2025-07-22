@@ -12,10 +12,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // Get the current user (instructor)
   const {
-    data: { session },
+    data: { user },
     error: sessionError
-  } = await supabase.auth.getSession()
-  if (sessionError || !session?.user) {
+  } = await supabase.auth.getUser()
+  if (sessionError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

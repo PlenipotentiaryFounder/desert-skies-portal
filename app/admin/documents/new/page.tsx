@@ -12,10 +12,10 @@ export default async function NewDocumentPage() {
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect("/login")
   }
 

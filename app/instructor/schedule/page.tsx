@@ -18,14 +18,14 @@ export default async function InstructorSchedulePage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
-  const flightSessions = await getInstructorFlightSessions(session.user.id)
+  const flightSessions = await getInstructorFlightSessions(user.id)
 
   return (
     <div className="flex flex-col gap-6">
@@ -36,8 +36,10 @@ export default async function InstructorSchedulePage() {
         </div>
         <Button asChild>
           <Link href="/instructor/schedule/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Flight Session
+            <div className="flex items-center">
+              <Plus className="mr-2 h-4 w-4" />
+              New Flight Session
+            </div>
           </Link>
         </Button>
       </div>

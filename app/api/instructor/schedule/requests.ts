@@ -8,10 +8,10 @@ export async function GET(req: NextRequest) {
 
   // Get the current user (instructor)
   const {
-    data: { session },
+    data: { user },
     error: sessionError
-  } = await supabase.auth.getSession()
-  if (sessionError || !session?.user) {
+  } = await supabase.auth.getUser()
+  if (sessionError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase
     .from("flight_sessions")
     .select("*")
-    .eq("instructor_id", session.user.id)
+    .eq("instructor_id", user.id)
     .eq("request_status", "pending")
     .order("date", { ascending: true })
     .order("start_time", { ascending: true })

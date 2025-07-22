@@ -1,24 +1,61 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { createClient } from "@/lib/supabase/client"
 
-export default function ProfileForm({ profile }: { profile: any }) {
+export default function ProfileForm() {
   const [form, setForm] = useState({
-    first_name: profile?.first_name || "",
-    last_name: profile?.last_name || "",
-    email: profile?.email || "",
-    phone: profile?.phone || "",
-    bio: profile?.bio || "",
-    avatar_url: profile?.avatar_url || "",
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    bio: "",
+    avatar_url: "",
   })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+
+  // Fetch profile data on component mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+          
+          if (profile) {
+            setForm({
+              first_name: profile.first_name || "",
+              last_name: profile.last_name || "",
+              email: profile.email || "",
+              phone: profile.phone || "",
+              bio: profile.bio || "",
+              avatar_url: profile.avatar_url || "",
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -46,6 +83,21 @@ export default function ProfileForm({ profile }: { profile: any }) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target
     setForm((f) => ({ ...f, [name]: value }))
+  }
+
+  if (isLoadingProfile) {
+    return (
+      <div className="w-full">
+        <Card className="shadow-md border bg-background">
+          <CardContent className="flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading profile...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

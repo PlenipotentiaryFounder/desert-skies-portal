@@ -225,7 +225,7 @@ export function MissionForm({ enrollments, lessons, maneuvers, onSubmit, initial
                   <div className="block font-medium mb-1">Select Maneuvers</div>
                   <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
                     {maneuvers.map((m) => (
-                      <label key={m.id} className="flex items-center gap-2">
+                      <label key={m.lesson_maneuver_id || m.id} className="flex items-center gap-2">
                         <input
                           type="checkbox"
                           checked={form.custom.maneuvers.includes(m.id)}
@@ -277,7 +277,7 @@ export function MissionForm({ enrollments, lessons, maneuvers, onSubmit, initial
                           <li className="text-gray-400">(none)</li>
                         ) : (
                           maneuvers.filter(m => form.custom.maneuvers.includes(m.id)).map(m => (
-                            <li key={m.id}>{m.name}</li>
+                            <li key={m.lesson_maneuver_id || m.id}>{m.name}</li>
                           ))
                         )}
                       </ul>

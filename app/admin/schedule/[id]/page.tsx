@@ -38,8 +38,10 @@ export default async function FlightSessionDetailPage({
         </div>
         <Button asChild>
           <Link href={`/admin/schedule/${params.id}/edit`}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Session
+            <div className="flex items-center">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Session
+            </div>
           </Link>
         </Button>
       </div>

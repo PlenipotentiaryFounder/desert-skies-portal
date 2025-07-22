@@ -788,30 +788,32 @@ function UserSidebarInfo({ profile }: UserSidebarInfoProps) {
                 "h-12 w-12 items-center justify-center p-0"
             )}
           >
-            <Avatar
-              className={cn(
-                "h-10 w-10",
-                state === "collapsed" && "h-8 w-8"
-              )}
-            >
-              <AvatarImage src={profile.avatar_url || ""} />
-              <AvatarFallback>
-                {profile.first_name?.[0]}
-                {profile.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div
-              className={cn(
-                "ml-2 flex flex-col items-start",
-                state === "collapsed" && "hidden"
-              )}
-            >
-              <span className="text-sm font-medium">
-                {profile.first_name} {profile.last_name}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {profile.email}
-              </span>
+            <div className="flex items-center">
+              <Avatar
+                className={cn(
+                  "h-10 w-10",
+                  state === "collapsed" && "h-8 w-8"
+                )}
+              >
+                <AvatarImage src={profile.avatar_url || ""} />
+                <AvatarFallback>
+                  {profile.first_name?.[0]}
+                  {profile.last_name?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div
+                className={cn(
+                  "ml-2 flex flex-col items-start",
+                  state === "collapsed" && "hidden"
+                )}
+              >
+                <span className="text-sm font-medium">
+                  {profile.first_name} {profile.last_name}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {profile.email}
+                </span>
+              </div>
             </div>
           </Button>
         </PopoverTrigger>

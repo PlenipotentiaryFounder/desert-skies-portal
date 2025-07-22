@@ -5,6 +5,7 @@ import { getUserProfileWithRoles } from "@/lib/user-service"
 import { BookOpen, Calendar, ClipboardCheck, FileText, Home, Plane, Settings, User, Users } from "lucide-react"
 import { DashboardShell } from "@/components/shared/dashboard-shell"
 import { cookies } from "next/headers"
+import "react-big-calendar/lib/css/react-big-calendar.css"
 
 const navItems = [
   {
@@ -36,6 +37,11 @@ const navItems = [
     title: "Documents",
     href: "/instructor/documents",
     icon: "fileText",
+  },
+  {
+    title: "Maintenance",
+    href: "/instructor/maintenance",
+    icon: "wrench",
   },
   {
     title: "Endorsements",

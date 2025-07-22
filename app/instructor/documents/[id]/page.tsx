@@ -17,16 +17,16 @@ export default async function InstructorDocumentDetailPage({ params }: { params:
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect("/login")
   }
 
   const document = await getDocumentById(params.id).catch(() => null)
 
-  if (!document || document.user_id !== session.user.id) {
+  if (!document || document.user_id !== user.id) {
     notFound()
   }
 

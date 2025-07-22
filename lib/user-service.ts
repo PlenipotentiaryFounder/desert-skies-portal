@@ -321,14 +321,14 @@ export async function getCurrentInstructor(): Promise<User | null> {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
-  return getUserProfileWithRoles(session.user.id)
+  return getUserProfileWithRoles(user.id)
 }
 
 export async function getUserProfileWithRoles(userId: string): Promise<User | null> {

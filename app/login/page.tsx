@@ -1,16 +1,15 @@
 import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { LoginUI } from "./login-ui"
+import LoginUI from "./login-ui"
 
 export default async function LoginPage() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (session) {
+  if (user) {
     redirect("/")
   }
 

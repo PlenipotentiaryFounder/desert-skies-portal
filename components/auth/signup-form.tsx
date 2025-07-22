@@ -195,6 +195,7 @@ export function SignupForm() {
                           <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                           <Input 
                             placeholder="John" 
+                            autoComplete="given-name"
                             {...field} 
                             className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                           />
@@ -215,6 +216,7 @@ export function SignupForm() {
                           <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                           <Input 
                             placeholder="Doe" 
+                            autoComplete="family-name"
                             {...field} 
                             className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                           />
@@ -236,6 +238,7 @@ export function SignupForm() {
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input 
                           placeholder="pilot@example.com" 
+                          autoComplete="email"
                           {...field} 
                           className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />

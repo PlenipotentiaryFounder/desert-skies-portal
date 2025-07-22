@@ -55,6 +55,8 @@ const nextConfig = {
       },
     };
 
+
+
     return config;
   },
 }

@@ -28,10 +28,10 @@ export async function POST(req: NextRequest) {
 
   // Get the current user (student)
   const {
-    data: { session },
+    data: { user },
     error: sessionError
-  } = await supabase.auth.getSession()
-  if (sessionError || !session?.user) {
+  } = await supabase.auth.getUser()
+  if (sessionError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     postbrief_minutes,
     location_id,
     recurrence_rule,
-    requested_by: session.user.id,
+    requested_by: user.id,
     request_status: "pending",
     status: "scheduled"
   })

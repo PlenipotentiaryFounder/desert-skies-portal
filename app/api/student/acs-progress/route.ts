@@ -7,8 +7,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const certificateType = searchParams.get("certificateType") || "private_pilot"
 
-    const cookieStore = await cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = await createClient()
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -161,8 +160,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = await createClient()
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()

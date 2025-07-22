@@ -67,7 +67,11 @@ export function InstructorStudentsList({ enrollments }: InstructorStudentsListPr
       <Card className="flex flex-col items-center justify-center p-6 text-center">
         <p className="text-muted-foreground mb-4">No students found</p>
         <Button asChild variant="outline" size="sm">
-          <Link href="/instructor/students/new">Enroll New Student</Link>
+          <Link href="/instructor/students/new">
+            <div className="flex items-center">
+              Enroll New Student
+            </div>
+          </Link>
         </Button>
       </Card>
     )
@@ -88,8 +92,10 @@ export function InstructorStudentsList({ enrollments }: InstructorStudentsListPr
         </div>
         <Button asChild size="sm">
           <Link href="/instructor/students/new">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Enroll New Student
+            <div className="flex items-center">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Enroll New Student
+            </div>
           </Link>
         </Button>
       </div>
@@ -98,7 +104,11 @@ export function InstructorStudentsList({ enrollments }: InstructorStudentsListPr
         <Card className="flex flex-col items-center justify-center p-6 text-center">
           <p className="text-muted-foreground mb-4">No students found</p>
           <Button asChild variant="outline" size="sm">
-            <Link href="/instructor/students/new">Enroll New Student</Link>
+            <Link href="/instructor/students/new">
+              <div className="flex items-center">
+                Enroll New Student
+              </div>
+            </Link>
           </Button>
         </Card>
       ) : (
@@ -165,7 +175,11 @@ export function InstructorStudentsList({ enrollments }: InstructorStudentsListPr
                   </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="ghost" size="sm">
-                      <Link href={`/instructor/students/${student.id}`}>View Details</Link>
+                      <Link href={`/instructor/students/${student.id}`}>
+                        <div className="flex items-center">
+                          View Details
+                        </div>
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>

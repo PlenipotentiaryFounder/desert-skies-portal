@@ -17,10 +17,10 @@ export default async function StudentDocumentDetailPage({ params }: { params: { 
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect("/login")
   }
 
@@ -35,7 +35,7 @@ export default async function StudentDocumentDetailPage({ params }: { params: { 
     .from("student_enrollments")
     .select("*")
     .eq("student_id", document.user_id)
-    .eq("instructor_id", session.user.id)
+    .eq("instructor_id", user.id)
     .eq("status", "active")
     .maybeSingle()
 

@@ -13,8 +13,10 @@ export function UsersPageHeader() {
       </div>
       <Button asChild>
         <Link href="/admin/users/new">
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add User
+          <div className="flex items-center">
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add User
+          </div>
         </Link>
       </Button>
     </div>

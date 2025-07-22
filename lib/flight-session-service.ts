@@ -502,6 +502,7 @@ export async function getAvailableManeuversForLesson(lessonId: string) {
   // Format the data
   const maneuvers = (lessonManeuvers as any[]).filter((lm) => lm && typeof lm === "object" && !("error" in lm) && lm.maneuver && typeof lm.maneuver === "object").map((lm) => ({
     ...lm.maneuver,
+    lesson_maneuver_id: lm.id,
     is_required: lm.is_required,
   }))
 

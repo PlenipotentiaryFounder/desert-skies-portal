@@ -337,14 +337,18 @@ export function UsersList({ initialQuery, initialRole, initialStatus }: UsersLis
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
                               <Link href={`/admin/users/${user.id}`} onClick={e => e.stopPropagation()}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
+                                <div className="flex items-center">
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </div>
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link href={`/admin/users/${user.id}/permissions`} onClick={e => e.stopPropagation()}>
-                                <Shield className="mr-2 h-4 w-4" />
-                                Permissions
+                                <div className="flex items-center">
+                                  <Shield className="mr-2 h-4 w-4" />
+                                  Permissions
+                                </div>
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -385,8 +389,10 @@ export function UsersList({ initialQuery, initialRole, initialStatus }: UsersLis
         <div className="text-sm text-muted-foreground">{users.length} users found</div>
         <Button asChild>
           <Link href="/admin/users/new">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add User
+            <div className="flex items-center">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add User
+            </div>
           </Link>
         </Button>
       </CardFooter>

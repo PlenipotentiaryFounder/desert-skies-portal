@@ -63,8 +63,8 @@ async function LessonCard({ lesson }: { lesson: any }) {
           {acsStandards.length > 0 ? (
             <div className="space-y-1">
               <div className="font-semibold text-blue-700">ACS Standards:</div>
-              {acsStandards.slice(0, 2).map((standard) => (
-                <div key={standard.id} className="text-blue-600 font-mono">
+              {acsStandards.slice(0, 2).map((standard, index) => (
+                <div key={`${standard.id}-${index}`} className="text-blue-600 font-mono">
                   {standard.code}: {standard.title}
                 </div>
               ))}
@@ -84,7 +84,7 @@ async function LessonCard({ lesson }: { lesson: any }) {
       <ul className="list-disc ml-6 space-y-1">
         {maneuvers.length === 0 && <li className="text-muted-foreground">None</li>}
         {maneuvers.map((m: any) => (
-          <li key={m.id}>
+          <li key={m.lesson_maneuver_id || m.id}>
             <span className="font-semibold">{m.name}</span>
             {m.faa_reference && <span className="ml-2 text-xs text-muted-foreground">({m.faa_reference})</span>}
             {m.is_required === false && <span className="ml-2 text-xs text-orange-600">(Optional)</span>}

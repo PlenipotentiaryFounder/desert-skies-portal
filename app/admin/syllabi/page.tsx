@@ -23,8 +23,10 @@ export default async function SyllabiPage() {
           {!hasSyllabi && (
             <Button variant="outline" asChild>
               <Link href="/admin/syllabi/seed">
-                <Database className="mr-2 h-4 w-4" />
-                Seed Syllabi Data
+                <div className="flex items-center">
+                  <Database className="mr-2 h-4 w-4" />
+                  Seed Syllabi Data
+                </div>
               </Link>
             </Button>
           )}

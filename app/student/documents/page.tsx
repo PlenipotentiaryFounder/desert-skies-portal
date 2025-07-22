@@ -17,10 +17,10 @@ export default async function StudentDocumentsPage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
@@ -28,7 +28,7 @@ export default async function StudentDocumentsPage() {
   const { data: documents } = await supabase
     .from("documents")
     .select("*")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
   const totalDocs = documents?.length || 0
   const verifiedDocs = documents?.filter((d: any) => d.is_verified).length || 0
   const pendingDocs = documents?.filter((d: any) => !d.is_verified).length || 0
@@ -70,7 +70,7 @@ export default async function StudentDocumentsPage() {
 
       {/* Document List */}
       <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-xl" />}>
-        <StudentDocumentsListWrapper userId={session.user.id} />
+        <StudentDocumentsListWrapper userId={user.id} />
       </Suspense>
 
       {/* Floating Action Button for mobile */}

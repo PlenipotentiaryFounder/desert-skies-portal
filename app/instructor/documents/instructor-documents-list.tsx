@@ -230,8 +230,10 @@ function DocumentsGrid({
             {!doc.is_verified && showUser && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={`${basePath}/${doc.id}/verify`}>
-                  <Check className="mr-2 h-4 w-4" />
-                  Verify
+                  <div className="flex items-center">
+                    <Check className="mr-2 h-4 w-4" />
+                    Verify
+                  </div>
                 </Link>
               </Button>
             )}

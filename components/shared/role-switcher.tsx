@@ -42,8 +42,10 @@ export function RoleSwitcher({ roles }: RoleSwitcherProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="w-full justify-between">
-          <span className="capitalize">{currentDashboardRole}</span>
-          <ChevronsUpDown className="ml-2 h-4 w-4" />
+          <div className="flex items-center justify-between w-full">
+            <span className="capitalize">{currentDashboardRole}</span>
+            <ChevronsUpDown className="ml-2 h-4 w-4" />
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">

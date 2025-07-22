@@ -24,10 +24,10 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
   const cookieStore = await cookies()
   const supabase = createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
@@ -41,7 +41,7 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
   const activeEnrollment = enrollments.find((e) => e.status === "active")
 
   // Check if this instructor is assigned to this student
-  const isAssigned = activeEnrollment?.instructor_id === session.user.id
+  const isAssigned = activeEnrollment?.instructor_id === user.id
 
   if (!isAssigned) {
     return (

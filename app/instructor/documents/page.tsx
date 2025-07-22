@@ -16,10 +16,10 @@ export default async function InstructorDocumentsPage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
@@ -32,14 +32,16 @@ export default async function InstructorDocumentsPage() {
         </div>
         <Button asChild>
           <Link href="/instructor/documents/upload">
-            <Plus className="mr-2 h-4 w-4" />
-            Upload Document
+            <div className="flex items-center">
+              <Plus className="mr-2 h-4 w-4" />
+              Upload Document
+            </div>
           </Link>
         </Button>
       </div>
 
       <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
-        <InstructorDocumentsListWrapper instructorId={session.user.id} />
+        <InstructorDocumentsListWrapper instructorId={user.id} />
       </Suspense>
     </div>
   )

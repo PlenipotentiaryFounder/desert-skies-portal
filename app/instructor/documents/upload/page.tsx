@@ -12,10 +12,10 @@ export default async function InstructorDocumentUploadPage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect("/login")
   }
 
@@ -26,7 +26,7 @@ export default async function InstructorDocumentUploadPage() {
         <p className="text-muted-foreground">Upload your certificates, licenses, and other documents</p>
       </div>
 
-      <InstructorDocumentUploadForm userId={session.user.id} />
+      <InstructorDocumentUploadForm userId={user.id} />
     </div>
   )
 }

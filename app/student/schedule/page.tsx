@@ -19,14 +19,14 @@ export default async function StudentSchedulePage() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
-  const flightSessions = await getStudentFlightSessions(session.user.id)
+  const flightSessions = await getStudentFlightSessions(user.id)
 
   return (
     <div className="relative flex flex-col gap-6">
