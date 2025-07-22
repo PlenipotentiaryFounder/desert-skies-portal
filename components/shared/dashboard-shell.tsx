@@ -252,18 +252,126 @@ export function DashboardShell({
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
+      {/* Desktop Sidebar - Always Visible */}
+      {showNav && (
+        <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-80 bg-gradient-to-b from-aviation-sky-900 via-aviation-sky-800 to-aviation-sky-900 border-r border-aviation-sky-700/50 backdrop-blur-xl flex-col h-screen">
+          {/* Sidebar Header */}
+          <div className="flex h-16 items-center justify-between px-6 border-b border-aviation-sky-700/50">
+            <motion.div 
+              className="flex items-center gap-3"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-aviation-sky-500 to-aviation-sky-600 rounded-xl flex items-center justify-center shadow-aviation">
+                <Plane className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white font-display">Desert Skies</h1>
+                <p className="text-xs text-aviation-sky-300">
+                  {userRole === 'admin' ? 'Admin Portal' : 
+                   userRole === 'instructor' ? 'Instructor Portal' : 
+                   userRole === 'student' ? 'Student Portal' : 'Flight Training Portal'}
+                </p>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Navigation and Profile Container */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Scrollable Navigation */}
+            <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto min-h-0">
+              {navigationItems.map((item, index) => {
+                const isActive = currentPath === item.href
+                // Handle both string-based and component-based icons
+                const Icon = typeof item.icon === 'string' ? iconMap[item.icon] : item.icon
+                const itemName = item.name || item.title
+                
+                return (
+                  <motion.div
+                    key={itemName || item.href}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + index * 0.05 }}
+                  >
+                    <motion.a
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden cursor-pointer",
+                        isActive
+                          ? "bg-gradient-to-r from-aviation-sky-600 to-aviation-sky-700 text-white shadow-aviation"
+                          : "text-aviation-sky-300 hover:text-white hover:bg-aviation-sky-700/30"
+                      )}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {/* Active indicator */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className="absolute inset-0 bg-gradient-to-r from-aviation-sky-500/20 to-aviation-sky-600/20"
+                        />
+                      )}
+                      
+                      {Icon && (
+                        <Icon className={cn(
+                          "w-5 h-5 transition-transform group-hover:scale-110",
+                          isActive ? "text-white" : "text-aviation-sky-400 group-hover:text-white"
+                        )} />
+                      )}
+                      
+                      <span className="relative z-10">{itemName}</span>
+                      
+                      {item.badge && (
+                        <motion.span
+                          className="ml-auto bg-aviation-danger-500 text-white text-xs px-2 py-1 rounded-full font-bold"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.5 + index * 0.1 }}
+                        >
+                          {item.badge}
+                        </motion.span>
+                      )}
+                    </motion.a>
+                  </motion.div>
+                )
+              })}
+            </nav>
+
+            {/* Profile Card - Expandable at bottom */}
+            <div className="px-4 pb-4 flex-shrink-0">
+              <AviationProfileCard
+                user={user}
+                userProfile={userProfile}
+                variant="aviation"
+                showDetails={true}
+                collapsible={true}
+              />
+            </div>
+          </div>
+
+          {/* Sidebar Footer */}
+          <div className="p-4 border-t border-aviation-sky-700/50">
+            <motion.div 
+              className="flex items-center gap-2 text-xs text-aviation-sky-400"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              <Shield className="w-3 h-3" />
+              <span>FAA Part 141 Certified</span>
+            </motion.div>
+          </div>
+        </aside>
+      )}
+
+      {/* Mobile Sidebar - Animated */}
       <AnimatePresence>
-        {showNav && (
+        {showNav && sidebarOpen && (
           <motion.aside
             initial={{ x: -320 }}
-            animate={{ x: sidebarOpen ? 0 : -320 }}
+            animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={cn(
-              "fixed inset-y-0 left-0 z-50 w-80 bg-gradient-to-b from-aviation-sky-900 via-aviation-sky-800 to-aviation-sky-900 border-r border-aviation-sky-700/50 backdrop-blur-xl flex flex-col h-screen lg:translate-x-0",
-              sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            )}
+            className="fixed inset-y-0 left-0 z-50 w-80 bg-gradient-to-b from-aviation-sky-900 via-aviation-sky-800 to-aviation-sky-900 border-r border-aviation-sky-700/50 backdrop-blur-xl flex flex-col h-screen lg:hidden"
             data-sidebar="mobile"
           >
             {/* Sidebar Header */}

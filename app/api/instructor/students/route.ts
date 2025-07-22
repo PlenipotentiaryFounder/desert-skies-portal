@@ -31,8 +31,8 @@ export async function GET() {
     // Get students enrolled with this instructor
     const { data: enrollments, error: enrollmentsError } = await supabase
       .from('student_enrollments')
-      .select(`
-        student_id,
+        .select(`
+          student_id,
         syllabus_id,
         start_date,
         status,
