@@ -63,8 +63,7 @@ export function DashboardNav({ items, profile }: DashboardNavProps) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    router.refresh()
-    router.push("/")
+    router.push("/login")
   }
 
   return (
