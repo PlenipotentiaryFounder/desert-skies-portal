@@ -100,19 +100,14 @@ interface StudentDetail extends Student {
   instructorNotes: string[]
 }
 
-interface StudentManagementSystemProps {
-  students?: StudentDetail[]
-  isLoading?: boolean
-}
-
-export default function StudentManagementSystem({ students: initialStudents = [], isLoading: initialLoading = false }: StudentManagementSystemProps) {
-  const [students, setStudents] = useState<StudentDetail[]>(initialStudents)
+export default function StudentManagementSystem() {
+  const [students, setStudents] = useState<StudentDetail[]>([])
   const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [showAddStudent, setShowAddStudent] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingStudents, setIsLoadingStudents] = useState(initialLoading)
+  const [isLoadingStudents, setIsLoadingStudents] = useState(true)
   const [newStudent, setNewStudent] = useState({
     first_name: '',
     last_name: '',
@@ -129,31 +124,26 @@ export default function StudentManagementSystem({ students: initialStudents = []
     return matchesSearch && matchesStatus
   })
 
-  // Only fetch students if no initial data provided
+  // Fetch students on component mount
   useEffect(() => {
-    if (initialStudents.length === 0 && !initialLoading) {
-      const fetchStudents = async () => {
-        try {
-          const response = await fetch('/api/instructor/students')
-          if (response.ok) {
-            const data = await response.json()
-            setStudents(data.students || [])
-          } else {
-            console.error('Failed to fetch students')
-          }
-        } catch (error) {
-          console.error('Error fetching students:', error)
-        } finally {
-          setIsLoadingStudents(false)
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch('/api/instructor/students')
+        if (response.ok) {
+          const data = await response.json()
+          setStudents(data.students || [])
+        } else {
+          console.error('Failed to fetch students')
         }
+      } catch (error) {
+        console.error('Error fetching students:', error)
+      } finally {
+        setIsLoadingStudents(false)
       }
-
-      fetchStudents()
-    } else {
-      setStudents(initialStudents)
-      setIsLoadingStudents(false)
     }
-  }, [initialStudents, initialLoading])
+
+    fetchStudents()
+  }, [])
 
   const handleStudentSelect = async (student: Student) => {
     setIsLoading(true)

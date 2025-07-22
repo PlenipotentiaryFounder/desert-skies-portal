@@ -136,6 +136,32 @@ export function DashboardShell({
   navItems
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  
+  // Close sidebar when clicking outside on mobile or pressing Escape
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sidebarOpen && window.innerWidth < 1024) {
+        const sidebar = document.querySelector('[data-sidebar="mobile"]')
+        const target = event.target as Element
+        if (sidebar && !sidebar.contains(target)) {
+          setSidebarOpen(false)
+        }
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && sidebarOpen) {
+        setSidebarOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [sidebarOpen])
   const [user, setUser] = React.useState<any>(null)
   const [userProfile, setUserProfile] = React.useState<any>(profile)
   const router = useRouter()
@@ -230,13 +256,15 @@ export function DashboardShell({
       <AnimatePresence>
         {showNav && (
           <motion.aside
-            initial={{ x: -300 }}
-            animate={{ x: 0 }}
-            exit={{ x: -300 }}
+            initial={{ x: -320 }}
+            animate={{ x: sidebarOpen ? 0 : -320 }}
+            exit={{ x: -320 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
-              "fixed inset-y-0 left-0 z-50 w-80 bg-gradient-to-b from-aviation-sky-900 via-aviation-sky-800 to-aviation-sky-900 border-r border-aviation-sky-700/50 backdrop-blur-xl flex flex-col h-screen",
-              sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+              "fixed inset-y-0 left-0 z-50 w-80 bg-gradient-to-b from-aviation-sky-900 via-aviation-sky-800 to-aviation-sky-900 border-r border-aviation-sky-700/50 backdrop-blur-xl flex flex-col h-screen lg:translate-x-0",
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}
+            data-sidebar="mobile"
           >
             {/* Sidebar Header */}
             <div className="flex h-16 items-center justify-between px-6 border-b border-aviation-sky-700/50">
@@ -260,8 +288,9 @@ export function DashboardShell({
               <Button
                 variant="ghost"
                 size="icon"
-                className="lg:hidden text-white hover:bg-aviation-sky-700/50"
+                className="lg:hidden text-white hover:bg-aviation-sky-700/50 transition-colors"
                 onClick={() => setSidebarOpen(false)}
+                aria-label="Close sidebar"
               >
                 <X className="w-5 h-5" />
               </Button>
@@ -286,8 +315,9 @@ export function DashboardShell({
                     >
                       <motion.a
                         href={item.href}
+                        onClick={() => setSidebarOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden",
+                          "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden cursor-pointer",
                           isActive
                             ? "bg-gradient-to-r from-aviation-sky-600 to-aviation-sky-700 text-white shadow-aviation"
                             : "text-aviation-sky-300 hover:text-white hover:bg-aviation-sky-700/30"
@@ -373,8 +403,14 @@ export function DashboardShell({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="lg:hidden"
+                  className={cn(
+                    "lg:hidden transition-colors",
+                    sidebarOpen 
+                      ? "bg-aviation-sky-100 text-aviation-sky-700" 
+                      : "hover:bg-aviation-sky-50"
+                  )}
                   onClick={() => setSidebarOpen(true)}
+                  aria-label="Open navigation menu"
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
