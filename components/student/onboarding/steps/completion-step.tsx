@@ -75,8 +75,7 @@ export function CompletionStep({
   
   const handleFinish = () => {
     onComplete({
-      onboarding_completed: true,
-      onboarding_completed_at: new Date().toISOString()
+      completed_at: new Date().toISOString()
     })
   }
 
@@ -98,7 +97,7 @@ export function CompletionStep({
           </div>
         </div>
         <h1 className="text-4xl font-bold text-gray-900">
-          Congratulations, {userProfile?.full_name?.split(' ')[0] || 'Student'}!
+          Congratulations, {userProfile?.first_name || onboardingData?.first_name || 'Student'}!
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
           You've successfully completed the onboarding process. Welcome to the 

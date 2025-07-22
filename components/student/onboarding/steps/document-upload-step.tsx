@@ -77,12 +77,29 @@ export function DocumentUploadStep({
 
   const uploadDocument = async (file: File, documentType: string) => {
     try {
+      // Validate user profile
+      if (!userProfile?.id) {
+        throw new Error('User profile not found. Please refresh the page and try again.')
+      }
+
       setIsUploading(true)
       setUploadProgress(prev => ({ ...prev, [documentType]: 0 }))
 
+      // Check file size (4MB limit to match storage bucket)
+      if (file.size > 4 * 1024 * 1024) {
+        throw new Error('File size must be less than 4MB')
+      }
+
+      // Validate file type
+      const documentConfig = REQUIRED_DOCUMENTS.find(doc => doc.id === documentType)
+      if (!documentConfig?.acceptedTypes.includes(file.type)) {
+        throw new Error(`File type ${file.type} is not accepted for ${documentType}`)
+      }
+
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}_${documentType}.${fileExt}`
-      const filePath = `documents/${userProfile.id}/${fileName}`
+      // Fix file path to match storage policy: folder name should be user ID
+      const filePath = `${userProfile.id}/${fileName}`
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -96,40 +113,63 @@ export function DocumentUploadStep({
       }, 200)
 
       // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      console.log('Attempting upload:', {
+        filePath,
+        fileSize: file.size,
+        fileType: file.type,
+        fileName: file.name,
+        userId: userProfile.id
+      })
+      
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('documents')
-        .upload(filePath, file)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
 
       clearInterval(progressInterval)
       setUploadProgress(prev => ({ ...prev, [documentType]: 100 }))
 
+      console.log('Upload response:', { uploadError, uploadData })
+      
       if (uploadError) {
-        throw uploadError
+        console.error('Storage upload error:', uploadError)
+        throw new Error(`Upload failed: ${uploadError.message}`)
+      }
+
+      if (!uploadData?.path) {
+        console.error('Upload succeeded but no file path returned:', uploadData)
+        throw new Error('Upload succeeded but no file path returned')
       }
 
       // Insert metadata into documents table
       const documentMetadata: Database['public']['Tables']['documents']['Insert'] = {
         user_id: userProfile.id,
         title: file.name,
-        description: '', // or provide a description if available
-        file_path: filePath,
+        description: `Uploaded during onboarding for ${documentType}`,
+        file_path: uploadData.path,
         file_type: file.type,
         document_type: documentType,
-        expiration_date: null, // or set if available
+        expiration_date: null,
         is_verified: false,
       }
+      
       const { error: insertError } = await supabase
         .from('documents')
         .insert([documentMetadata])
+        
       if (insertError) {
         console.error('Failed to insert document metadata:', insertError)
-        setErrors(prev => [...prev, `Failed to save document metadata for ${documentType}: ${insertError.message}`])
+        // Try to clean up the uploaded file if metadata insertion fails
+        await supabase.storage.from('documents').remove([uploadData.path])
+        throw new Error(`Failed to save document metadata: ${insertError.message}`)
       }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('documents')
-        .getPublicUrl(filePath)
+        .getPublicUrl(uploadData.path)
 
       // Update uploaded documents
       const newDocuments = {
@@ -137,7 +177,7 @@ export function DocumentUploadStep({
         [documentType]: {
           name: file.name,
           url: publicUrl,
-          path: filePath,
+          path: uploadData.path,
           uploaded_at: new Date().toISOString(),
           size: file.size,
           type: file.type
@@ -145,7 +185,7 @@ export function DocumentUploadStep({
       }
 
       setUploadedDocuments(newDocuments)
-      onComplete({ uploaded_documents: newDocuments })
+      // Don't auto-progress, let user click "Save and Continue"
 
       setTimeout(() => {
         setUploadProgress(prev => ({ ...prev, [documentType]: 0 }))
@@ -153,7 +193,8 @@ export function DocumentUploadStep({
 
     } catch (error: any) {
       console.error('Upload error:', error)
-      setErrors(prev => [...prev, `Failed to upload ${documentType}: ${error?.message}`])
+      const errorMessage = error?.message || 'Unknown upload error occurred'
+      setErrors(prev => [...prev, `Failed to upload ${documentType}: ${errorMessage}`])
     } finally {
       setIsUploading(false)
     }
@@ -163,16 +204,21 @@ export function DocumentUploadStep({
     try {
       const document = uploadedDocuments[documentType]
       if (document?.path) {
-        await supabase.storage
+        const { error: removeError } = await supabase.storage
           .from('documents')
           .remove([document.path])
+        
+        if (removeError) {
+          console.error('Failed to remove file from storage:', removeError)
+          // Continue with removing from UI even if storage removal fails
+        }
       }
 
       const newDocuments = { ...uploadedDocuments }
       delete newDocuments[documentType]
 
       setUploadedDocuments(newDocuments)
-      onComplete({ uploaded_documents: newDocuments })
+      // Don't auto-progress, let user click "Save and Continue"
     } catch (error) {
       console.error('Remove error:', error)
     }
@@ -217,7 +263,7 @@ export function DocumentUploadStep({
         return acc
       }, {} as Record<string, string[]>),
       maxFiles: 1,
-      maxSize: 10 * 1024 * 1024 // 10MB
+      maxSize: 4 * 1024 * 1024 // 4MB to match storage bucket limit
     })
 
     const isUploaded = uploadedDocuments[document.id]
@@ -262,7 +308,7 @@ export function DocumentUploadStep({
                 }
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Supported formats: PDF, JPEG, PNG (max 10MB)
+                Supported formats: PDF, JPEG, PNG (max 4MB)
               </p>
             </div>
           ) : (

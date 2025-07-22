@@ -7,41 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  DashboardWidget, 
-  QuickStatsWidget, 
-  ActivityFeedWidget, 
-  AlertsWidget 
-} from '@/components/ui/aviation-dashboard-widget'
-import { 
-  AviationMetric, 
-  WeatherMetrics, 
-  AircraftMetrics, 
-  FlightProgress 
-} from '@/components/ui/aviation-metrics'
-import { 
-  FlightDataDisplay,
-  CompactFlightDataDisplay,
-  FlightStatusIndicator
-} from '@/components/ui/flight-data-display'
-import {
-  AviationNotificationCenter,
-  CompactNotificationWidget,
-  NotificationBadge
-} from '@/components/ui/aviation-notifications'
-import {
-  AviationLineChart,
-  AviationBarChart,
-  AviationPieChart,
-  AviationRadarChart,
-  AviationComposedChart,
-  FlightPerformanceChart,
-  WeatherTrendChart,
-  StudentProgressChart,
-  AircraftUtilizationChart,
-  ManeuverPerformanceChart,
-  RevenueTrendChart
-} from '@/components/ui/aviation-charts'
+import { useStudentDashboardData } from '@/components/student/dashboard/StudentDashboardData'
+import { TrainingSchedule } from '@/components/student/dashboard/TrainingSchedule'
+import { TrainingProgress } from '@/components/student/dashboard/TrainingProgress'
 import { 
   Plane, 
   Users, 
@@ -117,7 +85,6 @@ import {
   RotateCcw,
   Play,
   Pause,
-  Stop,
   SkipBack,
   SkipForward,
   Volume2,
@@ -130,13 +97,11 @@ import {
   Smartphone,
   Tablet,
   Laptop,
-  Desktop,
   Server,
   Database,
   HardDrive,
   MemoryStick,
   Cpu,
-  Gpu,
   Network,
   Wifi as WifiIcon,
   WifiOff,
@@ -153,158 +118,10 @@ import {
   Power,
   PowerOff,
   Zap as ZapIcon,
-  Lightning,
-  Thunder,
-  Rain,
-  Snow,
-  Hail,
-  Fog,
-  Mist,
-  Drizzle,
-  Hurricane,
-  Tornado,
-  Earthquake,
-  Volcano,
-  Tsunami,
-  Fire,
-  Flood,
-  Drought,
-  Heat,
-  Cold,
-  Humidity,
-  Pressure,
-  Visibility,
-  Ceiling,
-  Turbulence,
-  Icing,
-  WindShear,
-  Microburst,
-  ClearAirTurbulence,
-  MountainWave,
-  JetStream,
-  Front,
-  WarmFront,
-  ColdFront,
-  StationaryFront,
-  OccludedFront,
-  HighPressure,
-  LowPressure,
-  Ridge,
-  Trough,
-  Convergence,
-  Divergence,
-  Advection,
-  Convection,
-  Radiation,
-  Conduction,
-  Evaporation,
-  Condensation,
-  Sublimation,
-  Deposition,
-  Melting,
-  Freezing,
-  Boiling,
-  CondensationNuclei,
-  CloudCondensationNuclei,
-  IceNuclei,
-  Aerosol,
-  Particulate,
-  Pollutant,
-  Greenhouse,
-  Ozone,
-  CarbonDioxide,
-  Methane,
-  NitrousOxide,
-  SulfurDioxide,
-  NitrogenOxide,
-  CarbonMonoxide,
-  Lead,
-  Mercury,
-  Arsenic,
-  Cadmium,
-  Chromium,
-  Nickel,
-  Zinc,
-  Copper,
-  Iron,
-  Aluminum,
-  Silicon,
-  Calcium,
-  Magnesium,
-  Sodium,
-  Potassium,
-  Chlorine,
-  Fluorine,
-  Bromine,
-  Iodine,
-  Helium,
-  Neon,
-  Argon,
-  Krypton,
-  Xenon,
-  Radon,
-  Hydrogen,
-  Oxygen,
-  Nitrogen,
-  Carbon,
-  Phosphorus,
-  Sulfur,
-  Selenium,
-  Manganese,
-  Cobalt,
-  Molybdenum,
-  Vanadium,
-  Tungsten,
-  Titanium,
-  Zirconium,
-  Hafnium,
-  Niobium,
-  Tantalum,
-  Rhenium,
-  Osmium,
-  Iridium,
-  Platinum,
-  Gold,
-  Silver,
-  Palladium,
-  Rhodium,
-  Ruthenium,
-  Technetium,
-  Promethium,
-  Neodymium,
-  Praseodymium,
-  Cerium,
-  Lanthanum,
-  Actinium,
-  Thorium,
-  Protactinium,
-  Uranium,
-  Neptunium,
-  Plutonium,
-  Americium,
-  Curium,
-  Berkelium,
-  Californium,
-  Einsteinium,
-  Fermium,
-  Mendelevium,
-  Nobelium,
-  Lawrencium,
-  Rutherfordium,
-  Dubnium,
-  Seaborgium,
-  Bohrium,
-  Hassium,
-  Meitnerium,
-  Darmstadtium,
-  Roentgenium,
-  Copernicium,
-  Nihonium,
-  Flerovium,
-  Moscovium,
-  Livermorium,
-  Tennessine,
-  Oganesson
+  History,
+  CheckCheck,
+  Plus,
+  X
 } from 'lucide-react'
 
 // Mock data for the client component
@@ -325,10 +142,8 @@ const mockStudentData = {
 
 export default function StudentDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
-  const [showFlightData, setShowFlightData] = useState(true)
-  const [showNotifications, setShowNotifications] = useState(true)
+  const { data: dashboardData, loading, error } = useStudentDashboardData()
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -337,6 +152,16 @@ export default function StudentDashboard() {
 
     return () => clearInterval(timer)
   }, [])
+
+  // Debug tab changes
+  useEffect(() => {
+    console.log('🔄 Active tab changed to:', activeTab)
+  }, [activeTab])
+
+  const handleTabChange = (value: string) => {
+    console.log('🔄 Tab change requested:', value)
+    setActiveTab(value)
+  }
 
   // Mock data - in real app, this would come from API calls
   const quickStats = [
@@ -605,10 +430,8 @@ export default function StudentDashboard() {
   ]
 
   const handleRefresh = async () => {
-    setIsLoading(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsLoading(false)
+    // Refresh data by reloading the page or refetching
+    window.location.reload()
   }
 
   const handleMarkRead = (id: string) => {
@@ -665,20 +488,24 @@ export default function StudentDashboard() {
                 {currentTime.toLocaleTimeString()}
               </p>
             </div>
-            <NotificationBadge count={notifications.filter(n => !n.read).length} critical={notifications.filter(n => n.priority === 'critical').length} />
-            <Button
-              variant="aviation"
-              onClick={handleRefresh}
-              loading={isLoading}
-              icon={<RefreshCw className="w-4 h-4" />}
-            >
-              Refresh Data
-            </Button>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">
+                {dashboardData?.notifications?.filter(n => !n.read).length || 0} notifications
+              </Badge>
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={loading}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </motion.div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="training">Training</TabsTrigger>
@@ -688,145 +515,161 @@ export default function StudentDashboard() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Quick Stats Row */}
-            <motion.div variants={itemVariants}>
-              <QuickStatsWidget stats={quickStats} />
-            </motion.div>
-
-            {/* Main Dashboard Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Weather & Aircraft */}
-              <div className="space-y-6">
-                <motion.div variants={itemVariants}>
-                  <WeatherMetrics {...weatherData} />
-                </motion.div>
-                
-                <motion.div variants={itemVariants}>
-                  <Card variant="dashboard" className="h-full">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-foreground">
-                        <Plane className="w-5 h-5" />
-                        Aircraft Status
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <AircraftMetrics {...aircraftData} />
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </div>
-
-              {/* Center Column - Flight Progress & Alerts */}
-              <div className="space-y-6">
-                <motion.div variants={itemVariants}>
-                  <FlightProgress {...flightProgressData} />
-                </motion.div>
-                
-                <motion.div variants={itemVariants}>
-                  <AlertsWidget alerts={activeAlerts} />
-                </motion.div>
-              </div>
-
-              {/* Right Column - Activity Feed */}
-              <div className="space-y-6">
-                <motion.div variants={itemVariants}>
-                  <ActivityFeedWidget activities={recentActivities} />
-                </motion.div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading dashboard data...</p>
               </div>
             </div>
-
-            {/* Real-time Flight Data */}
-            <motion.div variants={itemVariants}>
-              <FlightDataDisplay
-                data={flightData}
-                variant="aviation"
-                showControls={true}
-                onRefresh={handleRefresh}
-              />
-            </motion.div>
-
-            {/* Upcoming Sessions */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <CalendarDays className="w-5 h-5" />
-                    Upcoming Training Sessions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {upcomingSessions.map((session, index) => (
-                      <motion.div
-                        key={session.time}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="flex flex-col gap-2 p-4 rounded-lg hover:bg-white/5 transition-colors border-l-4 border-aviation-sunset-500"
-                      >
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-aviation-sunset-300">{session.time}</p>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive mb-4">Error loading dashboard: {error}</p>
+              <Button onClick={handleRefresh}>Try Again</Button>
+            </div>
+          ) : dashboardData ? (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {/* Welcome Section */}
+              <motion.div variants={itemVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      Welcome back, {dashboardData.student.first_name}!
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-primary mb-2">
+                          {dashboardData.progress.syllabusProgress}%
                         </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">{session.instructor}</p>
-                          <p className="text-sm text-muted-foreground">{session.lesson}</p>
-                          <p className="text-xs text-aviation-sky-300">{session.aircraft}</p>
+                        <div className="text-sm text-muted-foreground">Syllabus Complete</div>
+                        <Progress value={dashboardData.progress.syllabusProgress} className="mt-2" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-blue-500 mb-2">
+                          {dashboardData.progress.totalHours}
                         </div>
-                        <Button variant="outline" size="sm">
-                          View Details
+                        <div className="text-sm text-muted-foreground">Total Flight Hours</div>
+                        <Progress value={(dashboardData.progress.totalHours / 40) * 100} className="mt-2" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-green-500 mb-2">
+                          {dashboardData.enrollment?.instructor_name || 'TBD'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Current Instructor</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Upcoming Sessions */}
+              <motion.div variants={itemVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Upcoming Sessions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {dashboardData.upcomingSessions.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No Upcoming Sessions</h3>
+                        <p className="text-muted-foreground mb-4">
+                          You don't have any scheduled flight sessions.
+                        </p>
+                        <Button>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Request Session
                         </Button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {dashboardData.upcomingSessions.slice(0, 3).map((session, index) => (
+                          <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="flex items-center gap-4">
+                              <div className="text-center">
+                                <p className="text-lg font-bold text-primary">
+                                  {new Date(session.start_time).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                  })}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(session.date).toLocaleDateString('en-US', { 
+                                    weekday: 'short', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </p>
+                              </div>
+                              <div>
+                                <h4 className="font-medium">
+                                  {session.lesson_name || 'Flight Training Session'}
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {session.instructor_name} • {session.aircraft_name}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge variant="outline">{session.status}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
 
-            {/* Quick Actions */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Zap className="w-5 h-5" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    <Button variant="aviation" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <PlaneTakeoff className="w-6 h-6" />
-                      <span className="text-sm">Schedule Flight</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <BookOpen className="w-6 h-6" />
-                      <span className="text-sm">View Syllabus</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <FileText className="w-6 h-6" />
-                      <span className="text-sm">Documents</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <BarChart3 className="w-6 h-6" />
-                      <span className="text-sm">Progress</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <Settings className="w-6 h-6" />
-                      <span className="text-sm">Settings</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <Bell className="w-6 h-6" />
-                      <span className="text-sm">Notifications</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Quick Actions */}
+              <motion.div variants={itemVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Zap className="w-5 h-5" />
+                      Quick Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                        <PlaneTakeoff className="w-6 h-6" />
+                        <span className="text-sm">Schedule Flight</span>
+                      </Button>
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                        <BookOpen className="w-6 h-6" />
+                        <span className="text-sm">View Syllabus</span>
+                      </Button>
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                        <FileText className="w-6 h-6" />
+                        <span className="text-sm">Documents</span>
+                      </Button>
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                        <BarChart3 className="w-6 h-6" />
+                        <span className="text-sm">Progress</span>
+                      </Button>
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                        <Settings className="w-6 h-6" />
+                        <span className="text-sm">Settings</span>
+                      </Button>
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                        <Bell className="w-6 h-6" />
+                        <span className="text-sm">Notifications</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          ) : null}
         </TabsContent>
 
         <TabsContent value="training" className="space-y-6">
@@ -835,63 +678,147 @@ export default function StudentDashboard() {
             initial="hidden"
             animate="visible"
           >
-            <motion.div variants={itemVariants}>
-              <ManeuverPerformanceChart data={maneuverPerformanceData} />
-            </motion.div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <motion.div variants={itemVariants}>
-                <AviationBarChart
-                  title="Training Progress"
-                  subtitle="Lesson completion status"
-                  data={trainingProgressData}
-                  icon={<GraduationCap className="w-5 h-5" />}
-                  xKey="lesson"
-                  yKey="progress"
-                  fillColor="#10B981"
-                />
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <AviationPieChart
-                  title="Flight Hours Distribution"
-                  subtitle="Hours by flight type"
-                  data={[
-                    { name: "Solo", value: mockStudentData.soloHours },
-                    { name: "Cross Country", value: mockStudentData.crossCountryHours },
-                    { name: "Night", value: mockStudentData.nightHours },
-                    { name: "Instrument", value: mockStudentData.instrumentHours }
-                  ]}
-                  icon={<Clock className="w-5 h-5" />}
-                  dataKey="value"
-                  nameKey="name"
-                />
-              </motion.div>
-            </div>
-          </motion.div>
-        </TabsContent>
-
-        <TabsContent value="schedule" className="space-y-6">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
+            {/* Current Lesson Progress */}
             <motion.div variants={itemVariants}>
               <Card variant="dashboard">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Calendar className="w-5 h-5" />
-                    Flight Schedule
+                    <BookOpen className="w-5 h-5" />
+                    Current Lesson Progress
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8 text-muted-foreground">
-                    Schedule management interface would go here
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-foreground">Lesson 4: Cross-Country Navigation</h4>
+                        <p className="text-sm text-muted-foreground">Private Pilot Syllabus</p>
+                      </div>
+                      <Progress value={75} className="h-2" />
+                      <p className="text-sm text-muted-foreground">75% Complete</p>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-foreground">Next Objective</h4>
+                        <p className="text-sm text-muted-foreground">Flight Planning & Weather Analysis</p>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full">
+                        View Lesson Details
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-foreground">Instructor Notes</h4>
+                        <p className="text-sm text-muted-foreground">Ready for cross-country planning session</p>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full">
+                        View Notes
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Maneuver Performance */}
+            <motion.div variants={itemVariants}>
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <Target className="w-5 h-5" />
+                    Maneuver Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {maneuverPerformanceData.map((maneuver, index) => (
+                      <div key={maneuver.subject} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-foreground">{maneuver.subject}</h4>
+                          <Badge variant={maneuver.score >= 90 ? "default" : maneuver.score >= 80 ? "secondary" : "destructive"}>
+                            {maneuver.score}%
+                          </Badge>
+                        </div>
+                        <Progress value={maneuver.score} className="h-2" />
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>Needs Work</span>
+                          <span>Excellent</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Training Resources */}
+            <motion.div variants={itemVariants}>
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <FileText className="w-5 h-5" />
+                    Training Resources
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-6">
+                      <BookOpen className="w-8 h-8" />
+                      <span className="font-medium">Syllabus</span>
+                      <span className="text-sm text-muted-foreground">View training plan</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-6">
+                      <FileText className="w-8 h-8" />
+                      <span className="font-medium">Study Materials</span>
+                      <span className="text-sm text-muted-foreground">Access resources</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-6">
+                      <BarChart3 className="w-8 h-8" />
+                      <span className="font-medium">Progress Reports</span>
+                      <span className="text-sm text-muted-foreground">Track performance</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-6">
+                      <Target className="w-8 h-8" />
+                      <span className="font-medium">Requirements</span>
+                      <span className="text-sm text-muted-foreground">Check completion</span>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
           </motion.div>
+        </TabsContent>
+
+        <TabsContent value="schedule" className="space-y-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading schedule...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive mb-4">Error loading schedule: {error}</p>
+              <Button onClick={handleRefresh}>Try Again</Button>
+            </div>
+          ) : dashboardData ? (
+            <TrainingSchedule 
+              upcomingSessions={dashboardData.upcomingSessions}
+              onRequestSession={() => {
+                // Navigate to session request page
+                window.location.href = '/student/schedule/new'
+              }}
+              onViewSession={(sessionId) => {
+                // Navigate to session details
+                window.location.href = `/student/schedule/${sessionId}`
+              }}
+              onEditSession={(sessionId) => {
+                // Navigate to session edit
+                window.location.href = `/student/schedule/${sessionId}/edit`
+              }}
+            />
+          ) : null}
         </TabsContent>
 
         <TabsContent value="progress" className="space-y-6">
@@ -900,18 +827,161 @@ export default function StudentDashboard() {
             initial="hidden"
             animate="visible"
           >
+            {/* Overall Progress */}
             <motion.div variants={itemVariants}>
-              <StudentProgressChart data={trainingProgressData} />
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <TrendingUp className="w-5 h-5" />
+                    Training Progress Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-aviation-sunset-300 mb-2">75%</div>
+                      <div className="text-sm text-muted-foreground">Syllabus Complete</div>
+                      <Progress value={75} className="mt-2" />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-aviation-sky-300 mb-2">45.5</div>
+                      <div className="text-sm text-muted-foreground">Total Hours</div>
+                      <Progress value={76} className="mt-2" />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-aviation-success-300 mb-2">12.3</div>
+                      <div className="text-sm text-muted-foreground">Solo Hours</div>
+                      <Progress value={82} className="mt-2" />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-aviation-warning-300 mb-2">8.7</div>
+                      <div className="text-sm text-muted-foreground">Cross Country</div>
+                      <Progress value={58} className="mt-2" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
-            
+
+            {/* Progress Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div variants={itemVariants}>
+                <Card variant="dashboard">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-foreground">
+                      <BarChart3 className="w-5 h-5" />
+                      Lesson Progress
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {trainingProgressData.map((lesson, index) => (
+                        <div key={lesson.lesson} className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-foreground">{lesson.lesson}</span>
+                            <span className="text-muted-foreground">{lesson.progress}%</span>
+                          </div>
+                          <Progress value={lesson.progress} className="h-2" />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <Card variant="dashboard">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-foreground">
+                      <Target className="w-5 h-5" />
+                      Skill Assessment
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {maneuverPerformanceData.map((skill, index) => (
+                        <div key={skill.subject} className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-foreground">{skill.subject}</span>
+                            <span className="text-muted-foreground">{skill.score}%</span>
+                          </div>
+                          <Progress value={skill.score} className="h-2" />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* Requirements Checklist */}
             <motion.div variants={itemVariants}>
-              <AviationRadarChart
-                title="Skill Assessment"
-                subtitle="Your proficiency in key areas"
-                data={maneuverPerformanceData}
-                icon={<Target className="w-5 h-5" />}
-                dataKey="score"
-              />
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <CheckCircle className="w-5 h-5" />
+                    Certification Requirements
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-4">Flight Hours</h4>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Total Time (40 required)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">45.5/40</span>
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Solo Time (10 required)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">12.3/10</span>
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Cross Country (5 required)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">8.7/5</span>
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Night Time (3 required)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">3.2/3</span>
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-4">Other Requirements</h4>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Medical Certificate</span>
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Student Pilot Certificate</span>
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Knowledge Test</span>
+                          <X className="w-4 h-4 text-red-500" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Practical Test</span>
+                          <X className="w-4 h-4 text-red-500" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           </motion.div>
         </TabsContent>
@@ -922,14 +992,114 @@ export default function StudentDashboard() {
             initial="hidden"
             animate="visible"
           >
+            {/* Notification Filters */}
             <motion.div variants={itemVariants}>
-              <AviationNotificationCenter
-                notifications={notifications}
-                onMarkRead={handleMarkRead}
-                onDelete={handleDelete}
-                onAction={handleAction}
-                onRefresh={handleRefresh}
-              />
+              <Card variant="dashboard">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-foreground">
+                      <Bell className="w-5 h-5" />
+                      Notifications
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <CheckCheck className="w-4 h-4 mr-2" />
+                        Mark All Read
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {notifications.map((notification) => (
+                      <div key={notification.id} className={`flex items-start gap-4 p-4 border rounded-lg ${!notification.read ? 'bg-muted/50' : ''}`}>
+                        <div className={`w-2 h-2 rounded-full mt-2 ${
+                          notification.priority === 'high' ? 'bg-red-500' : 
+                          notification.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                        }`} />
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-medium text-foreground">{notification.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
+                              <div className="flex items-center gap-4 mt-2">
+                                <span className="text-xs text-muted-foreground">
+                                  {notification.timestamp.toLocaleDateString()}
+                                </span>
+                                <Badge variant="outline" className="text-xs">
+                                  {notification.category}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Notification Settings */}
+            <motion.div variants={itemVariants}>
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <Settings className="w-5 h-5" />
+                    Notification Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-foreground">Email Notifications</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Flight Reminders</span>
+                          <Button variant="outline" size="sm">Enabled</Button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Progress Updates</span>
+                          <Button variant="outline" size="sm">Enabled</Button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Document Approvals</span>
+                          <Button variant="outline" size="sm">Enabled</Button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-foreground">In-App Notifications</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">New Messages</span>
+                          <Button variant="outline" size="sm">Enabled</Button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Schedule Changes</span>
+                          <Button variant="outline" size="sm">Enabled</Button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Weather Alerts</span>
+                          <Button variant="outline" size="sm">Enabled</Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           </motion.div>
         </TabsContent>

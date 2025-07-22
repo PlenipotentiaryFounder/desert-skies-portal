@@ -109,14 +109,38 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
   const [completedSteps, setCompletedSteps] = useState(initialOnboarding?.completed_steps || {})
   const [onboardingData, setOnboardingData] = useState(initialOnboarding || {})
   const [isSaving, setIsSaving] = useState(false)
+  const [lastSaveTime, setLastSaveTime] = useState(0)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   const router = useRouter()
   const supabase = createClient()
+
+  // Check if user has already completed onboarding and redirect if so
+  useEffect(() => {
+    if (initialOnboarding?.completed_at) {
+      console.log('User has already completed onboarding, redirecting to dashboard')
+      router.push('/student/dashboard')
+    }
+  }, [initialOnboarding?.completed_at, router])
+
+  // If user has completed onboarding, don't render the flow
+  if (initialOnboarding?.completed_at) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+        <div className="container mx-auto px-4 max-w-4xl text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Redirecting to Dashboard...</h1>
+          <p className="text-gray-600">You have already completed onboarding.</p>
+        </div>
+      </div>
+    )
+  }
   
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      // No longer needed as debouncedSaveProgress is removed
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
     }
   }, [])
 
@@ -125,7 +149,18 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
   }
 
   const getStepStatus = (stepId: string) => {
-    if (completedSteps[stepId]) return 'completed'
+    // Check if step is completed in the completed_steps object
+    if (completedSteps[stepId] === true) return 'completed'
+    // Check if step is completed based on onboarding data
+    if (stepId === 'welcome' && onboardingData.welcome_completed) return 'completed'
+    if (stepId === 'personal-info' && onboardingData.first_name) return 'completed'
+    if (stepId === 'aviation-background' && onboardingData.pilot_certificate_type) return 'completed'
+    if (stepId === 'emergency-contact' && onboardingData.emergency_contact_name) return 'completed'
+    if (stepId === 'liability-waiver' && onboardingData.liability_waiver_signed) return 'completed'
+    if (stepId === 'document-upload' && Object.keys(onboardingData.uploaded_documents || {}).length > 0) return 'completed'
+    if (stepId === 'program-selection' && onboardingData.desired_program) return 'completed'
+    if (stepId === 'completion' && onboardingData.completed_at) return 'completed'
+    
     if (stepId === currentStep) return 'current'
     return 'pending'
   }
@@ -145,138 +180,209 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
   const DEFAULT_INSTRUCTOR_ID = '7e6acaad-5d48-46e3-ad10-fa9144c541dc'
 
   const saveProgress = async (stepId: string, data: any, isComplete: boolean = false) => {
-    setIsSaving(true)
+    // Prevent rapid successive calls
+    const now = Date.now()
+    if (now - lastSaveTime < 1000) { // 1 second debounce
+      console.log('🔄 Debouncing saveProgress call')
+      return
+    }
     
-    try {
-      if (!userId) {
-        throw new Error('User authentication required')
-      }
+    setIsSaving(true)
+    setLastSaveTime(now)
+    
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    
+    // Set a new timeout to actually save
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        if (!userId) {
+          throw new Error('User authentication required')
+        }
 
-      console.log('🔄 Starting saveProgress:', { stepId, userId, isComplete })
+        console.log('🔄 Starting saveProgress:', { stepId, userId, isComplete })
 
-      const updatedCompletedSteps = isComplete 
-        ? { ...completedSteps, [stepId]: true }
-        : completedSteps
+        const updatedCompletedSteps = isComplete 
+          ? { ...completedSteps, [stepId]: true }
+          : completedSteps
 
-      // --- PROGRAM SELECTION LOGIC ---
-      let payload = {
-        user_id: userId,
-        current_step: stepId,
-        completed_steps: updatedCompletedSteps,
-        last_activity_at: new Date().toISOString(),
-        ...(data && typeof data === 'object' ? data : {})
-      }
-      // If this is the program-selection step, map to syllabus_id and create enrollment
-      if (stepId === 'program-selection' && data?.desired_program) {
-        const syllabus_id = SYLLABUS_MAP[data.desired_program]
-        if (syllabus_id) {
-          payload = { ...payload, syllabus_id }
-          // Check if enrollment already exists for this user and syllabus
-          const { data: existing, error: existingError } = await supabase
-            .from('student_enrollments')
-            .select('id')
-            .eq('student_id', userId)
-            .eq('syllabus_id', syllabus_id)
-            .maybeSingle()
-          if (!existing && !existingError) {
-            // Insert new pending enrollment
-            const { error: enrollError } = await supabase
+        // --- PROGRAM SELECTION LOGIC ---
+        let payload = {
+          user_id: userId,
+          current_step: stepId,
+          step_number: ONBOARDING_STEPS.findIndex(step => step.id === stepId) + 1,
+          completed_steps: updatedCompletedSteps,
+          last_activity_at: new Date().toISOString(),
+          ...(data && typeof data === 'object' ? data : {})
+        }
+
+        // Use first_name and last_name directly since we now have these columns
+        // No need to map to full_name anymore
+        
+        // If this is the personal-info step, also update the user profile
+        if (stepId === 'personal-info' && (data.first_name || data.last_name)) {
+          try {
+            const profileUpdateData: any = {}
+            if (data.first_name) profileUpdateData.first_name = data.first_name
+            if (data.last_name) profileUpdateData.last_name = data.last_name
+            if (data.phone_number) profileUpdateData.phone_number = data.phone_number
+            if (data.date_of_birth) profileUpdateData.date_of_birth = data.date_of_birth
+            if (data.address_line1) profileUpdateData.address_line1 = data.address_line1
+            if (data.address_line2) profileUpdateData.address_line2 = data.address_line2
+            if (data.city) profileUpdateData.city = data.city
+            if (data.state) profileUpdateData.state = data.state
+            if (data.zip_code) profileUpdateData.zip_code = data.zip_code
+            if (data.country) profileUpdateData.country = data.country
+            
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .update(profileUpdateData)
+              .eq('id', userId)
+            
+            if (profileError) {
+              console.error('Failed to update profile:', profileError)
+              // Don't throw error here, just log it - onboarding can continue
+            } else {
+              console.log('✅ Profile updated successfully')
+            }
+          } catch (error) {
+            console.error('Error updating profile:', error)
+            // Don't throw error here, just log it - onboarding can continue
+          }
+        }
+        
+        // If this is the program-selection step, map to syllabus_id and create enrollment
+        if (stepId === 'program-selection' && data?.desired_program) {
+          const syllabus_id = SYLLABUS_MAP[data.desired_program]
+          if (syllabus_id) {
+            payload = { ...payload, syllabus_id }
+            // Check if enrollment already exists for this user and syllabus
+            const { data: existing, error: existingError } = await supabase
               .from('student_enrollments')
-              .insert({
-                student_id: userId,
-                syllabus_id,
-                instructor_id: DEFAULT_INSTRUCTOR_ID,
-                start_date: new Date().toISOString().slice(0, 10),
-                status: 'pending',
-              })
-            if (enrollError) {
-              console.error('Failed to create enrollment:', enrollError)
-              toast.error('Failed to create enrollment: ' + enrollError.message)
+              .select('id')
+              .eq('student_id', userId)
+              .eq('syllabus_id', syllabus_id)
+              .maybeSingle()
+            if (!existing && !existingError) {
+              // Insert new pending enrollment
+              const { error: enrollError } = await supabase
+                .from('student_enrollments')
+                .insert({
+                  student_id: userId,
+                  syllabus_id,
+                  instructor_id: DEFAULT_INSTRUCTOR_ID,
+                  start_date: new Date().toISOString().slice(0, 10),
+                  status: 'pending',
+                })
+              if (enrollError) {
+                console.error('Failed to create enrollment:', enrollError)
+                toast.error('Failed to create enrollment: ' + enrollError.message)
+              }
             }
           }
         }
-      }
-      if (isComplete && stepId === 'completion') {
-        payload.completed_at = new Date().toISOString()
-      }
-
-      console.log('📦 Payload to save:', payload)
-
-      // Use upsert with the unique constraint on user_id
-      const { data: result, error, status, statusText } = await supabase
-        .from('student_onboarding')
-        .upsert(payload, {
-          onConflict: 'user_id',
-          ignoreDuplicates: false
-        })
-        .select()
-        .single()
-
-      console.log('📊 Database response:', { result, error, status, statusText })
-
-      if (error) {
-        // Handle different types of errors with comprehensive logging
-        const errorInfo = {
-          message: error.message || 'Unknown database error',
-          details: error.details || 'No additional details',
-          hint: error.hint || 'No hint available',
-          code: error.code || 'UNKNOWN_ERROR',
-          // Additional debugging info
-          originalError: error,
-          payload: payload,
-          userId: userId,
-          stepId: stepId
+        
+        if (isComplete && stepId === 'completion') {
+          payload.completed_at = new Date().toISOString()
+          
+          // Update profile with all onboarding data when completing onboarding
+          try {
+            const profileUpdateData: any = {}
+            if (onboardingData.first_name) profileUpdateData.first_name = onboardingData.first_name
+            if (onboardingData.last_name) profileUpdateData.last_name = onboardingData.last_name
+            if (onboardingData.phone_number) profileUpdateData.phone_number = onboardingData.phone_number
+            if (onboardingData.date_of_birth) profileUpdateData.date_of_birth = onboardingData.date_of_birth
+            if (onboardingData.address_line1) profileUpdateData.address_line1 = onboardingData.address_line1
+            if (onboardingData.address_line2) profileUpdateData.address_line2 = onboardingData.address_line2
+            if (onboardingData.city) profileUpdateData.city = onboardingData.city
+            if (onboardingData.state) profileUpdateData.state = onboardingData.state
+            if (onboardingData.zip_code) profileUpdateData.zip_code = onboardingData.zip_code
+            if (onboardingData.country) profileUpdateData.country = onboardingData.country
+            
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .update(profileUpdateData)
+              .eq('id', userId)
+            
+            if (profileError) {
+              console.error('Failed to update profile on completion:', profileError)
+            } else {
+              console.log('✅ Profile updated on completion')
+            }
+          } catch (error) {
+            console.error('Error updating profile on completion:', error)
+          }
         }
-        
-        console.error('❌ Database error details:', errorInfo)
-        
-        // Provide specific error messages based on error codes
-        let userMessage = 'Failed to save progress'
-        if (error.code === '23505') {
-          userMessage = 'Duplicate entry detected'
-        } else if (error.code === '23503') {
-          userMessage = 'Invalid reference data'
-        } else if (error.code === '42501') {
-          userMessage = 'Permission denied - please check your authentication'
-        } else if (error.code === '42703') {
-          userMessage = 'Database column error'
-        } else if (error.message) {
-          userMessage = error.message
+
+        console.log('📦 Payload to save:', payload)
+
+        // Use upsert with the unique constraint on user_id
+        const { data: result, error, status, statusText } = await supabase
+          .from('student_onboarding')
+          .upsert(payload, {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          })
+          .select()
+          .single()
+
+        console.log('📊 Database response:', { result, error, status, statusText })
+
+        if (error) {
+          // Handle different types of errors with comprehensive logging
+          const errorInfo = {
+            message: error.message || 'Unknown database error',
+            details: error.details || 'No additional details',
+            hint: error.hint || 'No hint available',
+            code: error.code || 'UNKNOWN_ERROR',
+            // Additional debugging info
+            originalError: error,
+            payload: payload,
+            userId: userId,
+            stepId: stepId
+          }
+          
+          console.error('❌ Database error details:', errorInfo)
+          
+          // Provide specific error messages based on error codes
+          let userMessage = 'Failed to save progress'
+          if (error.code === '23505') {
+            userMessage = 'Duplicate entry detected'
+          } else if (error.code === '23503') {
+            userMessage = 'Invalid reference data'
+          } else if (error.code === '42501') {
+            userMessage = 'Permission denied - please check your authentication'
+          } else if (error.code === '42703') {
+            userMessage = 'Database column error'
+          } else if (error.message) {
+            userMessage = error.message
+          }
+          
+          throw new Error(userMessage)
         }
+
+        if (!result) {
+          throw new Error('No data returned from database operation')
+        }
+
+        // Success - update local state
+        setCompletedSteps(updatedCompletedSteps)
+        setOnboardingData((prev: any) => ({ ...prev, ...result }))
+
+        console.log('✅ Progress saved successfully:', result)
         
-        throw new Error(userMessage)
+        if (isComplete) {
+          toast.success('Step completed successfully!')
+        }
+      } catch (error: any) {
+        console.error('💥 Save progress failed:', error)
+        toast.error(error.message || 'Failed to save progress')
+      } finally {
+        setIsSaving(false)
       }
-
-      if (!result) {
-        throw new Error('No data returned from database operation')
-      }
-
-      // Success - update local state
-      setCompletedSteps(updatedCompletedSteps)
-      setOnboardingData((prev: any) => ({ ...prev, ...result }))
-
-      console.log('✅ Progress saved successfully:', result)
-      
-      if (isComplete) {
-        toast.success('Step completed successfully!')
-      }
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      console.error('💥 Save progress failed:', {
-        error,
-        stepId,
-        userId,
-        message: errorMessage,
-        stack: error instanceof Error ? error.stack : undefined,
-        errorType: typeof error,
-        errorConstructor: error?.constructor?.name
-      })
-      
-      toast.error(`Failed to save progress: ${errorMessage}`)
-    } finally {
-      setIsSaving(false)
-    }
+    }, 500) // 500ms delay before actually saving
   }
 
   const goToStep = (stepId: string) => {
@@ -316,6 +422,36 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
   const completeStep = async (stepData: any) => {
     // Merge new step data into the existing onboardingData
     const mergedData = { ...onboardingData, ...stepData }
+    
+    // If this is the personal-info step, also update the user profile
+    if (currentStep === 'personal-info' && (stepData.first_name || stepData.last_name)) {
+      try {
+        const profileUpdateData: any = {}
+        if (stepData.first_name) profileUpdateData.first_name = stepData.first_name
+        if (stepData.last_name) profileUpdateData.last_name = stepData.last_name
+        if (stepData.phone_number) profileUpdateData.phone_number = stepData.phone_number
+        if (stepData.date_of_birth) profileUpdateData.date_of_birth = stepData.date_of_birth
+        if (stepData.address_line1) profileUpdateData.address_line1 = stepData.address_line1
+        if (stepData.address_line2) profileUpdateData.address_line2 = stepData.address_line2
+        if (stepData.city) profileUpdateData.city = stepData.city
+        if (stepData.state) profileUpdateData.state = stepData.state
+        if (stepData.zip_code) profileUpdateData.zip_code = stepData.zip_code
+        if (stepData.country) profileUpdateData.country = stepData.country
+        
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update(profileUpdateData)
+          .eq('id', userId)
+        
+        if (profileError) {
+          console.error('Failed to update profile:', profileError)
+          toast.error('Failed to update profile: ' + profileError.message)
+        }
+      } catch (error) {
+        console.error('Error updating profile:', error)
+      }
+    }
+    
     await saveProgress(currentStep, mergedData, true)
     setOnboardingData(mergedData)
     nextStep()
@@ -392,6 +528,7 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
                     ${status === 'pending' ? 'bg-gray-100 text-gray-600' : ''}
                     hover:bg-opacity-80
                   `}
+                  suppressHydrationWarning
                 >
                   {status === 'completed' ? (
                     <CheckCircle className="w-4 h-4" />

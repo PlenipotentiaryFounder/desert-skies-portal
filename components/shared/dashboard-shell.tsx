@@ -401,6 +401,7 @@ export function DashboardShell({
                     type="text"
                     placeholder="Search..."
                     className="pl-10 pr-4 py-2 w-64 rounded-xl border border-aviation-sky-200 bg-white/50 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-aviation-sky-500/20 focus:border-aviation-sky-500"
+                    suppressHydrationWarning
                   />
                 </div>
 

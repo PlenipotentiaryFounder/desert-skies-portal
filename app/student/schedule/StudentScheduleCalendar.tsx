@@ -137,7 +137,8 @@ export function StudentScheduleCalendar({ sessions = [] }: { sessions: any[] }) 
   }
 
   function canCancelOrReschedule(session: any) {
-    return ["pending", "approved"].includes(session.request_status) && session.status !== "completed" && session.status !== "canceled"
+    if (!session) return false
+    return ["pending", "approved"].includes(session.request_status || session.status) && session.status !== "completed" && session.status !== "canceled"
   }
 
   return (

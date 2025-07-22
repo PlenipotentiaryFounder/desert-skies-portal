@@ -44,7 +44,8 @@ export function PersonalInfoStep({
   isSaving
 }: PersonalInfoStepProps) {
   const [formData, setFormData] = useState({
-    full_name: userProfile?.full_name || '',
+    first_name: userProfile?.first_name || onboardingData.first_name || '',
+    last_name: userProfile?.last_name || onboardingData.last_name || '',
     phone_number: userProfile?.phone_number || onboardingData.phone_number || '',
     date_of_birth: userProfile?.date_of_birth || onboardingData.date_of_birth || '',
     address_line1: userProfile?.address_line1 || onboardingData.address_line1 || '',
@@ -67,8 +68,12 @@ export function PersonalInfoStep({
   const validateForm = () => {
     const newErrors: string[] = []
     
-    if (!formData.full_name.trim()) {
-      newErrors.push('Full name is required')
+    if (!formData.first_name.trim()) {
+      newErrors.push('First name is required')
+    }
+    
+    if (!formData.last_name.trim()) {
+      newErrors.push('Last name is required')
     }
     
     if (!formData.phone_number.trim()) {
@@ -115,7 +120,8 @@ export function PersonalInfoStep({
     
     // Update both profile and onboarding data
     const profileData = {
-      full_name: formData.full_name,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
       phone_number: formData.phone_number,
       date_of_birth: formData.date_of_birth,
       address_line1: formData.address_line1,
@@ -164,13 +170,29 @@ export function PersonalInfoStep({
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="full_name">Full Legal Name *</Label>
+                <Label htmlFor="first_name">First Name *</Label>
                 <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => handleInputChange('full_name', e.target.value)}
-                  placeholder="Enter your full legal name"
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) => handleInputChange('first_name', e.target.value)}
+                  placeholder="Enter your first name"
                   className="mt-1"
+                  suppressHydrationWarning
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Must match your government-issued ID
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="last_name">Last Name *</Label>
+                <Input
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) => handleInputChange('last_name', e.target.value)}
+                  placeholder="Enter your last name"
+                  className="mt-1"
+                  suppressHydrationWarning
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Must match your government-issued ID
@@ -185,6 +207,7 @@ export function PersonalInfoStep({
                   value={formData.date_of_birth}
                   onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
                   className="mt-1"
+                  suppressHydrationWarning
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Must be at least 16 years old
@@ -211,6 +234,7 @@ export function PersonalInfoStep({
                 onChange={(e) => handleInputChange('phone_number', e.target.value)}
                 placeholder="(555) 123-4567"
                 className="mt-1"
+                suppressHydrationWarning
               />
               <p className="text-xs text-gray-500 mt-1">
                 Primary contact number for scheduling and emergencies
@@ -236,6 +260,7 @@ export function PersonalInfoStep({
                 onChange={(e) => handleInputChange('address_line1', e.target.value)}
                 placeholder="Street address"
                 className="mt-1"
+                suppressHydrationWarning
               />
             </div>
             
@@ -247,6 +272,7 @@ export function PersonalInfoStep({
                 onChange={(e) => handleInputChange('address_line2', e.target.value)}
                 placeholder="Apartment, suite, etc. (optional)"
                 className="mt-1"
+                suppressHydrationWarning
               />
             </div>
             
@@ -259,13 +285,14 @@ export function PersonalInfoStep({
                   onChange={(e) => handleInputChange('city', e.target.value)}
                   placeholder="City"
                   className="mt-1"
+                  suppressHydrationWarning
                 />
               </div>
               
               <div>
                 <Label htmlFor="state">State *</Label>
                 <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1" suppressHydrationWarning>
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
                   <SelectContent>
@@ -284,6 +311,7 @@ export function PersonalInfoStep({
                   onChange={(e) => handleInputChange('zip_code', e.target.value)}
                   placeholder="12345"
                   className="mt-1"
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -291,7 +319,7 @@ export function PersonalInfoStep({
             <div>
               <Label htmlFor="country">Country</Label>
               <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1" suppressHydrationWarning>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

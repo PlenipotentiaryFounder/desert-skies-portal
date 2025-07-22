@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { InstructorApprovalList } from "./instructor-approval-list"
+import { getUserProfileWithRoles } from "@/lib/user-service"
 
 export default async function InstructorApprovalPage() {
   const cookieStore = await cookies()
