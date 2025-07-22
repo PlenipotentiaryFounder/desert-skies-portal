@@ -33,7 +33,7 @@ import {
   CompactNotificationWidget,
   NotificationBadge
 } from '@/components/ui/aviation-notifications'
-import StudentManagementSystem from '@/components/instructor/StudentManagementSystem'
+import StudentManagementSystemWrapper from '@/components/instructor/StudentManagementSystemWrapper'
 import {
   AviationLineChart,
   AviationBarChart,
@@ -938,7 +938,7 @@ export default function InstructorDashboard() {
 
             {/* Student Management System */}
             <motion.div variants={itemVariants} className="h-[800px]">
-              <StudentManagementSystem />
+              <StudentManagementSystemWrapper />
             </motion.div>
           </motion.div>
         </TabsContent>

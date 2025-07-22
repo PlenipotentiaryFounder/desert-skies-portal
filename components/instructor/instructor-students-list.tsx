@@ -22,8 +22,8 @@ interface Student {
     id: string
     start_date: string
     syllabus?: {
-      title: string
-      faa_type: string
+      name: string
+      description: string
     }
   }
 }
@@ -146,8 +146,8 @@ export function InstructorStudentsList({ enrollments }: InstructorStudentsListPr
                   <TableCell>
                     {student.enrollment?.syllabus ? (
                       <div>
-                        <p>{student.enrollment.syllabus.title}</p>
-                        <p className="text-sm text-muted-foreground">{student.enrollment.syllabus.faa_type}</p>
+                        <p>{student.enrollment.syllabus.name}</p>
+                        <p className="text-sm text-muted-foreground">{student.enrollment.syllabus.description}</p>
                       </div>
                     ) : (
                       <span className="text-muted-foreground">Not assigned</span>

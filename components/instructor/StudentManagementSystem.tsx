@@ -1,69 +1,49 @@
-'use client'
+"use client"
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search, 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MapPin, 
-  GraduationCap, 
-  Clock, 
-  Target, 
-  CheckCircle, 
-  AlertCircle, 
-  MessageSquare, 
-  CalendarDays, 
-  FileText, 
-  Settings, 
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  Star,
-  TrendingUp,
-  BarChart3,
-  BookOpen,
-  Award,
-  Clock3,
-  Plane,
-  Users,
-  Filter,
-  X
-} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  User, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  Clock, 
+  BookOpen, 
+  Target, 
+  TrendingUp, 
+  MessageSquare, 
+  Calendar as CalendarIcon,
+  FileText,
+  Settings,
+  BarChart3,
+  Plus,
+  Search,
+  Filter,
+  X,
+  CheckCircle,
+  AlertCircle,
+  Clock as ClockIcon,
+  MapPin,
+  Plane,
+  GraduationCap,
+  Award,
+  Star,
+  MessageCircle,
+  Edit,
+  Eye,
+  Download
+} from 'lucide-react'
 
 interface Student {
   id: string
@@ -120,128 +100,19 @@ interface StudentDetail extends Student {
   instructorNotes: string[]
 }
 
-// Mock data - replace with actual API calls
-const mockStudents: Student[] = [
-  {
-    id: '1',
-    first_name: 'Sarah',
-    last_name: 'Johnson',
-    email: 'sarah.johnson@email.com',
-    phone_number: '(555) 123-4567',
-    date_of_birth: '1995-03-15',
-    status: 'active',
-    profile_image: '/api/placeholder/150/150'
-  },
-  {
-    id: '2',
-    first_name: 'Michael',
-    last_name: 'Chen',
-    email: 'michael.chen@email.com',
-    phone_number: '(555) 234-5678',
-    date_of_birth: '1992-07-22',
-    status: 'active',
-    profile_image: '/api/placeholder/150/150'
-  },
-  {
-    id: '3',
-    first_name: 'Emily',
-    last_name: 'Rodriguez',
-    email: 'emily.rodriguez@email.com',
-    phone_number: '(555) 345-6789',
-    date_of_birth: '1998-11-08',
-    status: 'active',
-    profile_image: '/api/placeholder/150/150'
-  },
-  {
-    id: '4',
-    first_name: 'David',
-    last_name: 'Thompson',
-    email: 'david.thompson@email.com',
-    phone_number: '(555) 456-7890',
-    date_of_birth: '1990-05-12',
-    status: 'inactive',
-    profile_image: '/api/placeholder/150/150'
-  }
-]
-
-const mockStudentDetail: StudentDetail = {
-  id: '1',
-  first_name: 'Sarah',
-  last_name: 'Johnson',
-  email: 'sarah.johnson@email.com',
-  phone_number: '(555) 123-4567',
-  date_of_birth: '1995-03-15',
-  status: 'active',
-  profile_image: '/api/placeholder/150/150',
-  enrollments: [
-    {
-      id: '1',
-      syllabus_name: 'Private Pilot Certificate',
-      start_date: '2024-01-15',
-      status: 'active',
-      progress: { completed: 65, total: 100 }
-    }
-  ],
-  recentSessions: [
-    {
-      id: '1',
-      date: '2024-01-25',
-      start_time: '10:00',
-      end_time: '12:00',
-      status: 'completed',
-      notes: 'Excellent progress on cross-country planning. Student demonstrated strong navigation skills.'
-    },
-    {
-      id: '2',
-      date: '2024-01-22',
-      start_time: '14:00',
-      end_time: '16:00',
-      status: 'completed',
-      notes: 'Good work on emergency procedures. Needs more practice with slow flight.'
-    }
-  ],
-  nextSession: {
-    id: '3',
-    date: '2024-01-28',
-    start_time: '09:00',
-    end_time: '11:00',
-    status: 'scheduled',
-    notes: 'Solo flight preparation - pattern work and emergency procedures review.'
-  },
-  maneuverScores: [
-    { maneuver: 'Steep Turns', score: 85, date: '2024-01-20', notes: 'Good control, needs work on altitude maintenance' },
-    { maneuver: 'Slow Flight', score: 78, date: '2024-01-18', notes: 'Improving, but still needs practice' },
-    { maneuver: 'Stalls', score: 92, date: '2024-01-15', notes: 'Excellent recovery technique' },
-    { maneuver: 'Landings', score: 88, date: '2024-01-12', notes: 'Consistent approach, good flare timing' }
-  ],
-  acsProgress: [
-    { area: 'Preflight Preparation', completed: 8, total: 8, status: 'completed' },
-    { area: 'Preflight Procedures', completed: 6, total: 8, status: 'in_progress' },
-    { area: 'Airport Operations', completed: 4, total: 6, status: 'in_progress' },
-    { area: 'Takeoffs & Landings', completed: 3, total: 8, status: 'in_progress' },
-    { area: 'Performance Calculations', completed: 2, total: 4, status: 'in_progress' },
-    { area: 'Navigation', completed: 1, total: 6, status: 'not_started' }
-  ],
-  totalFlightHours: 42.5,
-  soloHours: 8.2,
-  crossCountryHours: 12.5,
-  nightHours: 3.0,
-  instructorNotes: [
-    'Strong student with excellent attitude and dedication',
-    'Shows natural flying ability and good decision-making',
-    'Needs more practice with crosswind landings',
-    'Ready for solo flight endorsement'
-  ]
+interface StudentManagementSystemProps {
+  students?: StudentDetail[]
+  isLoading?: boolean
 }
 
-export default function StudentManagementSystem() {
-  const [students, setStudents] = useState<Student[]>([])
+export default function StudentManagementSystem({ students: initialStudents = [], isLoading: initialLoading = false }: StudentManagementSystemProps) {
+  const [students, setStudents] = useState<StudentDetail[]>(initialStudents)
   const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [showAddStudent, setShowAddStudent] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingStudents, setIsLoadingStudents] = useState(true)
+  const [isLoadingStudents, setIsLoadingStudents] = useState(initialLoading)
   const [newStudent, setNewStudent] = useState({
     first_name: '',
     last_name: '',
@@ -258,26 +129,31 @@ export default function StudentManagementSystem() {
     return matchesSearch && matchesStatus
   })
 
-  // Fetch students on component mount
+  // Only fetch students if no initial data provided
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await fetch('/api/instructor/students')
-        if (response.ok) {
-          const data = await response.json()
-          setStudents(data.students || [])
-        } else {
-          console.error('Failed to fetch students')
+    if (initialStudents.length === 0 && !initialLoading) {
+      const fetchStudents = async () => {
+        try {
+          const response = await fetch('/api/instructor/students')
+          if (response.ok) {
+            const data = await response.json()
+            setStudents(data.students || [])
+          } else {
+            console.error('Failed to fetch students')
+          }
+        } catch (error) {
+          console.error('Error fetching students:', error)
+        } finally {
+          setIsLoadingStudents(false)
         }
-      } catch (error) {
-        console.error('Error fetching students:', error)
-      } finally {
-        setIsLoadingStudents(false)
       }
-    }
 
-    fetchStudents()
-  }, [])
+      fetchStudents()
+    } else {
+      setStudents(initialStudents)
+      setIsLoadingStudents(false)
+    }
+  }, [initialStudents, initialLoading])
 
   const handleStudentSelect = async (student: Student) => {
     setIsLoading(true)
@@ -356,7 +232,7 @@ export default function StudentManagementSystem() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 title-gold-glow">
-                  <Users className="w-5 h-5" />
+                  <User className="w-5 h-5" />
                   Students
                 </CardTitle>
                 <Dialog open={showAddStudent} onOpenChange={setShowAddStudent}>
@@ -868,7 +744,7 @@ export default function StudentManagementSystem() {
             <Card variant="dashboard" className="h-full">
               <CardContent className="flex items-center justify-center h-full">
                 <div className="text-center text-muted-foreground">
-                  <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <h3 className="text-xl font-semibold mb-2">Select a Student</h3>
                   <p>Choose a student from the list to view their details and manage their training.</p>
                 </div>

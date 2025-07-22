@@ -31,9 +31,8 @@ export type Enrollment = {
     avatar_url: string | null
   }
   syllabus?: {
-    title: string
-    faa_type: string
-    version: string
+    name: string
+    description: string
   }
 }
 
@@ -66,9 +65,8 @@ export async function getEnrollments() {
         avatar_url
       ),
       syllabus:syllabus_id (
-        title,
-        faa_type,
-        version
+        name,
+        description
       )
     `)
     .order("created_at", { ascending: false })
@@ -101,9 +99,8 @@ export async function getEnrollmentById(id: string) {
         avatar_url
       ),
       syllabus:syllabus_id (
-        title,
-        faa_type,
-        version
+        name,
+        description
       )
     `)
     .eq("id", id as Database["public"]["Tables"]["student_enrollments"]["Row"]["id"])
@@ -131,9 +128,8 @@ export async function getStudentEnrollments(studentId: string) {
         avatar_url
       ),
       syllabus:syllabus_id (
-        title,
-        faa_type,
-        version
+        name,
+        description
       )
     `)
     .eq("student_id", studentId as Database["public"]["Tables"]["student_enrollments"]["Row"]["student_id"])
@@ -161,9 +157,8 @@ export async function getInstructorEnrollments(instructorId: string) {
         avatar_url
       ),
       syllabus:syllabus_id (
-        title,
-        faa_type,
-        version
+        name,
+        description
       )
     `)
     .eq("instructor_id", instructorId as Database["public"]["Tables"]["student_enrollments"]["Row"]["instructor_id"])
