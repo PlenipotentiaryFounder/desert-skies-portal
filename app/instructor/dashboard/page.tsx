@@ -314,7 +314,7 @@ import {
 } from 'lucide-react'
 
 export default function InstructorDashboard() {
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
 
@@ -326,6 +326,9 @@ export default function InstructorDashboard() {
   const [showNotifications, setShowNotifications] = useState(true)
 
   useEffect(() => {
+    // Set initial time on client side only
+    setCurrentTime(new Date())
+    
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 1000)
@@ -685,7 +688,7 @@ export default function InstructorDashboard() {
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Current Time</p>
               <p className="text-xl font-mono text-aviation-sunset-300">
-                {currentTime.toLocaleTimeString()}
+                {currentTime ? currentTime.toLocaleTimeString() : '--:--:--'}
               </p>
             </div>
             <NotificationBadge count={notifications.filter(n => !n.read).length} critical={notifications.filter(n => n.priority === 'critical').length} />
