@@ -85,7 +85,7 @@ export function DashboardWidget({
           <div className="flex items-center gap-2">
             {icon && <span className="text-aviation-sunset-400">{icon}</span>}
             <div>
-              <CardTitle className="text-sm font-medium text-foreground">
+              <CardTitle className="text-sm font-medium title-gold-glow">
                 {title}
               </CardTitle>
               {subtitle && (

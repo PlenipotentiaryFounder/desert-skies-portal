@@ -33,12 +33,14 @@ import {
   CompactNotificationWidget,
   NotificationBadge
 } from '@/components/ui/aviation-notifications'
+import StudentManagementSystem from '@/components/instructor/StudentManagementSystem'
 import {
   AviationLineChart,
   AviationBarChart,
   AviationPieChart,
   AviationRadarChart,
   AviationComposedChart,
+  AviationAreaChart,
   FlightPerformanceChart,
   WeatherTrendChart,
   StudentProgressChart,
@@ -315,6 +317,11 @@ export default function InstructorDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+
+  const handleTabChange = (value: string) => {
+    console.log('Tab changed to:', value)
+    setActiveTab(value)
+  }
   const [showFlightData, setShowFlightData] = useState(true)
   const [showNotifications, setShowNotifications] = useState(true)
 
@@ -667,7 +674,7 @@ export default function InstructorDashboard() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-foreground font-display">
+            <h1 className="text-4xl font-bold title-gold-glow title-gold-glow-hover font-display">
               Flight Command Center
             </h1>
             <p className="text-muted-foreground mt-2">
@@ -694,14 +701,17 @@ export default function InstructorDashboard() {
         </div>
       </motion.div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="flights">Flights</TabsTrigger>
-          <TabsTrigger value="students">Students</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+        <div className="mb-4">
+          <p className="text-sm text-muted-foreground mb-2">Current Tab: <span className="text-aviation-sunset-300 font-semibold">{activeTab}</span></p>
+        </div>
+        <TabsList className="grid w-full grid-cols-6 bg-white/10 backdrop-blur-sm border border-white/20">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Overview</TabsTrigger>
+          <TabsTrigger value="flights" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Flights</TabsTrigger>
+          <TabsTrigger value="students" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Students</TabsTrigger>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Analytics</TabsTrigger>
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Notifications</TabsTrigger>
+          <TabsTrigger value="settings" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -715,6 +725,46 @@ export default function InstructorDashboard() {
               <QuickStatsWidget stats={quickStats} />
             </motion.div>
 
+            {/* Quick Actions */}
+            <motion.div variants={itemVariants}>
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                    <Zap className="w-5 h-5" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <Button variant="aviation" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <PlaneTakeoff className="w-6 h-6" />
+                      <span className="text-sm">New Session</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <UserCheck className="w-6 h-6" />
+                      <span className="text-sm">Add Student</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <BookOpen className="w-6 h-6" />
+                      <span className="text-sm">View Syllabus</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <BarChart3 className="w-6 h-6" />
+                      <span className="text-sm">Reports</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Settings className="w-6 h-6" />
+                      <span className="text-sm">Settings</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Bell className="w-6 h-6" />
+                      <span className="text-sm">Notifications</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
             {/* Main Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Weather & Aircraft */}
@@ -726,7 +776,7 @@ export default function InstructorDashboard() {
                 <motion.div variants={itemVariants}>
                   <Card variant="dashboard" className="h-full">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-foreground">
+                      <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
                         <Plane className="w-5 h-5" />
                         Aircraft Status
                       </CardTitle>
@@ -772,10 +822,10 @@ export default function InstructorDashboard() {
               <motion.div variants={itemVariants}>
                 <Card variant="dashboard" className="h-full">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-foreground">
-                      <GraduationCap className="w-5 h-5" />
-                      Student Progress Overview
-                    </CardTitle>
+                                          <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                        <GraduationCap className="w-5 h-5" />
+                        Student Progress Overview
+                      </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -812,10 +862,10 @@ export default function InstructorDashboard() {
               <motion.div variants={itemVariants}>
                 <Card variant="dashboard" className="h-full">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-foreground">
-                      <CalendarDays className="w-5 h-5" />
-                      Today's Schedule
-                    </CardTitle>
+                                          <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                        <CalendarDays className="w-5 h-5" />
+                        Today's Schedule
+                      </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -845,46 +895,6 @@ export default function InstructorDashboard() {
                 </Card>
               </motion.div>
             </div>
-
-            {/* Quick Actions */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Zap className="w-5 h-5" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    <Button variant="aviation" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <PlaneTakeoff className="w-6 h-6" />
-                      <span className="text-sm">New Session</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <UserCheck className="w-6 h-6" />
-                      <span className="text-sm">Add Student</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <BookOpen className="w-6 h-6" />
-                      <span className="text-sm">View Syllabus</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <BarChart3 className="w-6 h-6" />
-                      <span className="text-sm">Reports</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <Settings className="w-6 h-6" />
-                      <span className="text-sm">Settings</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                      <Bell className="w-6 h-6" />
-                      <span className="text-sm">Notifications</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
           </motion.div>
         </TabsContent>
 
@@ -915,12 +925,20 @@ export default function InstructorDashboard() {
             initial="hidden"
             animate="visible"
           >
-            <motion.div variants={itemVariants}>
-              <StudentProgressChart data={studentProgressData} />
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <ManeuverPerformanceChart data={maneuverPerformanceData} />
+            {/* Small Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div variants={itemVariants} className="h-80">
+                <StudentProgressChart data={studentProgressData} />
+              </motion.div>
+              
+              <motion.div variants={itemVariants} className="h-80">
+                <ManeuverPerformanceChart data={maneuverPerformanceData} />
+              </motion.div>
+            </div>
+
+            {/* Student Management System */}
+            <motion.div variants={itemVariants} className="h-[800px]">
+              <StudentManagementSystem />
             </motion.div>
           </motion.div>
         </TabsContent>
@@ -995,16 +1013,16 @@ export default function InstructorDashboard() {
             <motion.div variants={itemVariants}>
               <Card variant="dashboard">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Settings className="w-5 h-5" />
-                    System Settings
-                  </CardTitle>
+                                      <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                      <Settings className="w-5 h-5" />
+                      System Settings
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
                       <div>
-                        <h4 className="font-medium">Real-time Flight Data</h4>
+                        <h4 className="font-medium title-gold-glow">Real-time Flight Data</h4>
                         <p className="text-sm text-muted-foreground">Show live flight telemetry</p>
                       </div>
                       <Button
@@ -1018,7 +1036,7 @@ export default function InstructorDashboard() {
                     
                     <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
                       <div>
-                        <h4 className="font-medium">Notifications</h4>
+                        <h4 className="font-medium title-gold-glow">Notifications</h4>
                         <p className="text-sm text-muted-foreground">Show notification center</p>
                       </div>
                       <Button

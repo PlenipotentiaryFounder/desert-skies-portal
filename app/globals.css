@@ -348,6 +348,28 @@
     font-family: 'Orbitron', monospace;
   }
   
+  /* Gold Title with Glow Effect */
+  .title-gold-glow {
+    color: #FFD700;
+    text-shadow: 
+      0 0 1.5px rgba(255, 215, 0, 0.12),
+      0 0 3px rgba(255, 215, 0, 0.09),
+      0 0 4.5px rgba(255, 215, 0, 0.06),
+      0 0 6px rgba(255, 215, 0, 0.03);
+    font-weight: 700;
+    letter-spacing: 0.025em;
+  }
+  
+  .title-gold-glow-hover:hover {
+    color: #FFED4E;
+    text-shadow: 
+      0 0 2.25px rgba(255, 215, 0, 0.135),
+      0 0 3.75px rgba(255, 215, 0, 0.105),
+      0 0 5.25px rgba(255, 215, 0, 0.075),
+      0 0 6.75px rgba(255, 215, 0, 0.045);
+    transition: all 0.3s ease;
+  }
+  
   /* Advanced Animations */
   .animate-float {
     animation: float 3s ease-in-out infinite;

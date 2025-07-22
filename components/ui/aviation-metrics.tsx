@@ -138,7 +138,7 @@ export function WeatherMetrics({
   return (
     <Card variant="sky" className="h-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-aviation-sky-300">
+        <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
           <Thermometer className="w-5 h-5" />
           Current Weather
         </CardTitle>
@@ -293,7 +293,7 @@ export function FlightProgress({
   return (
     <Card variant="dashboard" className="h-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-foreground">
+        <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
           <Plane className="w-5 h-5" />
           Flight Progress
         </CardTitle>

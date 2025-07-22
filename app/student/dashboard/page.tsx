@@ -474,7 +474,7 @@ export default function StudentDashboard() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-foreground font-display">
+            <h1 className="text-4xl font-bold title-gold-glow title-gold-glow-hover font-display">
               Flight Training Command Center
             </h1>
             <p className="text-muted-foreground mt-2">

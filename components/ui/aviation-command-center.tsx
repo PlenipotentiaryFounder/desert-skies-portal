@@ -335,7 +335,7 @@ export function AviationCommandCenter({
                 <Plane className="w-6 h-6 text-aviation-sunset-400" />
               </div>
               <div>
-                <h1 className="text-xl font-aviation font-bold text-white">Desert Skies Command Center</h1>
+                <h1 className="text-xl font-aviation font-bold title-gold-glow title-gold-glow-hover">Desert Skies Command Center</h1>
                 <p className="text-sm text-muted-foreground">Flight School Management System</p>
               </div>
             </div>
@@ -554,10 +554,10 @@ export function CompactCommandCenter({ className }: { className?: string }) {
   return (
     <Card variant="aviation" className={className}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Plane className="w-5 h-5" />
-          Command Center
-        </CardTitle>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+            <Plane className="w-5 h-5" />
+            Command Center
+          </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4">
