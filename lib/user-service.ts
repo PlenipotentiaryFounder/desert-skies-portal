@@ -38,7 +38,20 @@ export async function getUserById(id: string): Promise<User | null> {
   if (error || !data) {
     return null
   }
-  return data as User
+
+  // Get user roles
+  const { data: rolesData, error: rolesError } = await supabase.rpc("get_user_roles", { p_user_id: id })
+  
+  if (rolesError) {
+    console.error("Error fetching user roles:", rolesError)
+    // Return profile without roles if roles fetch fails
+    return { ...data, roles: [] } as User
+  }
+
+  // Return as array of objects with role_name property
+  const roles = rolesData.map((r: any) => ({ role_name: r.role_name }))
+
+  return { ...data, roles } as User
 }
 
 export async function getStudents(): Promise<User[]> {

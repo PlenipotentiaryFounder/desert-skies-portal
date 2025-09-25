@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const studentId = searchParams.get("studentId")
   const syllabusId = searchParams.get("syllabusId")
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   let query = supabase.from("lessons").select("id, title, syllabus_id")
   if (syllabusId) query = query.eq("syllabus_id", syllabusId)
   // Optionally filter by instructor or student if needed

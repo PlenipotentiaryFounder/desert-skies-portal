@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 
 export async function GET(req: NextRequest) {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Get the current user (instructor)
   const {

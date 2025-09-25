@@ -7,7 +7,7 @@ import { getSyllabusLessonById } from "@/lib/syllabus-service"
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   // Insert lesson
   const { lesson, maneuvers, coreTopics, resources, whatToBring, ...lessonFields } = body
   const { data: lessonData, error: lessonError } = await supabase.from("syllabus_lessons").insert([lessonFields]).select()
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const body = await req.json()
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { id, maneuvers, coreTopics, resources, whatToBring, ...lessonFields } = body
   // Update lesson
   const { data: lessonData, error: lessonError } = await supabase.from("syllabus_lessons").update(lessonFields).eq("id", id).select()

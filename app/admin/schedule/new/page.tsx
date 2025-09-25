@@ -10,7 +10,7 @@ export const metadata = {
 
 export default async function NewFlightSessionPage() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   // Get all active enrollments with student and syllabus info
   const enrollments = await getEnrollments()

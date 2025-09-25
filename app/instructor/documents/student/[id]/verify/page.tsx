@@ -14,8 +14,9 @@ export const metadata = {
 }
 
 export default async function VerifyStudentDocumentPage({ params }: { params: { id: string } }) {
+  const awaitedParams = await params
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -24,7 +25,7 @@ export default async function VerifyStudentDocumentPage({ params }: { params: { 
     redirect("/login")
   }
 
-  const document = await getDocumentById(params.id).catch(() => null)
+  const document = await getDocumentById(awaitedParams.id).catch(() => null)
 
   if (!document || document.is_verified) {
     notFound()
@@ -158,7 +159,7 @@ export default async function VerifyStudentDocumentPage({ params }: { params: { 
               By verifying this document, you confirm that you have reviewed the document and that it meets all
               requirements for the specified document type.
             </p>
-            <VerifyDocumentButton id={params.id} />
+            <VerifyDocumentButton id={awaitedParams.id} />
           </div>
         </CardContent>
       </Card>

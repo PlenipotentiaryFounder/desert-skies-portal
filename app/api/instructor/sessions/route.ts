@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const instructorId = searchParams.get("instructorId")
   if (!instructorId) return NextResponse.json({ error: "Missing instructorId" }, { status: 400 })
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const { data, error } = await supabase
     .from("flight_sessions")
     .select(`

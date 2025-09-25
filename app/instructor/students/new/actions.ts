@@ -15,7 +15,7 @@ export async function getStudentsForInstructor() {
   const enrollments = await getInstructorEnrollments(instructor.id);
   const studentIds = enrollments.map(e => e.student_id);
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient(cookieStore);
   if (studentIds.length === 0) return [];
   const { data, error } = await supabase.from("profiles").select("*").in("id", studentIds as any);
   if (error) {

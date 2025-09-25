@@ -21,8 +21,9 @@ interface StudentDetailPageProps {
 }
 
 export default async function StudentDetailPage({ params }: StudentDetailPageProps) {
+  const awaitedParams = await params
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -31,9 +32,15 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
     return null
   }
 
-  const student = await getUserById(params.id)
+  const student = await getUserById(awaitedParams.id)
 
-  if (!student || student.role !== "student") {
+  if (!student) {
+    notFound()
+  }
+
+  // Check if user has student role
+  const hasStudentRole = student.roles?.some((role: any) => role.role_name === "student")
+  if (!hasStudentRole) {
     notFound()
   }
 

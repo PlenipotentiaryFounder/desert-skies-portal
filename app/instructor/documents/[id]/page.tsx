@@ -14,8 +14,9 @@ export const metadata = {
 }
 
 export default async function InstructorDocumentDetailPage({ params }: { params: { id: string } }) {
+  const awaitedParams = await params
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -24,7 +25,7 @@ export default async function InstructorDocumentDetailPage({ params }: { params:
     redirect("/login")
   }
 
-  const document = await getDocumentById(params.id).catch(() => null)
+  const document = await getDocumentById(awaitedParams.id).catch(() => null)
 
   if (!document || document.user_id !== user.id) {
     notFound()
@@ -73,7 +74,7 @@ export default async function InstructorDocumentDetailPage({ params }: { params:
                 <p className="text-sm font-medium">Verification Status</p>
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-muted-foreground">{document.is_verified ? "Verified" : "Not Verified"}</p>
-                  <VerifyDocumentButton id={params.id} isVerified={document.is_verified} />
+                  <VerifyDocumentButton id={awaitedParams.id} isVerified={document.is_verified} />
                 </div>
               </div>
               <div>

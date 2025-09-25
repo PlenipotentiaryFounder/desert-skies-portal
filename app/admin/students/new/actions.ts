@@ -12,6 +12,6 @@ export async function getInstructors() {
 
 export async function adminAddStudentServerAction(data: any) {
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient(cookieStore);
   // ...all logic for adding a student, creating enrollment, sending emails...
 } 

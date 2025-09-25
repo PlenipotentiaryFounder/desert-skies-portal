@@ -34,20 +34,40 @@ interface InstructorStudentsListProps {
 
 export function InstructorStudentsList({ enrollments }: InstructorStudentsListProps) {
   const [searchQuery, setSearchQuery] = useState("")
+  
   // Transform enrollments to students
-  const students: Student[] = enrollments.map((enrollment) => ({
-    id: enrollment.student.id,
-    first_name: enrollment.student.first_name,
-    last_name: enrollment.student.last_name,
-    email: enrollment.student.email,
-    avatar_url: enrollment.student.avatar_url,
-    status: enrollment.student.status,
-    enrollment: {
-      id: enrollment.id,
-      start_date: enrollment.start_date,
-      syllabus: enrollment.syllabus,
-    },
-  }))
+  const students: Student[] = enrollments.map((enrollment) => {
+    // Check if student data exists
+    if (!enrollment.student) {
+      return {
+        id: "unknown",
+        first_name: "Unknown",
+        last_name: "Student",
+        email: "unknown@example.com",
+        avatar_url: undefined,
+        status: "unknown",
+        enrollment: {
+          id: enrollment.id,
+          start_date: enrollment.start_date,
+          syllabus: enrollment.syllabus,
+        },
+      }
+    }
+    
+    return {
+      id: enrollment.student.id,
+      first_name: enrollment.student.first_name,
+      last_name: enrollment.student.last_name,
+      email: enrollment.student.email,
+      avatar_url: enrollment.student.avatar_url,
+      status: enrollment.student.status,
+      enrollment: {
+        id: enrollment.id,
+        start_date: enrollment.start_date,
+        syllabus: enrollment.syllabus,
+      },
+    }
+  })
 
   // Filter students based on search query
   const filteredStudents = students.filter((student) => {

@@ -13,8 +13,9 @@ export const metadata = {
 }
 
 export default async function StudentDocumentDetailPage({ params }: { params: { id: string } }) {
+  const awaitedParams = await params
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -23,7 +24,7 @@ export default async function StudentDocumentDetailPage({ params }: { params: { 
     redirect("/login")
   }
 
-  const document = await getDocumentById(params.id).catch(() => null)
+  const document = await getDocumentById(awaitedParams.id).catch(() => null)
 
   if (!document || document.user_id !== user.id) {
     notFound()

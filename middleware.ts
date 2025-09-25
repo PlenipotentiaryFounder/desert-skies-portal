@@ -27,23 +27,40 @@ export async function middleware(request: NextRequest) {
             response.cookies.set(name, value, options)
           })
         },
+        remove(name, options) {
+          response.cookies.delete(name, options)
+        },
       },
     }
   )
+
+  // Refresh session for all routes (including API routes)
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  
+  if (sessionError) {
+    console.log(`Session error: ${sessionError.message}`)
+  }
 
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
   console.log(`--- Middleware Run ---`);
   console.log(`Path: ${path}`);
+  console.log(`Session exists: ${!!session}`);
   console.log(`User object is ${user ? 'present' : 'null'}`);
   if (user) {
     console.log(`User ID: ${user.id}`);
   }
   console.log(`----------------------`);
 
-  // Skip middleware for static assets and API routes
-  if (path.startsWith("/_next") || path.startsWith("/api/") || path.includes(".") || path.startsWith("/public/")) {
+  // Skip middleware for static assets only
+  if (path.startsWith("/_next") || path.includes(".") || path.startsWith("/public/")) {
+    return response
+  }
+
+  // For API routes, just refresh the session and return
+  if (path.startsWith("/api/")) {
+    console.log(`API route detected: ${path} - refreshing session only`);
     return response
   }
 

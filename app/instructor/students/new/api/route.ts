@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       // Try to find by email in profiles
       try {
         const cookieStore = await cookies();
-        const supabase = createClient(cookieStore);
+        const supabase = await createClient(cookieStore);
         const { data: found, error } = await supabase.from("profiles").select("*").eq("email", email).single();
         if (error) console.error("Error in profiles lookup:", error);
         if (isUser(found)) student = found;

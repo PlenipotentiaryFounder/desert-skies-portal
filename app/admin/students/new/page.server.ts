@@ -31,7 +31,7 @@ export async function adminAddStudentServerAction({ email, firstName, lastName, 
     }
     // 2. Generate a magic link for the student
     const cookieStore = await cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = await createClient(cookieStore)
     const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email,

@@ -18,6 +18,9 @@ export default async function InstructorStudentsPage() {
   }
 
   const enrollments = await getInstructorEnrollments(user.id)
+  
+  console.log("Instructor students page - enrollments:", enrollments)
+  console.log("Instructor students page - user.id:", user.id)
 
   return (
     <div className="flex flex-col gap-6">

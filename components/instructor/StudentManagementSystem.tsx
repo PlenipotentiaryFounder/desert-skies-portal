@@ -127,17 +127,68 @@ export default function StudentManagementSystem() {
   // Fetch students on component mount
   useEffect(() => {
     const fetchStudents = async () => {
+      console.log('🔄 [Frontend] Starting to fetch students...')
+      setIsLoadingStudents(true)
+      
       try {
+        console.log('📡 [Frontend] Making API request to /api/instructor/students')
         const response = await fetch('/api/instructor/students')
+        
+        console.log('📊 [Frontend] Response status:', response.status)
+        console.log('📊 [Frontend] Response headers:', Object.fromEntries(response.headers.entries()))
+        
         if (response.ok) {
           const data = await response.json()
-          setStudents(data.students || [])
+          console.log('✅ [Frontend] API response received:', {
+            studentsCount: data.students?.length || 0,
+            totalStudents: data.totalStudents,
+            activeStudents: data.activeStudents
+          })
+          
+          if (data.students) {
+            console.log('👥 [Frontend] Setting students in state:', data.students.map((s: any) => ({
+              id: s.id,
+              name: `${s.first_name} ${s.last_name}`,
+              email: s.email,
+              status: s.status
+            })))
+            setStudents(data.students)
+          } else {
+            console.warn('⚠️ [Frontend] No students array in response, setting empty array')
+            setStudents([])
+          }
         } else {
-          console.error('Failed to fetch students')
+          const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }))
+          console.error('❌ [Frontend] API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          })
+          
+          // Log detailed error information
+          if (response.status === 401) {
+            console.error('🔐 [Frontend] Authentication error - user may not be logged in')
+          } else if (response.status === 403) {
+            console.error('🚫 [Frontend] Authorization error - user may not have instructor role')
+          } else if (response.status >= 500) {
+            console.error('💥 [Frontend] Server error - check server logs')
+          }
+          
+          // Set empty students array to prevent UI errors
+          setStudents([])
         }
       } catch (error) {
-        console.error('Error fetching students:', error)
+        console.error('💥 [Frontend] Network or parsing error:', error)
+        console.error('💥 [Frontend] Error details:', {
+          name: error instanceof Error ? error.name : 'Unknown',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : 'No stack trace'
+        })
+        
+        // Set empty students array to prevent UI errors
+        setStudents([])
       } finally {
+        console.log('🏁 [Frontend] Fetch students operation completed')
         setIsLoadingStudents(false)
       }
     }
@@ -146,15 +197,25 @@ export default function StudentManagementSystem() {
   }, [])
 
   const handleStudentSelect = async (student: Student) => {
+    console.log('👆 [Frontend] Selecting student:', { id: student.id, name: `${student.first_name} ${student.last_name}` })
     setIsLoading(true)
+    
     try {
       // Find the student with full details from the students array
       const studentWithDetails = students.find(s => s.id === student.id)
       if (studentWithDetails) {
+        console.log('✅ [Frontend] Student details found, setting as selected')
         setSelectedStudent(studentWithDetails as StudentDetail)
+      } else {
+        console.warn('⚠️ [Frontend] Student details not found in current students array')
       }
     } catch (error) {
-      console.error('Error selecting student:', error)
+      console.error('💥 [Frontend] Error selecting student:', error)
+      console.error('💥 [Frontend] Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      })
     } finally {
       setIsLoading(false)
     }
@@ -185,7 +246,10 @@ export default function StudentManagementSystem() {
   }
 
   const handleAddStudent = async () => {
+    console.log('➕ [Frontend] Starting to add new student:', newStudent)
+    
     try {
+      console.log('📡 [Frontend] Making POST request to /api/instructor/students')
       const response = await fetch('/api/instructor/students', {
         method: 'POST',
         headers: {
@@ -194,8 +258,11 @@ export default function StudentManagementSystem() {
         body: JSON.stringify(newStudent),
       })
 
+      console.log('📊 [Frontend] Add student response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ [Frontend] Student added successfully:', data)
         setStudents(prev => [...prev, data.student])
         setShowAddStudent(false)
         setNewStudent({
@@ -206,10 +273,31 @@ export default function StudentManagementSystem() {
           date_of_birth: ''
         })
       } else {
-        console.error('Failed to add student')
+        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }))
+        console.error('❌ [Frontend] Failed to add student:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        })
+        
+        // Log specific error types
+        if (response.status === 400) {
+          console.error('📝 [Frontend] Validation error - check required fields')
+        } else if (response.status === 401) {
+          console.error('🔐 [Frontend] Authentication error')
+        } else if (response.status === 403) {
+          console.error('🚫 [Frontend] Authorization error')
+        } else if (response.status >= 500) {
+          console.error('💥 [Frontend] Server error - check server logs')
+        }
       }
     } catch (error) {
-      console.error('Error adding student:', error)
+      console.error('💥 [Frontend] Network or parsing error while adding student:', error)
+      console.error('💥 [Frontend] Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      })
     }
   }
 
