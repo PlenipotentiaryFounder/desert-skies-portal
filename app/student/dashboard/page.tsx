@@ -141,11 +141,14 @@ const mockStudentData = {
 }
 
 export default function StudentDashboard() {
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const { data: dashboardData, loading, error } = useStudentDashboardData()
 
   useEffect(() => {
+    // Set initial time on client mount to prevent hydration mismatch
+    setCurrentTime(new Date())
+    
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 1000)
@@ -485,7 +488,7 @@ export default function StudentDashboard() {
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Current Time</p>
               <p className="text-xl font-mono text-aviation-sunset-300">
-                {currentTime.toLocaleTimeString()}
+                {currentTime ? currentTime.toLocaleTimeString() : '--:--:--'}
               </p>
             </div>
             <div className="flex items-center gap-2">

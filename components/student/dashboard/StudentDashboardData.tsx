@@ -103,7 +103,7 @@ export function useStudentDashboardData() {
           .select(`
             *,
             profiles!student_enrollments_instructor_id_fkey(first_name, last_name),
-            syllabi(name)
+            syllabi(title, description, faa_type)
           `)
           .eq('student_id', user.id)
           .eq('status', 'active')
@@ -120,10 +120,11 @@ export function useStudentDashboardData() {
           .from('flight_sessions')
           .select(`
             *,
-            student_enrollments!inner(student_id),
-            lessons(name),
+            student_enrollments!flight_sessions_enrollment_id_fkey(student_id),
+            syllabus_lessons(title),
+            custom_lessons(name),
             profiles!flight_sessions_instructor_id_fkey(first_name, last_name),
-            aircraft(registration)
+            aircraft(tail_number, make, model)
           `)
           .eq('student_enrollments.student_id', user.id)
           .gte('date', new Date().toISOString().split('T')[0])
