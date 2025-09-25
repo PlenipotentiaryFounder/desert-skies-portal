@@ -51,17 +51,22 @@ export function LiabilityWaiverStep({
   const [isSignaturePadReady, setIsSignaturePadReady] = useState(false)
 
   useEffect(() => {
-    if (canvasRef.current) {
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.strokeStyle = '#000'
-        ctx.lineWidth = 2
-        ctx.lineCap = 'round'
-        ctx.lineJoin = 'round'
-        setIsSignaturePadReady(true)
+    // Add a small delay to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      if (canvasRef.current && document.contains(canvasRef.current)) {
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.strokeStyle = '#000'
+          ctx.lineWidth = 2
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+          setIsSignaturePadReady(true)
+        }
       }
-    }
+    }, 100)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -69,9 +74,10 @@ export function LiabilityWaiverStep({
   }, []);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isSignaturePadReady) return
     setIsDrawing(true)
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || !document.contains(canvas)) return
     
     const rect = canvas.getBoundingClientRect()
     const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left
@@ -85,10 +91,10 @@ export function LiabilityWaiverStep({
   }
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return
+    if (!isDrawing || !isSignaturePadReady) return
     
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || !document.contains(canvas)) return
     
     const rect = canvas.getBoundingClientRect()
     const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left
@@ -104,14 +110,14 @@ export function LiabilityWaiverStep({
   const stopDrawing = () => {
     setIsDrawing(false)
     const canvas = canvasRef.current
-    if (canvas) {
+    if (canvas && document.contains(canvas)) {
       setSignatureData(canvas.toDataURL())
     }
   }
 
   const clearSignature = () => {
     const canvas = canvasRef.current
-    if (canvas) {
+    if (canvas && document.contains(canvas)) {
       const ctx = canvas.getContext('2d')
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)

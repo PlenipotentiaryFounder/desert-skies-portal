@@ -263,11 +263,36 @@ export function DocumentUploadStep({
         return acc
       }, {} as Record<string, string[]>),
       maxFiles: 1,
-      maxSize: 4 * 1024 * 1024 // 4MB to match storage bucket limit
+      maxSize: 4 * 1024 * 1024, // 4MB to match storage bucket limit
+      // Add defensive options to prevent MutationObserver errors
+      preventDropOnDocument: true,
+      noClick: false,
+      noKeyboard: false,
+      // Disable drag and drop if we're in a problematic state
+      disabled: isUploading
     })
 
     const isUploaded = uploadedDocuments[document.id]
     const progress = uploadProgress[document.id] || 0
+
+    // Add error boundary for dropzone
+    let rootProps, inputProps;
+    try {
+      rootProps = getRootProps();
+      inputProps = getInputProps();
+    } catch (error) {
+      console.warn('Dropzone initialization error:', error);
+      // Fallback to basic file input if dropzone fails
+      rootProps = {};
+      inputProps = {
+        type: 'file',
+        accept: document.acceptedTypes.join(','),
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+          const file = e.target.files?.[0];
+          if (file) uploadDocument(file, document.id);
+        }
+      };
+    }
 
     return (
       <Card className="relative">
@@ -292,14 +317,14 @@ export function DocumentUploadStep({
           
           {!isUploaded ? (
             <div
-              {...getRootProps()}
+              {...rootProps}
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                 isDragActive 
                   ? 'border-blue-500 bg-blue-50' 
                   : 'border-gray-300 hover:border-gray-400'
               }`}
             >
-              <input {...getInputProps()} />
+              <input {...inputProps} />
               <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
               <p className="text-sm text-gray-600">
                 {isDragActive 

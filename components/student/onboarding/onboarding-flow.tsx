@@ -153,7 +153,7 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
     if (completedSteps[stepId] === true) return 'completed'
     // Check if step is completed based on onboarding data
     if (stepId === 'welcome' && onboardingData.welcome_completed) return 'completed'
-    if (stepId === 'personal-info' && onboardingData.first_name) return 'completed'
+    if (stepId === 'personal-info' && onboardingData.full_name) return 'completed'
     if (stepId === 'aviation-background' && onboardingData.pilot_certificate_type) return 'completed'
     if (stepId === 'emergency-contact' && onboardingData.emergency_contact_name) return 'completed'
     if (stepId === 'liability-waiver' && onboardingData.liability_waiver_signed) return 'completed'
@@ -211,15 +211,33 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
         // --- PROGRAM SELECTION LOGIC ---
         let payload = {
           user_id: userId,
-          current_step: stepId,
-          step_number: ONBOARDING_STEPS.findIndex(step => step.id === stepId) + 1,
+          current_step: currentStep, // Use the current UI step, not the completed step
+          step_number: ONBOARDING_STEPS.findIndex(step => step.id === currentStep) + 1,
           completed_steps: updatedCompletedSteps,
           last_activity_at: new Date().toISOString(),
           ...(data && typeof data === 'object' ? data : {})
         }
 
-        // Use first_name and last_name directly since we now have these columns
-        // No need to map to full_name anymore
+        // Map first_name and last_name to full_name for student_onboarding table
+        if (data.first_name && data.last_name) {
+          payload.full_name = `${data.first_name} ${data.last_name}`
+        } else if (data.first_name) {
+          payload.full_name = data.first_name
+        } else if (data.last_name) {
+          payload.full_name = data.last_name
+        }
+        
+        // Remove first_name and last_name from payload as they don't exist in student_onboarding table
+        delete payload.first_name
+        delete payload.last_name
+        
+        // Handle empty date strings - convert to null to avoid PostgreSQL date validation errors
+        const dateFields = ['date_of_birth', 'medical_certificate_expires_at']
+        dateFields.forEach(field => {
+          if (payload[field] === '') {
+            payload[field] = null
+          }
+        })
         
         // If this is the personal-info step, also update the user profile
         if (stepId === 'personal-info' && (data.first_name || data.last_name)) {
@@ -266,7 +284,7 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
               .eq('syllabus_id', syllabus_id)
               .maybeSingle()
             if (!existing && !existingError) {
-              // Insert new pending enrollment
+              // Insert new active enrollment
               const { error: enrollError } = await supabase
                 .from('student_enrollments')
                 .insert({
@@ -274,7 +292,7 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
                   syllabus_id,
                   instructor_id: DEFAULT_INSTRUCTOR_ID,
                   start_date: new Date().toISOString().slice(0, 10),
-                  status: 'pending',
+                  status: 'active',
                 })
               if (enrollError) {
                 console.error('Failed to create enrollment:', enrollError)
@@ -290,8 +308,16 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
           // Update profile with all onboarding data when completing onboarding
           try {
             const profileUpdateData: any = {}
-            if (onboardingData.first_name) profileUpdateData.first_name = onboardingData.first_name
-            if (onboardingData.last_name) profileUpdateData.last_name = onboardingData.last_name
+            // Parse full_name back to first_name and last_name for profile
+            if (onboardingData.full_name) {
+              const nameParts = onboardingData.full_name.split(' ')
+              if (nameParts.length >= 2) {
+                profileUpdateData.first_name = nameParts[0]
+                profileUpdateData.last_name = nameParts.slice(1).join(' ')
+              } else {
+                profileUpdateData.first_name = nameParts[0]
+              }
+            }
             if (onboardingData.phone_number) profileUpdateData.phone_number = onboardingData.phone_number
             if (onboardingData.date_of_birth) profileUpdateData.date_of_birth = onboardingData.date_of_birth
             if (onboardingData.address_line1) profileUpdateData.address_line1 = onboardingData.address_line1
@@ -454,7 +480,16 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
     
     await saveProgress(currentStep, mergedData, true)
     setOnboardingData(mergedData)
-    nextStep()
+    
+    // If this is the completion step, redirect to dashboard instead of nextStep
+    if (currentStep === 'completion') {
+      // Add a small delay to ensure the completion is saved, then redirect
+      setTimeout(() => {
+        exitOnboarding()
+      }, 1000)
+    } else {
+      nextStep()
+    }
   }
 
   const exitOnboarding = () => {
