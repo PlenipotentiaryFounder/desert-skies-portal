@@ -1,4 +1,3 @@
-"use server"
 
 import { CalendarService, CalendarEvent, SyncResult } from "./calendar-service"
 import { CalendarOAuthService } from "./calendar-oauth-service"
