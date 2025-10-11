@@ -313,7 +313,7 @@ export function DocumentUploadStep({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600 mb-4">{document.description}</p>
+          <p className="text-sm text-aviation-sunset-200 mb-4">{document.description}</p>
           
           {!isUploaded ? (
             <div
@@ -325,14 +325,14 @@ export function DocumentUploadStep({
               }`}
             >
               <input {...inputProps} />
-              <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm text-gray-600">
+              <Upload className="w-8 h-8 mx-auto mb-2 text-aviation-sunset-300" />
+              <p className="text-sm text-aviation-sunset-200">
                 {isDragActive 
                   ? 'Drop the file here...' 
                   : 'Drag & drop a file here, or click to select'
                 }
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-aviation-sunset-300 mt-1">
                 Supported formats: PDF, JPEG, PNG (max 4MB)
               </p>
             </div>
@@ -382,7 +382,7 @@ export function DocumentUploadStep({
       <div className="text-center space-y-2">
         <Upload className="w-12 h-12 text-blue-600 mx-auto" />
         <h2 className="text-3xl font-bold">Document Upload</h2>
-        <p className="text-gray-600">
+        <p className="text-aviation-sunset-200">
           Upload your required documents to complete your student record
         </p>
       </div>
@@ -399,7 +399,7 @@ export function DocumentUploadStep({
         </CardHeader>
         <CardContent>
           <Progress value={getUploadProgress()} className="h-2" />
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-sm text-aviation-sunset-200 mt-2">
             {getUploadProgress()}% complete
           </p>
         </CardContent>

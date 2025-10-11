@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { getAircraftStatus, calculateNextInspection, calculateAircraftUtilization } from '@/lib/aircraft-status-service'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -232,7 +233,7 @@ export default function AircraftDetailPage() {
   }
 
   const getAircraftStatus = (aircraft: any): 'airworthy' | 'maintenance' | 'grounded' => {
-    // Mock status logic - in real app, this would check maintenance and squawks
+    // TODO: Implement real status logic based on maintenance and squawks
     const statuses = ['airworthy', 'maintenance', 'grounded']
     return statuses[Math.floor(Math.random() * 3)] as 'airworthy' | 'maintenance' | 'grounded'
   }

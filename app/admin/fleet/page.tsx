@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { getAircraftStatus, calculateNextInspection, calculateAircraftUtilization } from '@/lib/aircraft-status-service'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -114,6 +115,10 @@ export default function FleetManagementPage() {
   const [supabase] = useState(() => createClient())
   const { toast } = useToast()
 
+  // Mock data for maintenance and squawks (replace with real API calls)
+  const [maintenanceData] = useState<any[]>([])
+  const [squawkData] = useState<any[]>([])
+
   // Chart data
   const utilizationData = [
     { name: 'Jan', utilization: 85, hours: 120, revenue: 45000 },
@@ -152,17 +157,21 @@ export default function FleetManagementPage() {
 
       if (aircraftError) throw aircraftError
 
-      // Transform aircraft data with additional fields
-      const enhancedAircraft = (aircraftData || []).map(ac => ({
-        ...ac,
-        status: getAircraftStatus(ac),
-        next_inspection_date: calculateNextInspection(ac.last_inspection_date),
-        utilization_rate: Math.floor(Math.random() * 30) + 70,
-        total_flights: Math.floor(Math.random() * 100) + 50,
-        total_hours: ac.hobbs_time,
-        revenue_generated: Math.floor(Math.random() * 50000) + 20000,
-        maintenance_costs: Math.floor(Math.random() * 10000) + 5000
-      }))
+      // Transform aircraft data with real calculated fields
+      const enhancedAircraft: Aircraft[] = (aircraftData || []).map((ac) => {
+        const status = getAircraftStatus(ac, maintenanceData || [], squawkData || [])
+
+        return {
+          ...ac,
+          status,
+          next_inspection_date: calculateNextInspection(ac.last_inspection_date),
+          utilization_rate: Math.floor(Math.random() * 40) + 60, // Mock utilization rate
+          total_flights: Math.floor(Math.random() * 50) + 10, // Mock flight count
+          total_hours: ac.hobbs_time,
+          revenue_generated: Math.floor(Math.random() * 50000) + 10000, // Mock revenue
+          maintenance_costs: Math.floor(Math.random() * 10000) + 5000 // Mock maintenance costs
+        } as Aircraft
+      })
 
       setAircraft(enhancedAircraft)
 
@@ -178,18 +187,7 @@ export default function FleetManagementPage() {
     }
   }
 
-  const getAircraftStatus = (aircraft: any): 'airworthy' | 'maintenance' | 'grounded' => {
-    // Mock status logic - in real app, this would check maintenance and squawks
-    const statuses = ['airworthy', 'maintenance', 'grounded']
-    return statuses[Math.floor(Math.random() * 3)] as 'airworthy' | 'maintenance' | 'grounded'
-  }
-
-  const calculateNextInspection = (lastInspection: string): string => {
-    const lastDate = new Date(lastInspection)
-    const nextDate = new Date(lastDate)
-    nextDate.setFullYear(nextDate.getFullYear() + 1)
-    return nextDate.toISOString().split('T')[0]
-  }
+  // Use the real aircraft status service
 
   const getStatusColor = (status: string) => {
     switch (status) {

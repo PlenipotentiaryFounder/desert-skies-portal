@@ -8,6 +8,10 @@ export type NotificationCategory =
   | "system_announcement"
   | "new_document"
   | "syllabus_update"
+  | "billing"
+  | "payment"
+  | "account"
+  | "session"
 
 export interface Notification {
   id: string
@@ -179,6 +183,186 @@ export async function getNotificationSettings(userId: string): Promise<Notificat
   }
 }
 
+// Billing-specific notification functions
+
+/**
+ * Send billing-related notifications
+ */
+export async function sendBillingNotification(
+  userId: string,
+  type: string,
+  title: string,
+  message: string,
+  data?: Record<string, any>
+): Promise<void> {
+  const category: NotificationCategory = type.includes('payment') ? 'payment' :
+                                       type.includes('account') ? 'account' :
+                                       type.includes('session') ? 'session' : 'billing'
+
+  await createNotification({
+    userId,
+    title,
+    message,
+    category,
+    link: data?.link,
+    relatedEntityId: data?.entity_id,
+    relatedEntityType: data?.entity_type
+  })
+}
+
+/**
+ * Send payment received notification
+ */
+export async function notifyPaymentReceived(
+  userId: string,
+  amount: number,
+  invoiceNumber?: string
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'payment_received',
+    'Payment Received',
+    `Payment of $${amount.toFixed(2)} has been processed successfully${invoiceNumber ? ` for invoice ${invoiceNumber}` : ''}.`,
+    {
+      amount,
+      invoice_number: invoiceNumber,
+      link: '/student/billing'
+    }
+  )
+}
+
+/**
+ * Send payment failed notification
+ */
+export async function notifyPaymentFailed(
+  userId: string,
+  amount: number,
+  reason?: string
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'payment_failed',
+    'Payment Failed',
+    `Payment processing failed for $${amount.toFixed(2)}. ${reason || 'Please check your payment method and try again.'}`,
+    {
+      amount,
+      reason,
+      link: '/student/billing/pay-balance'
+    }
+  )
+}
+
+/**
+ * Send low account balance notification
+ */
+export async function notifyLowAccountBalance(
+  userId: string,
+  currentBalance: number,
+  threshold: number
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'account_low_balance',
+    'Low Account Balance',
+    `Your account balance ($${currentBalance.toFixed(2)}) is below your threshold of $${threshold.toFixed(2)}. Consider adding funds.`,
+    {
+      current_balance: currentBalance,
+      threshold,
+      link: '/student/billing/add-funds'
+    }
+  )
+}
+
+/**
+ * Send overdue invoice notification
+ */
+export async function notifyInvoiceOverdue(
+  userId: string,
+  invoiceNumber: string,
+  amount: number,
+  daysOverdue: number
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'invoice_overdue',
+    'Invoice Overdue',
+    `Invoice ${invoiceNumber} for $${amount.toFixed(2)} is ${daysOverdue} days overdue.`,
+    {
+      invoice_number: invoiceNumber,
+      amount,
+      days_overdue: daysOverdue,
+      link: '/student/billing/pay-balance'
+    }
+  )
+}
+
+/**
+ * Send flight session completed notification
+ */
+export async function notifyFlightSessionCompleted(
+  userId: string,
+  sessionId: string,
+  aircraft: string,
+  hours: number
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'flight_session_completed',
+    'Flight Session Completed',
+    `Your flight session in ${aircraft} (${hours.toFixed(1)} hours) has been logged and is ready for review.`,
+    {
+      session_id: sessionId,
+      aircraft,
+      hours,
+      link: '/student/billing'
+    }
+  )
+}
+
+/**
+ * Send session adjustment notification
+ */
+export async function notifySessionAdjusted(
+  userId: string,
+  sessionId: string,
+  adjustmentType: 'refund' | 'additional_charge',
+  amount: number,
+  reason: string
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'session_adjusted',
+    'Flight Session Adjusted',
+    `A flight session has been adjusted. ${adjustmentType === 'refund' ? `Refund of $${amount.toFixed(2)}` : `Additional charge of $${amount.toFixed(2)}`} processed. Reason: ${reason}`,
+    {
+      session_id: sessionId,
+      adjustment_type: adjustmentType,
+      amount,
+      reason,
+      link: '/student/billing'
+    }
+  )
+}
+
+/**
+ * Send PIN verification failed notification (for security monitoring)
+ */
+export async function notifyPINVerificationFailed(
+  userId: string,
+  attemptCount: number
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'pin_verification_failed',
+    'PIN Verification Failed',
+    `Multiple failed PIN attempts detected (${attemptCount} attempts). Please contact support if you need assistance.`,
+    {
+      attempt_count: attemptCount,
+      link: '/student/settings'
+    }
+  )
+}
+
 export async function updateNotificationSettings(
   settings: Partial<NotificationSettings> & { userId: string },
 ): Promise<boolean> {
@@ -245,4 +429,184 @@ async function createDefaultNotificationSettings(userId: string): Promise<Notifi
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   }
+}
+
+// Billing-specific notification functions
+
+/**
+ * Send billing-related notifications
+ */
+export async function sendBillingNotification(
+  userId: string,
+  type: string,
+  title: string,
+  message: string,
+  data?: Record<string, any>
+): Promise<void> {
+  const category: NotificationCategory = type.includes('payment') ? 'payment' :
+                                       type.includes('account') ? 'account' :
+                                       type.includes('session') ? 'session' : 'billing'
+
+  await createNotification({
+    userId,
+    title,
+    message,
+    category,
+    link: data?.link,
+    relatedEntityId: data?.entity_id,
+    relatedEntityType: data?.entity_type
+  })
+}
+
+/**
+ * Send payment received notification
+ */
+export async function notifyPaymentReceived(
+  userId: string,
+  amount: number,
+  invoiceNumber?: string
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'payment_received',
+    'Payment Received',
+    `Payment of $${amount.toFixed(2)} has been processed successfully${invoiceNumber ? ` for invoice ${invoiceNumber}` : ''}.`,
+    {
+      amount,
+      invoice_number: invoiceNumber,
+      link: '/student/billing'
+    }
+  )
+}
+
+/**
+ * Send payment failed notification
+ */
+export async function notifyPaymentFailed(
+  userId: string,
+  amount: number,
+  reason?: string
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'payment_failed',
+    'Payment Failed',
+    `Payment processing failed for $${amount.toFixed(2)}. ${reason || 'Please check your payment method and try again.'}`,
+    {
+      amount,
+      reason,
+      link: '/student/billing/pay-balance'
+    }
+  )
+}
+
+/**
+ * Send low account balance notification
+ */
+export async function notifyLowAccountBalance(
+  userId: string,
+  currentBalance: number,
+  threshold: number
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'account_low_balance',
+    'Low Account Balance',
+    `Your account balance ($${currentBalance.toFixed(2)}) is below your threshold of $${threshold.toFixed(2)}. Consider adding funds.`,
+    {
+      current_balance: currentBalance,
+      threshold,
+      link: '/student/billing/add-funds'
+    }
+  )
+}
+
+/**
+ * Send overdue invoice notification
+ */
+export async function notifyInvoiceOverdue(
+  userId: string,
+  invoiceNumber: string,
+  amount: number,
+  daysOverdue: number
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'invoice_overdue',
+    'Invoice Overdue',
+    `Invoice ${invoiceNumber} for $${amount.toFixed(2)} is ${daysOverdue} days overdue.`,
+    {
+      invoice_number: invoiceNumber,
+      amount,
+      days_overdue: daysOverdue,
+      link: '/student/billing/pay-balance'
+    }
+  )
+}
+
+/**
+ * Send flight session completed notification
+ */
+export async function notifyFlightSessionCompleted(
+  userId: string,
+  sessionId: string,
+  aircraft: string,
+  hours: number
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'flight_session_completed',
+    'Flight Session Completed',
+    `Your flight session in ${aircraft} (${hours.toFixed(1)} hours) has been logged and is ready for review.`,
+    {
+      session_id: sessionId,
+      aircraft,
+      hours,
+      link: '/student/billing'
+    }
+  )
+}
+
+/**
+ * Send session adjustment notification
+ */
+export async function notifySessionAdjusted(
+  userId: string,
+  sessionId: string,
+  adjustmentType: 'refund' | 'additional_charge',
+  amount: number,
+  reason: string
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'session_adjusted',
+    'Flight Session Adjusted',
+    `A flight session has been adjusted. ${adjustmentType === 'refund' ? `Refund of $${amount.toFixed(2)}` : `Additional charge of $${amount.toFixed(2)}`} processed. Reason: ${reason}`,
+    {
+      session_id: sessionId,
+      adjustment_type: adjustmentType,
+      amount,
+      reason,
+      link: '/student/billing'
+    }
+  )
+}
+
+/**
+ * Send PIN verification failed notification (for security monitoring)
+ */
+export async function notifyPINVerificationFailed(
+  userId: string,
+  attemptCount: number
+): Promise<void> {
+  await sendBillingNotification(
+    userId,
+    'pin_verification_failed',
+    'PIN Verification Failed',
+    `Multiple failed PIN attempts detected (${attemptCount} attempts). Please contact support if you need assistance.`,
+    {
+      attempt_count: attemptCount,
+      link: '/student/settings'
+    }
+  )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { getAircraftStatus, calculateNextInspection, calculateAircraftUtilization, type MaintenanceRecord, type SquawkReport } from '@/lib/aircraft-status-service'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -221,39 +222,62 @@ export function AircraftFleetDashboard() {
 
       if (squawkError) throw squawkError
 
-      // Fetch flight sessions (mock data for now)
-      const mockFlightSessions: FlightSession[] = [
-        {
-          id: '1',
-          aircraft_id: aircraftData?.[0]?.id || '',
-          instructor_id: 'instructor1',
-          student_id: 'student1',
-          start_time: new Date().toISOString(),
-          end_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          duration: 2.0,
-          fuel_used: 12.5,
-          distance: 150,
-          purpose: 'Training Flight',
-          status: 'scheduled'
-        }
-      ]
+      // Fetch recent flight sessions from flight_sessions table
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('flight_sessions')
+        .select(`
+          *,
+          aircraft(tail_number, make, model),
+          student_enrollments!flight_sessions_enrollment_id_fkey(student_id),
+          profiles!flight_sessions_instructor_id_fkey(first_name, last_name)
+        `)
+        .order('date', { ascending: false })
+        .limit(20)
 
-      // Transform aircraft data with additional fields
-      const enhancedAircraft = (aircraftData || []).map(ac => ({
-        ...ac,
-        status: getAircraftStatus(ac, maintenanceData || [], squawkData || []),
-        next_inspection_date: calculateNextInspection(ac.last_inspection_date),
-        utilization_rate: Math.floor(Math.random() * 30) + 70,
-        total_flights: Math.floor(Math.random() * 100) + 50,
-        total_hours: ac.hobbs_time,
-        revenue_generated: Math.floor(Math.random() * 50000) + 20000,
-        maintenance_costs: Math.floor(Math.random() * 10000) + 5000
+      if (sessionsError) {
+        console.warn('Error fetching flight sessions:', sessionsError)
+      }
+
+      const flightSessions: FlightSession[] = (sessionsData || []).map(session => ({
+        id: session.id,
+        aircraft_id: session.aircraft_id,
+        instructor_id: session.instructor_id,
+        student_id: session.student_enrollments?.student_id || '',
+        start_time: session.start_time,
+        end_time: session.end_time,
+        duration: calculateSessionDuration(session.start_time, session.end_time),
+        fuel_used: session.fuel_used || 0,
+        distance: session.distance || 0,
+        purpose: session.notes || 'Training Flight',
+        status: session.status,
+        aircraft: session.aircraft?.tail_number || 'Unknown',
+        instructor: session.profiles ?
+          `${session.profiles.first_name} ${session.profiles.last_name}` :
+          'Unknown Instructor',
+        student: session.student_enrollments?.student_id || 'Unknown Student'
+      }))
+
+      // Transform aircraft data with real calculated fields
+      const enhancedAircraft = await Promise.all((aircraftData || []).map(async (ac) => {
+        const status = getAircraftStatus(ac, maintenanceData || [], squawkData || [])
+        const utilization = await calculateAircraftUtilization(ac.id)
+
+        return {
+          ...ac,
+          status,
+          next_inspection_date: calculateNextInspection(ac.last_inspection_date),
+          utilization_rate: utilization.utilizationRate,
+          total_flights: utilization.totalFlights,
+          total_hours: ac.hobbs_time,
+          revenue_generated: utilization.revenueGenerated,
+          maintenance_costs: Math.floor(Math.random() * 10000) + 5000 // TODO: Sum from maintenance records
+        }
       }))
 
       setAircraft(enhancedAircraft)
       setMaintenanceRecords(maintenanceData || [])
       setSquawkReports(squawkData || [])
-      setFlightSessions(mockFlightSessions)
+      setFlightSessions(flightSessions)
 
     } catch (error) {
       console.error('Error fetching fleet data:', error)
@@ -267,33 +291,16 @@ export function AircraftFleetDashboard() {
     }
   }
 
-  const getAircraftStatus = (aircraft: any, maintenance: MaintenanceRecord[], squawks: SquawkReport[]): 'airworthy' | 'maintenance' | 'grounded' => {
-    // Check for critical squawks that require grounding
-    const criticalSquawks = squawks.filter(s => 
-      s.aircraft_id === aircraft.id && 
-      s.requires_immediate_grounding && 
-      s.status !== 'resolved'
-    )
-    
-    if (criticalSquawks.length > 0) return 'grounded'
+  // Use the real aircraft status service
 
-    // Check for overdue maintenance
-    const overdueMaintenance = maintenance.filter(m => 
-      m.aircraft_id === aircraft.id && 
-      m.status === 'overdue' && 
-      m.is_airworthiness_affecting
-    )
-    
-    if (overdueMaintenance.length > 0) return 'maintenance'
+  const calculateSessionDuration = (startTime: string, endTime: string): number => {
+    if (!startTime || !endTime) return 0
 
-    return 'airworthy'
-  }
+    const start = new Date(`1970-01-01T${startTime}`)
+    const end = new Date(`1970-01-01T${endTime}`)
 
-  const calculateNextInspection = (lastInspection: string): string => {
-    const lastDate = new Date(lastInspection)
-    const nextDate = new Date(lastDate)
-    nextDate.setFullYear(nextDate.getFullYear() + 1)
-    return nextDate.toISOString().split('T')[0]
+    const diffMs = end.getTime() - start.getTime()
+    return Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10 // Convert to hours with 1 decimal
   }
 
   const getStatusColor = (status: string) => {

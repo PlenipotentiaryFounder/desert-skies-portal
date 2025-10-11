@@ -21,14 +21,14 @@ export function SignupUI() {
         
         {/* Footer */}
         <div className="mt-12 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-aviation-sunset-300">
             © 2025 Desert Skies Aviation Training. All rights reserved.
           </p>
-          <div className="mt-2 flex justify-center gap-6 text-xs text-gray-400">
-            <a href="/legal/privacy-policy" className="hover:text-gray-600 transition-colors">
+          <div className="mt-2 flex justify-center gap-6 text-xs text-aviation-sunset-300">
+            <a href="/legal/privacy-policy" className="hover:text-aviation-sunset-200 transition-colors">
               Privacy Policy
             </a>
-            <a href="/legal/terms" className="hover:text-gray-600 transition-colors">
+            <a href="/legal/terms" className="hover:text-aviation-sunset-200 transition-colors">
               Terms & Conditions
             </a>
           </div>

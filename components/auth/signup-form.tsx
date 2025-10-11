@@ -168,7 +168,7 @@ export function SignupForm() {
           </div>
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Desert Skies</h1>
-        <p className="text-gray-600">
+        <p className="text-aviation-sunset-200">
           Start your aviation journey with professional flight training
         </p>
       </div>
@@ -192,7 +192,7 @@ export function SignupForm() {
                       <FormLabel className="text-sm font-medium">First Name</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <User className="absolute left-3 top-3 h-4 w-4 text-aviation-sunset-300" />
                           <Input 
                             placeholder="John" 
                             autoComplete="given-name"
@@ -213,7 +213,7 @@ export function SignupForm() {
                       <FormLabel className="text-sm font-medium">Last Name</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <User className="absolute left-3 top-3 h-4 w-4 text-aviation-sunset-300" />
                           <Input 
                             placeholder="Doe" 
                             autoComplete="family-name"
@@ -235,7 +235,7 @@ export function SignupForm() {
                     <FormLabel className="text-sm font-medium">Email Address</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-aviation-sunset-300" />
                         <Input 
                           placeholder="pilot@example.com" 
                           autoComplete="email"
@@ -256,7 +256,7 @@ export function SignupForm() {
                     <FormLabel className="text-sm font-medium">Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-aviation-sunset-300" />
                         <Input 
                           type="password" 
                           placeholder="••••••••" 
@@ -337,7 +337,7 @@ export function SignupForm() {
 
           {/* Sign In Link */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-aviation-sunset-200">
               Already have an account?{" "}
               <Link 
                 href="/login" 
@@ -352,7 +352,7 @@ export function SignupForm() {
 
       {/* Footer */}
       <div className="mt-8 text-center">
-        <div className="flex justify-center items-center gap-2 text-sm text-gray-500">
+        <div className="flex justify-center items-center gap-2 text-sm text-aviation-sunset-300">
           <Badge variant="outline" className="text-xs">
             FAA Part 141 Certified
           </Badge>

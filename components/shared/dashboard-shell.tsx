@@ -237,7 +237,7 @@ export function DashboardShell({
   return (
     <div className="min-h-screen bg-gradient-to-br from-aviation-sky-50 via-white to-aviation-sky-100">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-grid-pattern-dense opacity-5" />
+      <div className="absolute inset-0 bg-grid-pattern-dense opacity-5 pointer-events-none" />
       
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
@@ -544,7 +544,7 @@ export function DashboardShell({
                   <input
                     type="text"
                     placeholder="Search..."
-                    className="pl-10 pr-4 py-2 w-64 rounded-xl border border-aviation-sky-200 bg-white/50 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-aviation-sky-500/20 focus:border-aviation-sky-500"
+                    className="pl-10 pr-4 py-2 w-64 rounded-xl border border-aviation-sky-200 bg-white/50 backdrop-blur-sm text-aviation-sky-900 placeholder:text-aviation-sky-600 text-sm focus:outline-none focus:ring-2 focus:ring-aviation-sky-500/20 focus:border-aviation-sky-500"
                     suppressHydrationWarning
                   />
                 </div>

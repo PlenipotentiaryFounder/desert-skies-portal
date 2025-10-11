@@ -9,8 +9,8 @@ const inputVariants = cva(
       variant: {
         default: "border-input bg-background hover:border-aviation-sunset-300 focus:border-aviation-sunset-500 focus:ring-aviation-sunset-500/20",
         aviation: "border-2 border-aviation-sunset-200/30 bg-white/5 backdrop-blur-sm text-aviation-sunset-100 placeholder:text-aviation-sunset-400 hover:border-aviation-sunset-300/50 focus:border-aviation-sunset-500 focus:bg-white/10 focus:ring-aviation-sunset-500/20 shadow-sm hover:shadow-md",
-        glass: "border border-white/20 bg-white/5 backdrop-blur-md text-white placeholder:text-white/60 hover:bg-white/10 focus:bg-white/15 focus:border-white/40 focus:ring-white/20",
-        glassDark: "border border-white/10 bg-black/20 backdrop-blur-md text-white placeholder:text-white/60 hover:bg-black/30 focus:bg-black/40 focus:border-white/20 focus:ring-white/10",
+        glass: "border border-white/20 bg-white/5 backdrop-blur-md text-aviation-sunset-100 placeholder:text-aviation-sunset-300 hover:bg-white/10 focus:bg-white/15 focus:border-white/40 focus:ring-aviation-sunset-500/20",
+        glassDark: "border border-white/10 bg-black/20 backdrop-blur-md text-aviation-sunset-100 placeholder:text-aviation-sunset-300 hover:bg-black/30 focus:bg-black/40 focus:border-white/20 focus:ring-aviation-sunset-500/20",
         outlined: "border-2 border-aviation-sunset-200/30 bg-transparent text-aviation-sunset-100 placeholder:text-aviation-sunset-400 hover:border-aviation-sunset-300/50 focus:border-aviation-sunset-500 focus:ring-aviation-sunset-500/20",
         filled: "border-0 bg-aviation-sunset-500/10 text-aviation-sunset-100 placeholder:text-aviation-sunset-400 hover:bg-aviation-sunset-500/15 focus:bg-white/10 focus:ring-2 focus:ring-aviation-sunset-500/20",
         sunset: "border-2 border-aviation-sunset-300/30 bg-aviation-sunset-500/5 backdrop-blur-sm text-aviation-sunset-100 placeholder:text-aviation-sunset-400 hover:border-aviation-sunset-400/50 focus:border-aviation-sunset-500 focus:bg-aviation-sunset-500/10 focus:ring-aviation-sunset-500/20",

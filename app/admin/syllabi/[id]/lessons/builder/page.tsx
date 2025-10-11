@@ -202,7 +202,7 @@ export default function LessonBuilderWorkstation() {
               onImport={handleImportAll}
             />
           ) : (
-            <div className="text-gray-500">Panel content for {panel} goes here.</div>
+            <div className="text-aviation-sunset-300">Panel content for {panel} goes here.</div>
           )}
         </div>
       </main>

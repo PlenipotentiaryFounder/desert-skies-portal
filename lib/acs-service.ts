@@ -53,42 +53,39 @@ export interface StudentACSProgress {
  * Get all ACS documents from the monitoring system
  */
 export async function getACSDocuments(): Promise<ACSDocument[]> {
-  // No acs_documents table in DB, so always return mock data
-  return [
-    {
-      id: '1',
-      name: 'Private Pilot Airplane ACS',
-      certificate_type: 'private_pilot',
-      version: 'FAA-S-ACS-6B',
-      url: 'https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf',
-      last_updated: new Date().toISOString(),
-      status: 'active'
-    },
-    {
-      id: '2', 
-      name: 'Commercial Pilot Airplane ACS',
-      certificate_type: 'commercial_pilot',
-      version: 'FAA-S-ACS-7B',
-      url: 'https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf',
-      last_updated: new Date().toISOString(),
-      status: 'active'
-    },
-    {
-      id: '3',
-      name: 'Instrument Rating Airplane ACS', 
-      certificate_type: 'instrument_rating',
-      version: 'FAA-S-ACS-8C',
-      url: 'https://www.faa.gov/training_testing/testing/acs/instrument_rating_acs_8.pdf',
-      last_updated: new Date().toISOString(),
-      status: 'active'
+  try {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('acs_documents')
+      .select('*')
+      .eq('status', 'active')
+      .order('certificate_type')
+
+    if (error) {
+      console.error('Error fetching ACS documents:', error)
+      return []
     }
-  ]
+
+    return (data || []).map(doc => ({
+      id: doc.id,
+      name: doc.name,
+      certificate_type: doc.certificate_type as any,
+      version: doc.version,
+      url: doc.url,
+      last_updated: doc.last_updated,
+      status: doc.status as any
+    }))
+  } catch (error) {
+    console.error('Error in getACSDocuments:', error)
+    return []
+  }
 }
 
 /**
  * Get ACS document by certificate type
  */
 export async function getACSDocumentByCertificateType(certificateType: string): Promise<ACSDocument | null> {
+  // TODO: Implement database query when acs_documents table is created
   const documents = await getACSDocuments()
   return documents.find(doc => doc.certificate_type === certificateType) || null
 }

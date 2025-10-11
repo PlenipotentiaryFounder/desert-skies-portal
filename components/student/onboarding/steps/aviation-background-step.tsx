@@ -43,6 +43,7 @@ const MEDICAL_CLASSES = [
   'BasicMed'
 ]
 
+// TODO: Consider moving to database or configuration file
 const CITIZENSHIP_STATUS = [
   'U.S. Citizen',
   'Permanent Resident',

@@ -55,6 +55,11 @@ const navItems = [
     icon: "user",
   },
   {
+    title: "Billing",
+    href: "/student/billing",
+    icon: "creditCard",
+  },
+  {
     title: "Settings",
     href: "/student/settings",
     icon: "settings",

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { getDocumentTypeOptions } from "@/lib/configuration-service"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Calendar, Check, FileText, Search } from "lucide-react"
@@ -56,18 +57,27 @@ export function InstructorDocumentsList({ instructorDocuments, studentDocuments 
   const filteredInstructorDocuments = filterDocuments(instructorDocuments)
   const filteredStudentDocuments = filterDocuments(studentDocuments)
 
-  const documentTypeOptions = [
-    { value: "all", label: "All Types" },
-    { value: "medical_certificate", label: "Medical Certificate" },
-    { value: "pilot_license", label: "Pilot License" },
-    { value: "photo_id", label: "Photo ID" },
-    { value: "logbook", label: "Logbook" },
-    { value: "training_record", label: "Training Record" },
-    { value: "endorsement", label: "Endorsement" },
-    { value: "certificate", label: "Certificate" },
-    { value: "other", label: "Other" },
-  ]
+  // Use real document type options from configuration service
+export default function InstructorDocumentsList() {
+  const [documentTypeOptions, setDocumentTypeOptions] = useState<Array<{ value: string, label: string }>>([])
+  const [loading, setLoading] = useState(true)
 
+  useEffect(() => {
+    async function fetchDocumentTypes() {
+      try {
+        const options = await getDocumentTypeOptions()
+        setDocumentTypeOptions(options)
+      } catch (error) {
+        console.error('Error fetching document types:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDocumentTypes()
+  }, [])
+
+  // TODO: Fetch verification statuses from database or configuration
   const verificationOptions = [
     { value: "all", label: "All Statuses" },
     { value: "verified", label: "Verified" },

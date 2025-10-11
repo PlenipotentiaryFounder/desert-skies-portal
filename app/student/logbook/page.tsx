@@ -71,9 +71,9 @@ function AviationLogbookRow({ entry, expanded, onExpand, onEdit, onSign, onVoid,
         <td>{entry.total_time}</td>
         <td>{entry.status}</td>
         <td>
-          <span className={entry.student_signed ? 'text-green-600' : 'text-gray-400'}>Student {entry.student_signed ? '✓' : '✗'}</span>
+          <span className={entry.student_signed ? 'text-green-600' : 'text-aviation-sunset-300'}>Student {entry.student_signed ? '✓' : '✗'}</span>
           <span className="ml-2" />
-          <span className={entry.instructor_signed ? 'text-green-600' : 'text-gray-400'}>Instructor {entry.instructor_signed ? '✓' : '✗'}</span>
+          <span className={entry.instructor_signed ? 'text-green-600' : 'text-aviation-sunset-300'}>Instructor {entry.instructor_signed ? '✓' : '✗'}</span>
         </td>
         <td className="flex gap-2">
           <button className="btn btn-xs btn-secondary" onClick={e => { e.stopPropagation(); onEdit(entry); }}><Edit className="h-4 w-4" /></button>
@@ -103,7 +103,7 @@ function AviationLogbookRow({ entry, expanded, onExpand, onEdit, onSign, onVoid,
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
                   <div className="font-bold text-sky-700 dark:text-yellow-300 mb-1">Remarks</div>
-                  <div className="text-sm text-zinc-700 dark:text-zinc-200">{entry.remarks || <span className="italic text-zinc-400">No remarks</span>}</div>
+                  <div className="text-sm text-aviation-sunset-200">{entry.remarks || <span className="italic text-aviation-sunset-300">No remarks</span>}</div>
                   {entry.attachment_url && (
                     <div className="mt-3 flex items-center gap-2">
                       <Paperclip className="h-4 w-4 text-sky-500" aria-hidden="true" />
@@ -315,7 +315,7 @@ function LogbookEntryForm({ entry, onSave, onClose }: { entry?: any, onSave: (da
               <div className="absolute z-10 bg-white border rounded shadow mt-1 w-full max-h-40 overflow-auto">
                 {aircraftOptions.map(option => (
                   <div key={option.id} className="px-3 py-2 hover:bg-sky-100 cursor-pointer" onClick={() => handleAircraftSelect(option)}>
-                    <span className="font-semibold">{option.tail_number}</span> <span className="text-xs text-zinc-500">{option.make} {option.model}</span>
+                    <span className="font-semibold">{option.tail_number}</span> <span className="text-xs text-aviation-sunset-300">{option.make} {option.model}</span>
                   </div>
                 ))}
               </div>
@@ -336,7 +336,7 @@ function LogbookEntryForm({ entry, onSave, onClose }: { entry?: any, onSave: (da
               <div className="absolute z-10 bg-white border rounded shadow mt-1 w-full max-h-40 overflow-auto">
                 {instructorOptions.map(option => (
                   <div key={option.id} className="px-3 py-2 hover:bg-sky-100 cursor-pointer" onClick={() => handleInstructorSelect(option)}>
-                    <span className="font-semibold">{option.name}</span> <span className="text-xs text-zinc-500">{option.email}</span>
+                    <span className="font-semibold">{option.name}</span> <span className="text-xs text-aviation-sunset-300">{option.email}</span>
                   </div>
                 ))}
               </div>
@@ -345,7 +345,7 @@ function LogbookEntryForm({ entry, onSave, onClose }: { entry?: any, onSave: (da
           <div>
             <label>Attachment (optional)</label>
             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="input" accept="image/*,application/pdf" />
-            {uploading && <p className="text-sm text-zinc-500 mt-1">Uploading...</p>}
+            {uploading && <p className="text-sm text-aviation-sunset-300 mt-1">Uploading...</p>}
             {uploadError && <p className="text-sm text-red-600 mt-1">{uploadError}</p>}
           </div>
         </div>
@@ -395,7 +395,7 @@ function LogbookEntryForm({ entry, onSave, onClose }: { entry?: any, onSave: (da
       >
         <div className="flex items-center gap-3 mb-2">
           {steps.map((s, i) => (
-            <div key={i} className={`flex items-center gap-1 ${i === step ? 'font-bold text-sky-600 dark:text-yellow-300' : i < step ? 'text-green-600 dark:text-green-300' : 'text-zinc-400'}`}>
+            <div key={i} className={`flex items-center gap-1 ${i === step ? 'font-bold text-sky-600 dark:text-yellow-300' : i < step ? 'text-green-600 dark:text-green-300' : 'text-aviation-sunset-300'}`}>
               {s.icon}
               <span className="hidden md:inline">{s.label}</span>
               {i < steps.length - 1 && <span className="mx-2 w-6 h-1 rounded-full bg-sky-200 dark:bg-blue-900" />}

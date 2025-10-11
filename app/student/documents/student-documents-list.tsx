@@ -39,6 +39,7 @@ export function StudentDocumentsList({ documents }: StudentDocumentsListProps) {
     return matchesSearch && matchesType
   })
 
+  // TODO: Fetch document types from database or configuration
   const documentTypeOptions = [
     { value: "all", label: "All Types" },
     { value: "medical_certificate", label: "Medical Certificate" },

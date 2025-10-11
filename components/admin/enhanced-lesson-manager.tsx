@@ -348,7 +348,7 @@ export function EnhancedLessonManager({
                           {/* Drag Handle */}
                           <div
                             {...provided.dragHandleProps}
-                            className="cursor-grab hover:cursor-grabbing text-gray-400 hover:text-gray-600"
+                            className="cursor-grab hover:cursor-grabbing text-aviation-sunset-300 hover:text-aviation-sunset-200"
                           >
                             <GripVertical className="w-5 h-5" />
                           </div>
@@ -373,11 +373,11 @@ export function EnhancedLessonManager({
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-gray-600 line-clamp-1">{lesson.description}</p>
+                            <p className="text-sm text-aviation-sunset-200 line-clamp-1">{lesson.description}</p>
                           </div>
 
                           {/* Quick Stats */}
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-4 text-sm text-aviation-sunset-300">
                             <div className="flex items-center gap-1">
                               <Clock className="w-4 h-4" />
                               {lesson.estimated_hours}h
@@ -465,7 +465,7 @@ export function EnhancedLessonManager({
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                   <Label className="text-sm font-medium">Description</Label>
-                                  <p className="text-sm text-gray-600 mt-1">{lesson.description}</p>
+                                  <p className="text-sm text-aviation-sunset-200 mt-1">{lesson.description}</p>
                                 </div>
                                 <div className="space-y-2">
                                   <div className="flex justify-between">
@@ -517,8 +517,8 @@ export function EnhancedLessonManager({
                                 <div>
                                   <h4 className="font-medium mb-2">Selected Maneuvers</h4>
                                   {getCurrentManeuvers(lesson.id).length === 0 ? (
-                                    <div className="text-center py-4 text-gray-500">
-                                      <Target className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                                    <div className="text-center py-4 text-aviation-sunset-300">
+                                      <Target className="w-8 h-8 mx-auto mb-2 text-aviation-sunset-300" />
                                       <p className="text-sm">No maneuvers selected</p>
                                     </div>
                                   ) : (

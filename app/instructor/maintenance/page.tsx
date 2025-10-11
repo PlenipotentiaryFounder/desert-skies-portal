@@ -203,7 +203,7 @@ export default function InstructorMaintenancePage() {
   }
 
   const getAircraftStatus = (aircraft: any): 'airworthy' | 'maintenance' | 'grounded' => {
-    // Mock status logic - in real app, this would check maintenance and squawks
+    // TODO: Implement real status logic based on maintenance and squawks
     const statuses = ['airworthy', 'maintenance', 'grounded']
     return statuses[Math.floor(Math.random() * 3)] as 'airworthy' | 'maintenance' | 'grounded'
   }

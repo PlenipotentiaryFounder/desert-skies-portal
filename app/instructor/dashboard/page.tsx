@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import { getCurrentWeather, getWeatherTrend, type WeatherData, type WeatherTrendData } from '@/lib/weather-service'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -48,16 +49,16 @@ import {
   ManeuverPerformanceChart,
   RevenueTrendChart
 } from '@/components/ui/aviation-charts'
-import { 
-  Plane, 
-  Users, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Wind, 
-  Thermometer, 
-  Eye, 
-  Gauge, 
+import {
+  Plane,
+  Users,
+  Calendar,
+  Clock,
+  MapPin,
+  Wind,
+  Thermometer,
+  Eye,
+  Gauge,
   Fuel,
   Compass,
   TrendingUp,
@@ -97,6 +98,9 @@ import {
   Key,
   Radio,
   Wifi,
+  DollarSign,
+  Receipt,
+  X,
   Signal,
   EyeOff,
   Trash2,
@@ -324,6 +328,9 @@ export default function InstructorDashboard() {
   }
   const [showFlightData, setShowFlightData] = useState(true)
   const [showNotifications, setShowNotifications] = useState(true)
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
+  const [weatherTrendData, setWeatherTrendData] = useState<WeatherTrendData[]>([])
+  const [weatherLoading, setWeatherLoading] = useState(false)
 
   useEffect(() => {
     // Set initial time on client side only
@@ -334,6 +341,26 @@ export default function InstructorDashboard() {
     }, 1000)
 
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    async function fetchWeatherData() {
+      try {
+        setWeatherLoading(true)
+        const [currentWeather, trendData] = await Promise.all([
+          getCurrentWeather(),
+          getWeatherTrend()
+        ])
+        setWeatherData(currentWeather)
+        setWeatherTrendData(trendData)
+      } catch (error) {
+        console.error('Error fetching weather data:', error)
+      } finally {
+        setWeatherLoading(false)
+      }
+    }
+
+    fetchWeatherData()
   }, [])
 
   // Mock data - in real app, this would come from API calls
@@ -453,7 +480,8 @@ export default function InstructorDashboard() {
     }
   ]
 
-  const weatherData = {
+  // Use real weather data from API
+  const currentWeatherData = weatherData || {
     temperature: 72,
     windSpeed: 8,
     visibility: 10,
@@ -462,6 +490,20 @@ export default function InstructorDashboard() {
     humidity: 45
   }
 
+  // Mock weather trend data for fallback
+  const mockWeatherTrendData = [
+    { time: "06:00", temperature: 65, windSpeed: 5 },
+    { time: "08:00", temperature: 68, windSpeed: 6 },
+    { time: "10:00", temperature: 72, windSpeed: 8 },
+    { time: "12:00", temperature: 75, windSpeed: 10 },
+    { time: "14:00", temperature: 78, windSpeed: 12 },
+    { time: "16:00", temperature: 76, windSpeed: 11 }
+  ]
+
+  // Use weather trend data from API with fallback to mock data
+  const weatherTrendDataForChart = weatherTrendData.length > 0 ? weatherTrendData : mockWeatherTrendData
+
+  // TODO: Fetch aircraft status from aircraft table or current flight session
   const aircraftData = {
     fuelLevel: 85,
     altitude: 2500,
@@ -471,6 +513,7 @@ export default function InstructorDashboard() {
     nextMaintenance: 150
   }
 
+  // TODO: Fetch flight progress from current flight session
   const flightProgressData = {
     currentPhase: "En Route",
     phases: [
@@ -518,7 +561,7 @@ export default function InstructorDashboard() {
     timestamp: new Date()
   }
 
-  // Mock chart data
+  // TODO: Fetch real chart data from flight sessions and performance tracking
   const flightPerformanceData = [
     { time: "00:00", altitude: 0, speed: 0, fuel: 100 },
     { time: "00:05", altitude: 500, speed: 60, fuel: 95 },
@@ -526,15 +569,6 @@ export default function InstructorDashboard() {
     { time: "00:15", altitude: 2500, speed: 120, fuel: 85 },
     { time: "00:20", altitude: 2500, speed: 125, fuel: 80 },
     { time: "00:25", altitude: 2400, speed: 115, fuel: 75 }
-  ]
-
-  const weatherTrendData = [
-    { time: "06:00", temperature: 65, windSpeed: 5 },
-    { time: "08:00", temperature: 68, windSpeed: 6 },
-    { time: "10:00", temperature: 72, windSpeed: 8 },
-    { time: "12:00", temperature: 75, windSpeed: 10 },
-    { time: "14:00", temperature: 78, windSpeed: 12 },
-    { time: "16:00", temperature: 76, windSpeed: 11 }
   ]
 
   const studentProgressData = [
@@ -570,7 +604,7 @@ export default function InstructorDashboard() {
     { month: "Jun", revenue: 65000 }
   ]
 
-  // Mock notifications
+  // TODO: Fetch real notifications from notifications table
   const notifications = [
     {
       id: "1",
@@ -708,10 +742,11 @@ export default function InstructorDashboard() {
         <div className="mb-4">
           <p className="text-sm text-muted-foreground mb-2">Current Tab: <span className="text-aviation-sunset-300 font-semibold">{activeTab}</span></p>
         </div>
-        <TabsList className="grid w-full grid-cols-6 bg-white/10 backdrop-blur-sm border border-white/20">
+        <TabsList className="grid w-full grid-cols-7 bg-white/10 backdrop-blur-sm border border-white/20">
           <TabsTrigger value="overview" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Overview</TabsTrigger>
           <TabsTrigger value="flights" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Flights</TabsTrigger>
           <TabsTrigger value="students" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Students</TabsTrigger>
+          <TabsTrigger value="billing" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Billing</TabsTrigger>
           <TabsTrigger value="analytics" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Analytics</TabsTrigger>
           <TabsTrigger value="notifications" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Notifications</TabsTrigger>
           <TabsTrigger value="settings" className="data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Settings</TabsTrigger>
@@ -768,12 +803,82 @@ export default function InstructorDashboard() {
               </Card>
             </motion.div>
 
+            {/* Billing Overview Widget */}
+            <motion.div variants={itemVariants}>
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                    <DollarSign className="w-5 h-5" />
+                    Billing Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Revenue Summary */}
+                    <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                      <div className="text-2xl font-bold text-green-600 mb-2">
+                        $3,450.00
+                      </div>
+                      <div className="text-sm text-muted-foreground">This Month</div>
+                      <div className="flex gap-2 mt-2 justify-center">
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <BarChart3 className="w-3 h-3 mr-1" />
+                          View Reports
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Pending Approvals */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Pending Approvals</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center p-2 bg-orange-50 rounded border border-orange-200">
+                          <span className="text-sm">John Smith - Lesson 3</span>
+                          <Badge variant="outline" className="text-orange-600">$125.00</Badge>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-orange-50 rounded border border-orange-200">
+                          <span className="text-sm">Sarah Johnson - Ground</span>
+                          <Badge variant="outline" className="text-orange-600">$75.00</Badge>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => setActiveTab('billing')}>
+                        Review All Sessions
+                      </Button>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Quick Actions</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <FileText className="w-4 h-4 mr-1" />
+                          View Invoices
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <Settings className="w-4 h-4 mr-1" />
+                          Manage Rates
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <Users className="w-4 h-4 mr-1" />
+                          Student Accounts
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <Receipt className="w-4 h-4 mr-1" />
+                          Create Invoice
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
             {/* Main Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Weather & Aircraft */}
               <div className="space-y-6">
                 <motion.div variants={itemVariants}>
-                  <WeatherMetrics {...weatherData} />
+                  <WeatherMetrics {...currentWeatherData} />
                 </motion.div>
                 
                 <motion.div variants={itemVariants}>
@@ -913,7 +1018,7 @@ export default function InstructorDashboard() {
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <motion.div variants={itemVariants}>
-                <WeatherTrendChart data={weatherTrendData} />
+                <WeatherTrendChart data={weatherTrendDataForChart} />
               </motion.div>
               <motion.div variants={itemVariants}>
                 <AircraftUtilizationChart data={aircraftUtilizationData} />
@@ -985,6 +1090,156 @@ export default function InstructorDashboard() {
                   icon={<GraduationCap className="w-5 h-5" />}
                 />
               </motion.div>
+            </div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Revenue Overview */}
+              <Card variant="dashboard" className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                    <TrendingUp className="w-5 h-5" />
+                    Revenue Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Monthly Revenue */}
+                  <div className="text-center p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                    <div className="text-4xl font-bold text-green-600 mb-2">
+                      $3,450.00
+                    </div>
+                    <div className="text-sm text-muted-foreground">This Month's Revenue</div>
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600">$2,150</div>
+                        <div className="text-xs text-muted-foreground">Flight Hours</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-purple-600">$1,300</div>
+                        <div className="text-xs text-muted-foreground">Ground Hours</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-orange-600">15</div>
+                        <div className="text-xs text-muted-foreground">Sessions</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="text-2xl font-bold text-blue-600">$2,750.00</div>
+                      <div className="text-sm text-muted-foreground">Pending Payments</div>
+                    </div>
+                    <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="text-2xl font-bold text-orange-600">3</div>
+                      <div className="text-sm text-muted-foreground">Sessions to Approve</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                    <Receipt className="w-4 h-4 mr-2" />
+                    Create Invoice
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage Rates
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                    <Users className="w-4 h-4 mr-2" />
+                    Student Accounts
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    View Reports
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Pending Approvals */}
+              <Card variant="dashboard" className="lg:col-span-3">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                    <Clock className="w-5 h-5" />
+                    Pending Approvals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-blue-100 text-blue-600">
+                          <Plane className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium">John Smith - Flight Training</p>
+                          <p className="text-sm text-muted-foreground">Jan 15, 2024 • 2.0 hours flight</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">$150.00</p>
+                        <div className="flex gap-2 mt-1">
+                          <Button size="sm" variant="outline">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <X className="w-3 h-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-green-100 text-green-600">
+                          <Clock className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Sarah Johnson - Ground Instruction</p>
+                          <p className="text-sm text-muted-foreground">Jan 14, 2024 • 1.5 hours ground</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">$112.50</p>
+                        <div className="flex gap-2 mt-1">
+                          <Button size="sm" variant="outline">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <X className="w-3 h-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t">
+                    <Button variant="outline" className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                      <Clock className="w-4 h-4 mr-2" />
+                      View All Pending Sessions
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </motion.div>
         </TabsContent>

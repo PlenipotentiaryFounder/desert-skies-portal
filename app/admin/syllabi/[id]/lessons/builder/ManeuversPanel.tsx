@@ -224,7 +224,7 @@ export default function ManeuversPanel({
         </div>
         
         {selected.length === 0 ? (
-          <div className="text-xs text-gray-400 p-4 text-center border rounded-lg bg-muted/30">
+          <div className="text-xs text-aviation-sunset-300 p-4 text-center border rounded-lg bg-muted/30">
             No maneuvers selected. Use the search below to add maneuvers.
           </div>
         ) : (
@@ -253,7 +253,7 @@ export default function ManeuversPanel({
                           {/* Drag Handle */}
                           <div
                             {...provided.dragHandleProps}
-                            className="cursor-grab hover:cursor-grabbing text-gray-400 hover:text-gray-600"
+                            className="cursor-grab hover:cursor-grabbing text-aviation-sunset-300 hover:text-aviation-sunset-200"
                           >
                             <GripVertical className="w-4 h-4" />
                           </div>
@@ -271,7 +271,7 @@ export default function ManeuversPanel({
                               </Badge>
                             </div>
                             {m.category && (
-                              <div className="text-xs text-gray-500 mt-1">{m.category}</div>
+                              <div className="text-xs text-aviation-sunset-300 mt-1">{m.category}</div>
                             )}
                           </div>
                           
@@ -288,7 +288,7 @@ export default function ManeuversPanel({
                               size="sm" 
                               variant="ghost" 
                               onClick={() => handleToggle(m)} 
-                              className="w-6 h-6 p-0 text-gray-400 hover:text-red-500"
+                              className="w-6 h-6 p-0 text-aviation-sunset-300 hover:text-red-500"
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -309,7 +309,7 @@ export default function ManeuversPanel({
       <div>
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-sm">Add Maneuvers</h3>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-aviation-sunset-300">
             {filtered.length} of {allManeuvers.length} maneuvers
           </div>
         </div>
@@ -338,7 +338,7 @@ export default function ManeuversPanel({
               <div className="flex-1 min-w-0">
                 <div className="font-medium truncate">{m.name}</div>
                 {m.category && (
-                  <div className="text-xs text-gray-500">{m.category}</div>
+                  <div className="text-xs text-aviation-sunset-300">{m.category}</div>
                 )}
               </div>
             </label>

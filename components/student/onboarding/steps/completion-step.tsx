@@ -99,7 +99,7 @@ export function CompletionStep({
         <h1 className="text-4xl font-bold text-gray-900">
           Congratulations, {userProfile?.first_name || onboardingData?.first_name || 'Student'}!
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+        <p className="text-xl text-aviation-sunset-200 max-w-2xl mx-auto">
           You've successfully completed the onboarding process. Welcome to the 
           Desert Skies Aviation Training family!
         </p>
@@ -171,7 +171,7 @@ export function CompletionStep({
                       {step.priority === 'high' ? 'Priority' : 'Optional'}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{step.description}</p>
+                  <p className="text-sm text-aviation-sunset-200 mb-2">{step.description}</p>
                   <Button variant="outline" size="sm">
                     {step.action}
                   </Button>

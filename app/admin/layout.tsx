@@ -202,8 +202,8 @@ const navItems = [
     description: "Analytics and reporting"
   },
   {
-    title: "Financial",
-    href: "/admin/financial",
+    title: "Billing",
+    href: "/admin/billing",
     icon: "dollarSign",
     description: "Financial management and billing"
   },
@@ -243,9 +243,8 @@ export default async function AdminLayout({
     : []
   console.log('ADMIN LAYOUT: roles:', roles)
 
-  if (!roles.includes("admin")) {
-    redirect("/")
-  }
+  // Role verification is handled by middleware, so we don't need additional redirects here
+  // The middleware ensures only users with admin role can access /admin routes
 
   return (
     <DashboardShell 

@@ -28,6 +28,21 @@ import {
   RefreshCw
 } from 'lucide-react'
 
+// Client-side timestamp component to avoid hydration issues
+function TimestampDisplay({ timestamp }: { timestamp: string | Date }) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Always render the same content initially to avoid hydration mismatch
+  const date = timestamp instanceof Date ? timestamp : new Date(timestamp)
+  const timeString = date.toLocaleTimeString()
+
+  return <span>{timeString}</span>
+}
+
 // Types
 interface FlightData {
   altitude: number
@@ -110,16 +125,16 @@ function GaugeDisplay({
         </svg>
         {showValue && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs font-mono font-bold text-white">
+            <span className="text-xs font-mono font-bold text-aviation-sunset-100 drop-shadow-lg">
               {value}
             </span>
           </div>
         )}
       </div>
       <div className="text-center">
-        <div className="text-xs font-medium text-white/80">{label}</div>
+        <div className="text-xs font-medium text-aviation-sunset-200">{label}</div>
         {showValue && (
-          <div className="text-xs text-white/60">{unit}</div>
+          <div className="text-xs text-aviation-sunset-300">{unit}</div>
         )}
       </div>
     </div>
@@ -138,12 +153,12 @@ function CompassDisplay({ heading }: { heading: number }) {
           <div className="absolute top-1/2 left-1/2 w-1 h-8 bg-aviation-sunset-500 transform -translate-x-1/2 -translate-y-full rounded-full shadow-lg" />
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-mono font-bold text-white">
+          <span className="text-xs font-mono font-bold text-aviation-sunset-100 drop-shadow-lg">
             {heading}°
           </span>
         </div>
       </div>
-      <div className="text-xs font-medium text-white/80">Heading</div>
+      <div className="text-xs font-medium text-aviation-sunset-200">Heading</div>
     </div>
   )
 }
@@ -217,7 +232,7 @@ export function FlightDataDisplay({
                   whileTap={{ scale: 0.95 }}
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  className="p-1.5 rounded-lg bg-aviation-sunset-500/20 hover:bg-aviation-sunset-500/30 transition-colors"
                 >
                   <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </motion.button>
@@ -226,7 +241,7 @@ export function FlightDataDisplay({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={onSettings}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    className="p-1.5 rounded-lg bg-aviation-sunset-500/20 hover:bg-aviation-sunset-500/30 transition-colors"
                   >
                     <Settings className="w-4 h-4" />
                   </motion.button>
@@ -367,7 +382,7 @@ export function FlightDataDisplay({
         {/* Last Updated */}
         <div className="mt-6 pt-4 border-t border-white/10">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Last updated: {data.timestamp.toLocaleTimeString()}</span>
+            <span>Last updated: <TimestampDisplay timestamp={data.timestamp} /></span>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-aviation-success-500 animate-pulse" />
               <span>Live</span>

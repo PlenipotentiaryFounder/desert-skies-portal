@@ -252,29 +252,29 @@ export function MissionForm({ enrollments, lessons, maneuvers, onSubmit, initial
                     <h2 className="text-lg font-semibold mb-2">Mission Summary</h2>
                     <div>
                       <div className="font-medium">Title:</div>
-                      <div>{form.custom.title || <span className="text-gray-400">(none)</span>}</div>
+                      <div>{form.custom.title || <span className="text-aviation-sunset-300">(none)</span>}</div>
                     </div>
                     <div>
                       <div className="font-medium">Date:</div>
-                      <div>{form.date || <span className="text-gray-400">(none)</span>}</div>
+                      <div>{form.date || <span className="text-aviation-sunset-300">(none)</span>}</div>
                     </div>
                     <div>
                       <div className="font-medium">Start:</div>
-                      <div>{form.startTime || <span className="text-gray-400">(none)</span>}</div>
+                      <div>{form.startTime || <span className="text-aviation-sunset-300">(none)</span>}</div>
                     </div>
                     <div>
                       <div className="font-medium">End:</div>
-                      <div>{form.endTime || <span className="text-gray-400">(none)</span>}</div>
+                      <div>{form.endTime || <span className="text-aviation-sunset-300">(none)</span>}</div>
                     </div>
                     <div>
                       <div className="font-medium">Aircraft:</div>
-                      <div>{aircraftOptions.find(a => a.id === form.aircraftId)?.tail_number || <span className="text-gray-400">(none)</span>}</div>
+                      <div>{aircraftOptions.find(a => a.id === form.aircraftId)?.tail_number || <span className="text-aviation-sunset-300">(none)</span>}</div>
                     </div>
                     <div>
                       <div className="font-medium">Maneuvers:</div>
                       <ul className="list-disc list-inside text-sm">
                         {form.custom.maneuvers.length === 0 ? (
-                          <li className="text-gray-400">(none)</li>
+                          <li className="text-aviation-sunset-300">(none)</li>
                         ) : (
                           maneuvers.filter(m => form.custom.maneuvers.includes(m.id)).map(m => (
                             <li key={m.lesson_maneuver_id || m.id}>{m.name}</li>

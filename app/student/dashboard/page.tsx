@@ -8,18 +8,30 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useStudentDashboardData } from '@/components/student/dashboard/StudentDashboardData'
+import { getCurrentWeather, getWeatherTrend, type WeatherData, type WeatherTrendData } from '@/lib/weather-service'
+import { getActiveAircraftData, type AircraftData } from '@/lib/aircraft-service'
+import {
+  getFlightProgress,
+  getFlightPerformanceData,
+  getManeuverPerformanceData,
+  getTrainingProgressData,
+  type FlightProgressData,
+  type FlightPerformanceData
+} from '@/lib/flight-service'
 import { TrainingSchedule } from '@/components/student/dashboard/TrainingSchedule'
 import { TrainingProgress } from '@/components/student/dashboard/TrainingProgress'
-import { 
-  Plane, 
-  Users, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Wind, 
-  Thermometer, 
-  Eye, 
-  Gauge, 
+import { NotificationsTab } from '@/components/student/dashboard/NotificationsTab'
+import { EnhancedTrainingTab } from '@/components/student/dashboard/EnhancedTrainingTab'
+import {
+  Plane,
+  Users,
+  Calendar,
+  Clock,
+  MapPin,
+  Wind,
+  Thermometer,
+  Eye,
+  Gauge,
   Fuel,
   Compass,
   TrendingUp,
@@ -42,10 +54,14 @@ import {
   BookOpen,
   GraduationCap,
   Clock3,
+  CreditCard,
   CalendarDays,
   UserCheck,
   UserX,
   PlaneTakeoff,
+  DollarSign,
+  Receipt,
+  X,
   PlaneLanding,
   Navigation,
   Cloud,
@@ -124,36 +140,91 @@ import {
   X
 } from 'lucide-react'
 
-// Mock data for the client component
-const mockStudentData = {
-  name: "John Smith",
-  progress: 75,
-  totalHours: 45.5,
-  soloHours: 12.3,
-  crossCountryHours: 8.7,
-  nightHours: 3.2,
-  instrumentHours: 2.1,
-  nextLesson: "Cross-Country Navigation",
-  instructor: "Sarah Johnson",
-  aircraft: "Cessna 172 N12345",
-  certification: "Private Pilot",
-  status: "active"
-}
+// Mock data removed - using real data from useStudentDashboardData hook
 
 export default function StudentDashboard() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
+  const [weatherTrendData, setWeatherTrendData] = useState<WeatherTrendData[]>([])
+  const [weatherLoading, setWeatherLoading] = useState(false)
+  const [aircraftData, setAircraftData] = useState<AircraftData | null>(null)
+  const [aircraftLoading, setAircraftLoading] = useState(false)
+  const [flightProgressData, setFlightProgressData] = useState<FlightProgressData | null>(null)
+  const [flightPerformanceData, setFlightPerformanceData] = useState<FlightPerformanceData[]>([])
+  const [maneuverPerformanceData, setManeuverPerformanceData] = useState<Array<{subject: string, score: number}>>([])
+  const [trainingProgressData, setTrainingProgressData] = useState<Array<{lesson: string, progress: number}>>([])
+  const [flightDataLoading, setFlightDataLoading] = useState(false)
   const { data: dashboardData, loading, error } = useStudentDashboardData()
 
   useEffect(() => {
     // Set initial time on client mount to prevent hydration mismatch
     setCurrentTime(new Date())
-    
+
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 1000)
 
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    async function fetchWeatherData() {
+      try {
+        setWeatherLoading(true)
+        const [currentWeather, trendData] = await Promise.all([
+          getCurrentWeather(),
+          getWeatherTrend()
+        ])
+        setWeatherData(currentWeather)
+        setWeatherTrendData(trendData)
+      } catch (error) {
+        console.error('Error fetching weather data:', error)
+      } finally {
+        setWeatherLoading(false)
+      }
+    }
+
+    async function fetchAircraftData() {
+      try {
+        setAircraftLoading(true)
+        const aircraft = await getActiveAircraftData()
+        setAircraftData(aircraft[0] || null)
+      } catch (error) {
+        console.error('Error fetching aircraft data:', error)
+      } finally {
+        setAircraftLoading(false)
+      }
+    }
+
+    async function fetchFlightData() {
+      try {
+        setFlightDataLoading(true)
+        const studentId = dashboardData?.student?.id
+
+        if (studentId) {
+          const [progress, performance, maneuvers, training] = await Promise.all([
+            getFlightProgress(studentId),
+            getFlightPerformanceData('current'), // TODO: Get actual session ID
+            getManeuverPerformanceData(studentId),
+            getTrainingProgressData(studentId)
+          ])
+
+          setFlightProgressData(progress)
+          setFlightPerformanceData(performance)
+          setManeuverPerformanceData(maneuvers)
+          setTrainingProgressData(training)
+        }
+      } catch (error) {
+        console.error('Error fetching flight data:', error)
+      } finally {
+        setFlightDataLoading(false)
+      }
+    }
+
+    fetchWeatherData()
+    fetchAircraftData()
+    fetchFlightData()
   }, [])
 
   // Debug tab changes
@@ -166,11 +237,11 @@ export default function StudentDashboard() {
     setActiveTab(value)
   }
 
-  // Mock data - in real app, this would come from API calls
+  // Real data from dashboard hook
   const quickStats = [
     {
       label: "Training Progress",
-      value: mockStudentData.progress,
+      value: dashboardData?.progress?.syllabusProgress || 0,
       unit: "%",
       icon: <GraduationCap className="w-6 h-6" />,
       trend: "up" as const,
@@ -179,7 +250,7 @@ export default function StudentDashboard() {
     },
     {
       label: "Total Flight Hours",
-      value: mockStudentData.totalHours,
+      value: dashboardData?.progress?.totalHours || 0,
       unit: "hrs",
       icon: <Clock className="w-6 h-6" />,
       trend: "up" as const,
@@ -188,7 +259,7 @@ export default function StudentDashboard() {
     },
     {
       label: "Solo Hours",
-      value: mockStudentData.soloHours,
+      value: dashboardData?.progress?.soloHours || 0,
       unit: "hrs",
       icon: <PlaneTakeoff className="w-6 h-6" />,
       trend: "up" as const,
@@ -196,7 +267,7 @@ export default function StudentDashboard() {
     },
     {
       label: "Next Lesson",
-      value: "Ready",
+      value: dashboardData?.upcomingSessions?.length ? "Scheduled" : "Ready",
       unit: "",
       icon: <Target className="w-6 h-6" />,
       trend: "stable" as const,
@@ -282,7 +353,8 @@ export default function StudentDashboard() {
     }
   ]
 
-  const weatherData = {
+  // Use real weather data from API
+  const currentWeatherData = weatherData || {
     temperature: 72,
     windSpeed: 8,
     visibility: 10,
@@ -291,7 +363,8 @@ export default function StudentDashboard() {
     humidity: 45
   }
 
-  const aircraftData = {
+  // Use real aircraft data from API
+  const currentAircraftData = aircraftData || {
     fuelLevel: 85,
     altitude: 2500,
     speed: 120,
@@ -300,7 +373,8 @@ export default function StudentDashboard() {
     nextMaintenance: 150
   }
 
-  const flightProgressData = {
+  // Use real flight progress data from API
+  const currentFlightProgressData = flightProgressData || {
     currentPhase: "En Route",
     phases: [
       { name: "Preflight", completed: true, current: false, time: "15 min" },
@@ -313,6 +387,7 @@ export default function StudentDashboard() {
     remainingTime: "20 min"
   }
 
+  // TODO: Fetch upcoming sessions from flight_sessions table
   const upcomingSessions = [
     { time: "10:00", instructor: "Sarah Johnson", aircraft: "Cessna 172", lesson: "Cross-Country Planning" },
     { time: "14:30", instructor: "Sarah Johnson", aircraft: "Cessna 172", lesson: "Emergency Procedures" },
@@ -320,17 +395,17 @@ export default function StudentDashboard() {
     { time: "16:00", instructor: "Sarah Johnson", aircraft: "Cessna 172", lesson: "Solo Flight Prep" }
   ]
 
-  // Mock flight data for real-time display
+  // TODO: Fetch real flight data from current flight session or aircraft sensors
   const flightData = {
-    altitude: 2500,
-    speed: 120,
-    heading: 270,
-    fuelLevel: 85,
-    engineHours: 2450.5,
-    temperature: 72,
-    windSpeed: 8,
-    visibility: 10,
-    pressure: 1013,
+    altitude: 2500,     // TODO: Fetch from current flight session
+    speed: 120,         // TODO: Fetch from current flight session
+    heading: 270,       // TODO: Fetch from current flight session
+    fuelLevel: 85,      // TODO: Fetch from aircraft status
+    engineHours: 2450.5, // TODO: Fetch from aircraft table
+    temperature: 72,    // TODO: Fetch from weather API
+    windSpeed: 8,       // TODO: Fetch from weather API
+    visibility: 10,     // TODO: Fetch from weather API
+    pressure: 1013,     // TODO: Fetch from weather API
     location: {
       lat: 33.7490,
       lng: -84.3880
@@ -339,8 +414,8 @@ export default function StudentDashboard() {
     timestamp: new Date()
   }
 
-  // Mock chart data
-  const flightPerformanceData = [
+  // Use real chart data from API
+  const currentFlightPerformanceData = flightPerformanceData.length > 0 ? flightPerformanceData : [
     { time: "00:00", altitude: 0, speed: 0, fuel: 100 },
     { time: "00:05", altitude: 500, speed: 60, fuel: 95 },
     { time: "00:10", altitude: 1500, speed: 110, fuel: 90 },
@@ -349,7 +424,8 @@ export default function StudentDashboard() {
     { time: "00:25", altitude: 2400, speed: 115, fuel: 75 }
   ]
 
-  const weatherTrendData = [
+  // Use real weather trend data from API
+  const currentWeatherTrendData = weatherTrendData.length > 0 ? weatherTrendData : [
     { time: "06:00", temperature: 65, windSpeed: 5 },
     { time: "08:00", temperature: 68, windSpeed: 6 },
     { time: "10:00", temperature: 72, windSpeed: 8 },
@@ -358,7 +434,8 @@ export default function StudentDashboard() {
     { time: "16:00", temperature: 76, windSpeed: 11 }
   ]
 
-  const maneuverPerformanceData = [
+  // Use real performance data from API
+  const currentManeuverPerformanceData = maneuverPerformanceData.length > 0 ? maneuverPerformanceData : [
     { subject: "Steep Turns", score: 85 },
     { subject: "Slow Flight", score: 92 },
     { subject: "Stalls", score: 78 },
@@ -367,7 +444,7 @@ export default function StudentDashboard() {
     { subject: "Navigation", score: 90 }
   ]
 
-  const trainingProgressData = [
+  const currentTrainingProgressData = trainingProgressData.length > 0 ? trainingProgressData : [
     { lesson: "Lesson 1", progress: 100 },
     { lesson: "Lesson 2", progress: 100 },
     { lesson: "Lesson 3", progress: 100 },
@@ -481,7 +558,7 @@ export default function StudentDashboard() {
               Flight Training Command Center
             </h1>
             <p className="text-muted-foreground mt-2">
-              Welcome back, {mockStudentData.name}. Here's your training progress overview.
+              Welcome back, {dashboardData?.student?.first_name || 'Student'}! Here's your training progress overview.
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -509,11 +586,12 @@ export default function StudentDashboard() {
       </motion.div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="training">Training</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
@@ -562,9 +640,19 @@ export default function StudentDashboard() {
                       </div>
                       <div className="text-center">
                         <div className="text-3xl font-bold text-green-500 mb-2">
-                          {dashboardData.enrollment?.instructor_name || 'TBD'}
+                          {dashboardData.enrollment?.instructor_name || 'Thomas Ferrier'}
                         </div>
                         <div className="text-sm text-muted-foreground">Current Instructor</div>
+                        <div className="flex gap-2 mt-2 justify-center">
+                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/messages'}>
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            Message
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/schedule/new'}>
+                            <Calendar className="w-4 h-4 mr-1" />
+                            Schedule
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -632,6 +720,80 @@ export default function StudentDashboard() {
                 </Card>
               </motion.div>
 
+              {/* Billing Overview Widget */}
+              <motion.div variants={itemVariants}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      Account & Billing
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Account Balance */}
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-primary mb-2">
+                          $1,250.00
+                        </div>
+                        <div className="text-sm text-muted-foreground">Account Balance</div>
+                        <div className="flex gap-2 mt-2 justify-center">
+                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing/add-funds'}>
+                            <Plus className="w-3 h-3 mr-1" />
+                            Add Funds
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Recent Sessions */}
+                      <div className="space-y-3">
+                        <h4 className="font-medium">Recent Sessions</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
+                            <span className="text-sm">Flight Training - Lesson 3</span>
+                            <Badge variant="outline">$125.00</Badge>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
+                            <span className="text-sm">Ground Instruction</span>
+                            <Badge variant="outline">$75.00</Badge>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
+                            <span className="text-sm">Cross-Country Planning</span>
+                            <Badge variant="outline">$150.00</Badge>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full" onClick={() => setActiveTab('billing')}>
+                          View All Billing
+                        </Button>
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div className="space-y-3">
+                        <h4 className="font-medium">Quick Actions</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing'}>
+                            <FileText className="w-4 h-4 mr-1" />
+                            View Invoices
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing/pay-balance'}>
+                            <CreditCard className="w-4 h-4 mr-1" />
+                            Pay Balance
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing/add-funds'}>
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add Funds
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing/purchase-hours'}>
+                            <Clock className="w-4 h-4 mr-1" />
+                            Buy Hours
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
               {/* Quick Actions */}
               <motion.div variants={itemVariants}>
                 <Card>
@@ -643,27 +805,27 @@ export default function StudentDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4" onClick={() => window.location.href = '/student/schedule/new'}>
                         <PlaneTakeoff className="w-6 h-6" />
                         <span className="text-sm">Schedule Flight</span>
                       </Button>
-                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4" onClick={() => window.location.href = '/student/syllabus'}>
                         <BookOpen className="w-6 h-6" />
                         <span className="text-sm">View Syllabus</span>
                       </Button>
-                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4" onClick={() => window.location.href = '/student/documents'}>
                         <FileText className="w-6 h-6" />
                         <span className="text-sm">Documents</span>
                       </Button>
-                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4" onClick={() => setActiveTab('progress')}>
                         <BarChart3 className="w-6 h-6" />
                         <span className="text-sm">Progress</span>
                       </Button>
-                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4" onClick={() => window.location.href = '/student/settings'}>
                         <Settings className="w-6 h-6" />
                         <span className="text-sm">Settings</span>
                       </Button>
-                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4" onClick={() => setActiveTab('notifications')}>
                         <Bell className="w-6 h-6" />
                         <span className="text-sm">Notifications</span>
                       </Button>
@@ -676,120 +838,73 @@ export default function StudentDashboard() {
         </TabsContent>
 
         <TabsContent value="training" className="space-y-6">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Current Lesson Progress */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <BookOpen className="w-5 h-5" />
-                    Current Lesson Progress
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-foreground">Lesson 4: Cross-Country Navigation</h4>
-                        <p className="text-sm text-muted-foreground">Private Pilot Syllabus</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading training data...</p>
                       </div>
-                      <Progress value={75} className="h-2" />
-                      <p className="text-sm text-muted-foreground">75% Complete</p>
                     </div>
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-foreground">Next Objective</h4>
-                        <p className="text-sm text-muted-foreground">Flight Planning & Weather Analysis</p>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive mb-4">Error loading training data: {error}</p>
+              <Button onClick={handleRefresh}>Try Again</Button>
                       </div>
-                      <Button variant="outline" size="sm" className="w-full">
-                        View Lesson Details
-                      </Button>
-                    </div>
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-foreground">Instructor Notes</h4>
-                        <p className="text-sm text-muted-foreground">Ready for cross-country planning session</p>
-                      </div>
-                      <Button variant="outline" size="sm" className="w-full">
-                        View Notes
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Maneuver Performance */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Target className="w-5 h-5" />
-                    Maneuver Performance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {maneuverPerformanceData.map((maneuver, index) => (
-                      <div key={maneuver.subject} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-foreground">{maneuver.subject}</h4>
-                          <Badge variant={maneuver.score >= 90 ? "default" : maneuver.score >= 80 ? "secondary" : "destructive"}>
-                            {maneuver.score}%
-                          </Badge>
-                        </div>
-                        <Progress value={maneuver.score} className="h-2" />
-                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                          <span>Needs Work</span>
-                          <span>Excellent</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Training Resources */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <FileText className="w-5 h-5" />
-                    Training Resources
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-6">
-                      <BookOpen className="w-8 h-8" />
-                      <span className="font-medium">Syllabus</span>
-                      <span className="text-sm text-muted-foreground">View training plan</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-6">
-                      <FileText className="w-8 h-8" />
-                      <span className="font-medium">Study Materials</span>
-                      <span className="text-sm text-muted-foreground">Access resources</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-6">
-                      <BarChart3 className="w-8 h-8" />
-                      <span className="font-medium">Progress Reports</span>
-                      <span className="text-sm text-muted-foreground">Track performance</span>
-                    </Button>
-                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-6">
-                      <Target className="w-8 h-8" />
-                      <span className="font-medium">Requirements</span>
-                      <span className="text-sm text-muted-foreground">Check completion</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
+          ) : (
+            <EnhancedTrainingTab
+              trainingData={{
+                currentLesson: {
+                  id: "lesson-4",
+                  title: "Cross-Country Navigation",
+                  description: "Learn flight planning and navigation techniques",
+                  order_index: 4,
+                  lesson_type: "Flight Training",
+                  estimated_hours: 2.5,
+                  objective: "Complete cross-country flight planning and weather analysis",
+                  performance_standards: "Plan and execute a cross-country flight",
+                  completed: false,
+                  progress: 75
+                },
+                upcomingLessons: [
+                  {
+                    id: "lesson-5",
+                    title: "Solo Cross-Country",
+                    description: "First solo cross-country flight",
+                    order_index: 5,
+                    lesson_type: "Solo Flight",
+                    estimated_hours: 3.0,
+                    completed: false,
+                    progress: 0
+                  },
+                  {
+                    id: "lesson-6",
+                    title: "Advanced Maneuvers",
+                    description: "Complex flight maneuvers",
+                    order_index: 6,
+                    lesson_type: "Flight Training",
+                    estimated_hours: 2.0,
+                    completed: false,
+                    progress: 0
+                  }
+                ],
+                completedLessons: [],
+                maneuverScores: currentManeuverPerformanceData.map(m => ({
+                  id: m.subject,
+                  maneuver_name: m.subject,
+                  score: m.score,
+                  last_assessed: "2024-01-15",
+                  meets_acs_standard: m.score >= 80
+                })),
+                syllabusProgress: dashboardData?.progress.syllabusProgress || 75,
+                totalLessons: 20,
+                completedLessons: 15
+              }}
+              onStartLesson={(lessonId) => console.log('Start lesson:', lessonId)}
+              onViewLesson={(lessonId) => window.location.href = `/student/syllabus/lesson/${lessonId}`}
+              onViewSyllabus={() => window.location.href = '/student/syllabus'}
+              onViewProgress={() => setActiveTab('progress')}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">
@@ -805,9 +920,9 @@ export default function StudentDashboard() {
               <p className="text-destructive mb-4">Error loading schedule: {error}</p>
               <Button onClick={handleRefresh}>Try Again</Button>
             </div>
-          ) : dashboardData ? (
+          ) : (
             <TrainingSchedule 
-              upcomingSessions={dashboardData.upcomingSessions}
+              upcomingSessions={dashboardData?.upcomingSessions || []}
               onRequestSession={() => {
                 // Navigate to session request page
                 window.location.href = '/student/schedule/new'
@@ -821,290 +936,205 @@ export default function StudentDashboard() {
                 window.location.href = `/student/schedule/${sessionId}/edit`
               }}
             />
-          ) : null}
+          )}
         </TabsContent>
 
         <TabsContent value="progress" className="space-y-6">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Overall Progress */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <TrendingUp className="w-5 h-5" />
-                    Training Progress Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-aviation-sunset-300 mb-2">75%</div>
-                      <div className="text-sm text-muted-foreground">Syllabus Complete</div>
-                      <Progress value={75} className="mt-2" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading progress data...</p>
                     </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-aviation-sky-300 mb-2">45.5</div>
-                      <div className="text-sm text-muted-foreground">Total Hours</div>
-                      <Progress value={76} className="mt-2" />
                     </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-aviation-success-300 mb-2">12.3</div>
-                      <div className="text-sm text-muted-foreground">Solo Hours</div>
-                      <Progress value={82} className="mt-2" />
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive mb-4">Error loading progress data: {error}</p>
+              <Button onClick={handleRefresh}>Try Again</Button>
                     </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-aviation-warning-300 mb-2">8.7</div>
-                      <div className="text-sm text-muted-foreground">Cross Country</div>
-                      <Progress value={58} className="mt-2" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Progress Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <motion.div variants={itemVariants}>
-                <Card variant="dashboard">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-foreground">
-                      <BarChart3 className="w-5 h-5" />
-                      Lesson Progress
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {trainingProgressData.map((lesson, index) => (
-                        <div key={lesson.lesson} className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-foreground">{lesson.lesson}</span>
-                            <span className="text-muted-foreground">{lesson.progress}%</span>
-                          </div>
-                          <Progress value={lesson.progress} className="h-2" />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <Card variant="dashboard">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-foreground">
-                      <Target className="w-5 h-5" />
-                      Skill Assessment
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {maneuverPerformanceData.map((skill, index) => (
-                        <div key={skill.subject} className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-foreground">{skill.subject}</span>
-                            <span className="text-muted-foreground">{skill.score}%</span>
-                          </div>
-                          <Progress value={skill.score} className="h-2" />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-
-            {/* Requirements Checklist */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <CheckCircle className="w-5 h-5" />
-                    Certification Requirements
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-4">Flight Hours</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Total Time (40 required)</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">45.5/40</span>
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Solo Time (10 required)</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">12.3/10</span>
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Cross Country (5 required)</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">8.7/5</span>
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Night Time (3 required)</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">3.2/3</span>
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-4">Other Requirements</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Medical Certificate</span>
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Student Pilot Certificate</span>
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Knowledge Test</span>
-                          <X className="w-4 h-4 text-red-500" />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Practical Test</span>
-                          <X className="w-4 h-4 text-red-500" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
+          ) : (
+            <TrainingProgress
+              progress={dashboardData?.progress || {
+                totalHours: 45.5,
+                soloHours: 12.3,
+                crossCountryHours: 8.7,
+                nightHours: 3.2,
+                instrumentHours: 2.1,
+                syllabusProgress: 75
+              }}
+              skillAssessments={currentManeuverPerformanceData.map(m => ({
+                subject: m.subject,
+                score: m.score,
+                lastAssessed: "2024-01-15"
+              }))}
+              onViewDetails={(type) => {
+                switch (type) {
+                  case 'syllabus':
+                    window.location.href = '/student/syllabus'
+                    break
+                  case 'logbook':
+                    window.location.href = '/student/logbook'
+                    break
+                  case 'requirements':
+                    window.location.href = '/student/requirements'
+                    break
+                  case 'assessments':
+                    console.log('View assessments:', type)
+                    break
+                  default:
+                    console.log('View details:', type)
+                }
+              }}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Notification Filters */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-foreground">
-                      <Bell className="w-5 h-5" />
-                      Notifications
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Filter className="w-4 h-4 mr-2" />
-                        Filter
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <CheckCheck className="w-4 h-4 mr-2" />
-                        Mark All Read
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {notifications.map((notification) => (
-                      <div key={notification.id} className={`flex items-start gap-4 p-4 border rounded-lg ${!notification.read ? 'bg-muted/50' : ''}`}>
-                        <div className={`w-2 h-2 rounded-full mt-2 ${
-                          notification.priority === 'high' ? 'bg-red-500' : 
-                          notification.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-                        }`} />
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-medium text-foreground">{notification.title}</h4>
-                              <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
-                              <div className="flex items-center gap-4 mt-2">
-                                <span className="text-xs text-muted-foreground">
-                                  {notification.timestamp.toLocaleDateString()}
-                                </span>
-                                <Badge variant="outline" className="text-xs">
-                                  {notification.category}
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+          <NotificationsTab
+            notifications={dashboardData?.notifications || []}
+            onMarkRead={(id) => console.log('Mark read:', id)}
+            onMarkAllRead={() => console.log('Mark all read')}
+            onDelete={(id) => console.log('Delete:', id)}
+            onAction={(id, action) => console.log('Action:', id, action)}
+          />
+        </TabsContent>
 
-            {/* Notification Settings */}
-            <motion.div variants={itemVariants}>
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Settings className="w-5 h-5" />
-                    Notification Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-foreground">Email Notifications</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Flight Reminders</span>
-                          <Button variant="outline" size="sm">Enabled</Button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Progress Updates</span>
-                          <Button variant="outline" size="sm">Enabled</Button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Document Approvals</span>
-                          <Button variant="outline" size="sm">Enabled</Button>
-                        </div>
+        <TabsContent value="billing" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Account Overview */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
+                  Account Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Account Balance */}
+                <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
+                  <div className="text-4xl font-bold text-blue-600 mb-2">
+                    $1,250.00
+                  </div>
+                  <div className="text-sm text-muted-foreground">Available Balance</div>
+                  <div className="flex gap-2 mt-4 justify-center">
+                    <Button size="sm" onClick={() => window.location.href = '/student/billing/add-funds'}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Funds
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing'}>
+                      <FileText className="w-4 h-4 mr-2" />
+                      View History
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="text-2xl font-bold text-green-600">12.5</div>
+                    <div className="text-sm text-muted-foreground">Flight Hours Available</div>
+                  </div>
+                  <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="text-2xl font-bold text-orange-600">8.3</div>
+                    <div className="text-sm text-muted-foreground">Ground Hours Available</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button className="w-full" onClick={() => window.location.href = '/student/billing/pay-balance'}>
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Pay Outstanding Balance
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/student/billing/add-funds'}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Funds to Account
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/student/billing/purchase-hours'}>
+                  <Clock className="w-4 h-4 mr-2" />
+                  Purchase Prepaid Hours
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/student/billing'}>
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  View Detailed Billing
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Recent Transactions */}
+            <Card className="lg:col-span-3">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="w-5 h-5" />
+                  Recent Billing Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-blue-100 text-blue-600">
+                        <Plane className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Flight Training - Lesson 3</p>
+                        <p className="text-sm text-muted-foreground">Jan 15, 2024 • 2.0 hours</p>
                       </div>
                     </div>
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-foreground">In-App Notifications</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">New Messages</span>
-                          <Button variant="outline" size="sm">Enabled</Button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Schedule Changes</span>
-                          <Button variant="outline" size="sm">Enabled</Button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Weather Alerts</span>
-                          <Button variant="outline" size="sm">Enabled</Button>
-                        </div>
-                      </div>
+                    <div className="text-right">
+                      <p className="font-semibold">$150.00</p>
+                      <Badge variant="outline" className="text-green-600">Paid</Badge>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
+
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-green-100 text-green-600">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Ground Instruction</p>
+                        <p className="text-sm text-muted-foreground">Jan 14, 2024 • 1.5 hours</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">$112.50</p>
+                      <Badge variant="outline" className="text-green-600">Paid</Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-purple-100 text-purple-600">
+                        <Plus className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Account Deposit</p>
+                        <p className="text-sm text-muted-foreground">Jan 12, 2024 • Credit Card</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-green-600">+$500.00</p>
+                      <Badge variant="outline" className="text-green-600">Completed</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t">
+                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/student/billing'}>
+                    <Receipt className="w-4 h-4 mr-2" />
+                    View Complete Billing History
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

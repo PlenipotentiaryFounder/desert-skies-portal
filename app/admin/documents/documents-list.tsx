@@ -50,6 +50,7 @@ export function DocumentsList({ documents }: DocumentsListProps) {
     return matchesSearch && matchesType && matchesVerification
   })
 
+  // TODO: Fetch document types from database or configuration
   const documentTypeOptions = [
     { value: "all", label: "All Types" },
     { value: "medical_certificate", label: "Medical Certificate" },
@@ -62,6 +63,7 @@ export function DocumentsList({ documents }: DocumentsListProps) {
     { value: "other", label: "Other" },
   ]
 
+  // TODO: Fetch verification statuses from database or configuration
   const verificationOptions = [
     { value: "all", label: "All Statuses" },
     { value: "verified", label: "Verified" },

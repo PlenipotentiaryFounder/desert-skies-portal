@@ -4,7 +4,9 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
+import { PINSetup } from "@/components/student/settings/PINSetup"
 
 export default function StudentSettingsPage() {
   // Notification preferences state
@@ -67,10 +69,20 @@ export default function StudentSettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-2xl mx-auto py-8">
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto py-8">
       <h1 className="text-3xl font-bold tracking-tight mb-2">Settings</h1>
-      {/* Notification Preferences */}
-      <Card>
+
+      <Tabs defaultValue="notifications" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="privacy">Privacy</TabsTrigger>
+          <TabsTrigger value="account">Account</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="notifications" className="space-y-4">
+          {/* Notification Preferences */}
+          <Card>
         <CardHeader>
           <CardTitle>Notification Preferences</CardTitle>
           <CardDescription>Choose how you want to receive important updates.</CardDescription>
@@ -123,8 +135,29 @@ export default function StudentSettingsPage() {
           {notifError && <div className="text-red-500 text-sm">{notifError}</div>}
         </CardFooter>
       </Card>
-      {/* Privacy Settings */}
-      <Card>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-4">
+          {/* PIN Setup */}
+          <PINSetup />
+
+          {/* Password Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Password Management</CardTitle>
+              <CardDescription>Update your password and security settings.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <Link href="/reset-password">
+                <Button variant="outline">Change Password</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="privacy" className="space-y-4">
+          {/* Privacy Settings */}
+          <Card>
         <CardHeader>
           <CardTitle>Privacy Settings</CardTitle>
           <CardDescription>Control your profile visibility and data sharing preferences.</CardDescription>
@@ -140,8 +173,11 @@ export default function StudentSettingsPage() {
           </div>
         </CardContent>
       </Card>
-      {/* Account Management */}
-      <Card>
+        </TabsContent>
+
+        <TabsContent value="account" className="space-y-4">
+          {/* Account Management */}
+          <Card>
         <CardHeader>
           <CardTitle>Account Management</CardTitle>
           <CardDescription>Manage your account security and status.</CardDescription>
@@ -153,8 +189,9 @@ export default function StudentSettingsPage() {
           <Button variant="destructive" disabled>Deactivate Account</Button>
         </CardContent>
       </Card>
-      {/* Legal Section */}
-      <Card>
+
+          {/* Legal Section */}
+          <Card>
         <CardHeader>
           <CardTitle>Legal</CardTitle>
           <CardDescription>Review our policies and terms.</CardDescription>
@@ -164,6 +201,8 @@ export default function StudentSettingsPage() {
           <Link href="/legal/terms" className="text-primary underline">Terms & Conditions</Link>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 } 
