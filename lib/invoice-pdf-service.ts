@@ -396,7 +396,7 @@ function generateInvoiceHTML(invoice: InvoicePDFData): string {
 </html>`
 }
 
-export function getCompanyInfo() {
+export async function getCompanyInfo() {
   return {
     name: "Desert Skies Aviation",
     address: "1234 Airport Way",

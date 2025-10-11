@@ -33,7 +33,7 @@ export async function GET(
     const invoiceData = {
       ...invoice,
       line_items: lineItems || [],
-      company: getCompanyInfo()
+      company: await getCompanyInfo()
     }
 
     // Generate PDF
