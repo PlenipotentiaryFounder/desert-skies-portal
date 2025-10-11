@@ -3,13 +3,21 @@ import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 
-// Initialize Stripe with webhook secret for verification
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2023-10-16',
+  })
+}
 
-// Webhook endpoint secret for signature verification
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
+function getWebhookSecret() {
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    throw new Error('STRIPE_WEBHOOK_SECRET is not configured')
+  }
+  return process.env.STRIPE_WEBHOOK_SECRET
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +28,8 @@ export async function POST(req: NextRequest) {
 
     try {
       // Verify webhook signature
+      const stripe = getStripe()
+      const endpointSecret = getWebhookSecret()
       event = stripe.webhooks.constructEvent(body, sig, endpointSecret)
     } catch (err) {
       console.error(`Webhook signature verification failed:`, err)
@@ -179,6 +189,7 @@ async function handleChargeDispute(dispute: Stripe.Dispute) {
     const supabase = await createClient()
 
     // Find the related payment intent and invoice
+    const stripe = getStripe()
     const paymentIntent = await stripe.paymentIntents.retrieve(dispute.payment_intent as string)
 
     if (paymentIntent.metadata?.invoice_id) {
