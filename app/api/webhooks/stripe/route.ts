@@ -50,6 +50,27 @@ export async function POST(req: NextRequest) {
         await handleChargeDispute(event.data.object as Stripe.Dispute)
         break
 
+      // Stripe Connect events
+      case 'account.updated':
+        await handleConnectAccountUpdated(event.data.object as Stripe.Account)
+        break
+
+      case 'transfer.paid':
+        await handleTransferPaid(event.data.object as Stripe.Transfer)
+        break
+
+      case 'transfer.failed':
+        await handleTransferFailed(event.data.object as Stripe.Transfer)
+        break
+
+      case 'payout.paid':
+        await handlePayoutPaid(event.data.object as Stripe.Payout)
+        break
+
+      case 'payout.failed':
+        await handlePayoutFailed(event.data.object as Stripe.Payout)
+        break
+
       default:
         console.log(`Unhandled event type ${event.type}`)
     }
@@ -224,5 +245,205 @@ async function handleChargeDispute(dispute: Stripe.Dispute) {
     }
   } catch (error) {
     console.error('Error processing dispute webhook:', error)
+  }
+}
+
+// ========================================
+// STRIPE CONNECT EVENT HANDLERS
+// ========================================
+
+// Handle Stripe Connect account updates
+async function handleConnectAccountUpdated(account: Stripe.Account) {
+  console.log('Connect account updated:', account.id)
+
+  try {
+    const supabase = await createClient()
+
+    // Update instructor profile with Connect account status
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        stripe_connect_onboarding_complete: account.charges_enabled && account.payouts_enabled,
+        stripe_connect_charges_enabled: account.charges_enabled,
+        stripe_connect_payouts_enabled: account.payouts_enabled,
+        stripe_connect_requirements_pending: account.requirements?.currently_due || [],
+        stripe_connect_requirements_due_date: account.requirements?.current_deadline 
+          ? new Date(account.requirements.current_deadline * 1000).toISOString().split('T')[0]
+          : null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_connect_account_id', account.id)
+
+    if (error) {
+      console.error('Error updating Connect account status:', error)
+      return
+    }
+
+    console.log(`Connect account ${account.id} updated successfully`)
+  } catch (error) {
+    console.error('Error processing Connect account update:', error)
+  }
+}
+
+// Handle successful instructor transfer
+async function handleTransferPaid(transfer: Stripe.Transfer) {
+  console.log('Transfer paid:', transfer.id)
+
+  try {
+    const supabase = await createClient()
+
+    // Update transfer status to paid
+    const { error } = await supabase
+      .from('instructor_transfers')
+      .update({
+        status: 'paid',
+        paid_at: new Date(transfer.created * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_transfer_id', transfer.id)
+
+    if (error) {
+      console.error('Error updating transfer status:', error)
+      return
+    }
+
+    // Get transfer details for notification
+    const { data: transferData } = await supabase
+      .from('instructor_transfers')
+      .select('*, profiles!instructor_id(first_name, last_name, email)')
+      .eq('stripe_transfer_id', transfer.id)
+      .single()
+
+    if (transferData) {
+      // Send payout notification to instructor
+      await import('@/lib/notification-service').then(({ notifyInstructorPayout }) =>
+        notifyInstructorPayout(
+          transferData.instructor_id,
+          transferData.amount_cents / 100,
+          transfer.id
+        )
+      )
+    }
+
+    console.log(`Transfer ${transfer.id} marked as paid`)
+  } catch (error) {
+    console.error('Error processing transfer paid webhook:', error)
+  }
+}
+
+// Handle failed instructor transfer
+async function handleTransferFailed(transfer: Stripe.Transfer) {
+  console.log('Transfer failed:', transfer.id)
+
+  try {
+    const supabase = await createClient()
+
+    // Update transfer status to failed
+    const { error } = await supabase
+      .from('instructor_transfers')
+      .update({
+        status: 'failed',
+        failure_code: (transfer as any).failure_code || 'unknown',
+        failure_message: (transfer as any).failure_message || 'Transfer failed',
+        failed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_transfer_id', transfer.id)
+
+    if (error) {
+      console.error('Error updating transfer failure status:', error)
+      return
+    }
+
+    // Get transfer details for notification
+    const { data: transferData } = await supabase
+      .from('instructor_transfers')
+      .select('*, profiles!instructor_id(first_name, last_name, email)')
+      .eq('stripe_transfer_id', transfer.id)
+      .single()
+
+    if (transferData) {
+      // Send failure notification to admin
+      await import('@/lib/notification-service').then(({ notifyAdminTransferFailed }) =>
+        notifyAdminTransferFailed(
+          transferData.instructor_id,
+          transferData.amount_cents / 100,
+          (transfer as any).failure_message || 'Transfer failed'
+        )
+      )
+    }
+
+    // Mark outbox entry for retry
+    const { error: outboxError } = await supabase
+      .from('payment_outbox')
+      .update({
+        status: 'failed',
+        failure_message: (transfer as any).failure_message || 'Transfer failed',
+        last_attempt_at: new Date().toISOString()
+      })
+      .eq('stripe_object_id', transfer.id)
+
+    if (outboxError) {
+      console.error('Error updating outbox status:', outboxError)
+    }
+
+    console.log(`Transfer ${transfer.id} marked as failed`)
+  } catch (error) {
+    console.error('Error processing transfer failed webhook:', error)
+  }
+}
+
+// Handle successful payout (instant payout confirmation)
+async function handlePayoutPaid(payout: Stripe.Payout) {
+  console.log('Payout paid:', payout.id)
+
+  try {
+    // Log instant payout completion if it was an instant payout
+    if (payout.type === 'bank_account' && payout.method === 'instant') {
+      const supabase = await createClient()
+
+      // Record instant payout fee if applicable
+      await supabase
+        .from('instructor_transfers')
+        .update({
+          instant_payout_fee_cents: Math.round((payout.amount * 0.01)), // 1% fee
+          updated_at: new Date().toISOString()
+        })
+        .eq('stripe_connect_account_id', payout.destination)
+        .eq('transfer_type', 'instant')
+        .is('instant_payout_fee_cents', null)
+    }
+
+    console.log(`Payout ${payout.id} completed successfully`)
+  } catch (error) {
+    console.error('Error processing payout paid webhook:', error)
+  }
+}
+
+// Handle failed payout
+async function handlePayoutFailed(payout: Stripe.Payout) {
+  console.log('Payout failed:', payout.id)
+
+  try {
+    const supabase = await createClient()
+
+    // Log payout failure for monitoring
+    await supabase
+      .from('reserve_alerts')
+      .insert({
+        alert_type: 'warning_threshold',
+        severity: 'warning',
+        platform_balance_cents: 0, // Will be updated by reserve monitoring
+        message: `Instructor payout failed: ${payout.failure_message || 'Unknown error'}`,
+        metadata: {
+          payout_id: payout.id,
+          failure_code: payout.failure_code,
+          failure_message: payout.failure_message
+        }
+      })
+
+    console.log(`Payout failure logged: ${payout.id}`)
+  } catch (error) {
+    console.error('Error processing payout failed webhook:', error)
   }
 }

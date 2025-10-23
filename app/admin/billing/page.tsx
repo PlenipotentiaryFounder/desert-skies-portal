@@ -15,7 +15,11 @@ import {
   Settings,
   Users,
   Plane,
-  Clock
+  Clock,
+  Activity,
+  BarChart3,
+  AlertCircle,
+  Shield
 } from "lucide-react"
 import Link from "next/link"
 import { StudentRateManager } from "./rates/student-rate-manager"
@@ -121,6 +125,70 @@ export default async function AdminBillingPage() {
           </Button>
         </div>
       </div>
+
+      {/* Advanced Billing Features - NEW */}
+      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-blue-600" />
+            Advanced Billing & Financial Controls
+          </CardTitle>
+          <CardDescription>
+            Monitor reserves, track margins, manage instructor payouts, and control student credit
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-4 gap-3">
+            <Link href="/admin/billing/reserve-monitoring">
+              <Button variant="outline" className="w-full h-auto flex-col items-start p-4 hover:bg-blue-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  <span className="font-semibold">Reserve Monitoring</span>
+                </div>
+                <span className="text-xs text-gray-600 text-left">
+                  Track platform cash reserves and reconciliation status
+                </span>
+              </Button>
+            </Link>
+            
+            <Link href="/admin/billing/margin-analytics">
+              <Button variant="outline" className="w-full h-auto flex-col items-start p-4 hover:bg-green-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart3 className="h-5 w-5 text-green-600" />
+                  <span className="font-semibold">Margin Analytics</span>
+                </div>
+                <span className="text-xs text-gray-600 text-left">
+                  View platform revenue and margin performance
+                </span>
+              </Button>
+            </Link>
+            
+            <Link href="/admin/billing/instructor-rates">
+              <Button variant="outline" className="w-full h-auto flex-col items-start p-4 hover:bg-purple-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-5 w-5 text-purple-600" />
+                  <span className="font-semibold">Instructor Rates</span>
+                </div>
+                <span className="text-xs text-gray-600 text-left">
+                  Manage instructor payout rates and instant payouts
+                </span>
+              </Button>
+            </Link>
+            
+            <Link href="/admin/billing/credit-limits">
+              <Button variant="outline" className="w-full h-auto flex-col items-start p-4 hover:bg-yellow-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="h-5 w-5 text-yellow-600" />
+                  <span className="font-semibold">Credit Limits</span>
+                </div>
+                <span className="text-xs text-gray-600 text-left">
+                  Monitor and adjust student credit limits
+                </span>
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

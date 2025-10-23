@@ -1060,7 +1060,7 @@ export async function getLessonCostEstimates(lessonId?: string): Promise<LessonC
 
   if (lessonId) query = query.eq('lesson_id', lessonId)
 
-  const { data, error } = await query
+  const { data, error} = await query
 
   if (error) {
     console.error('Error fetching lesson cost estimates:', error)
@@ -1068,4 +1068,167 @@ export async function getLessonCostEstimates(lessonId?: string): Promise<LessonC
   }
 
   return data as LessonCostEstimate[]
+}
+
+// ========================================
+// ENHANCED BILLING WITH LEDGER INTEGRATION  
+// ========================================
+
+import { getOrCreateWallet, postJournalEntries } from './ledger-service'
+import { enqueueInstructorTransfer } from './stripe-connect-service'
+
+/**
+ * Process complete flight billing with margin calculation and ledger entries
+ * This is the NEW billing system that integrates with the double-entry ledger
+ */
+export async function processFlightCompletionBilling(params: {
+  flightSessionId: string
+  studentId: string
+  instructorId: string
+  flightHours: number
+  groundHours: number
+  isInstantPayout?: boolean
+}): Promise<{ 
+  success: boolean
+  margin_cents?: number
+  student_charge_cents?: number
+  instructor_payout_cents?: number
+  journal_id?: string
+  error?: string 
+}> {
+  const supabase = await createClient(await cookies())
+  
+  try {
+    // 1. Get student billing rate
+    const { data: studentRate } = await supabase
+      .from('student_instructor_rates')
+      .select('flight_instruction_rate, ground_instruction_rate')
+      .eq('student_id', params.studentId)
+      .eq('instructor_id', params.instructorId)
+      .eq('is_active', true)
+      .order('effective_date', { ascending: false })
+      .limit(1)
+      .single()
+    
+    if (!studentRate) {
+      throw new Error('No active billing rate found for student')
+    }
+    
+    // 2. Get instructor payout rate
+    const { data: payoutRate } = await supabase
+      .from('instructor_payout_rates')
+      .select('flight_instruction_payout_cents, ground_instruction_payout_cents, instant_payout_enabled, instant_payout_fee_covered_by_dsa')
+      .eq('instructor_id', params.instructorId)
+      .eq('is_active', true)
+      .order('effective_date', { ascending: false })
+      .limit(1)
+      .single()
+    
+    if (!payoutRate) {
+      throw new Error('No active payout rate found for instructor')
+    }
+    
+    // 3. Calculate amounts in cents
+    const studentFlightChargeCents = Math.round(params.flightHours * studentRate.flight_instruction_rate * 100)
+    const studentGroundChargeCents = Math.round(params.groundHours * studentRate.ground_instruction_rate * 100)
+    const studentTotalCents = studentFlightChargeCents + studentGroundChargeCents
+    
+    const instructorFlightPayoutCents = Math.round(params.flightHours * (payoutRate.flight_instruction_payout_cents / 100) * 100)
+    const instructorGroundPayoutCents = Math.round(params.groundHours * (payoutRate.ground_instruction_payout_cents / 100) * 100)
+    const instructorTotalCents = instructorFlightPayoutCents + instructorGroundPayoutCents
+    
+    const marginCents = studentTotalCents - instructorTotalCents
+    
+    // 4. Get/create wallets
+    const studentWalletId = await getOrCreateWallet('student', params.studentId)
+    const instructorWalletId = await getOrCreateWallet('instructor', params.instructorId)
+    const platformWalletId = await getOrCreateWallet('platform', null)
+    
+    if (!studentWalletId || !instructorWalletId || !platformWalletId) {
+      throw new Error('Failed to create wallets')
+    }
+    
+    // 5. Post double-entry ledger (three-way split)
+    const { success: ledgerSuccess, journal_id } = await postJournalEntries(
+      'flight_completion',
+      params.flightSessionId,
+      [
+        // Student pays (debit)
+        {
+          wallet_id: studentWalletId,
+          amount_cents: -studentTotalCents,
+          ref_type: 'flight_completion',
+          ref_id: params.flightSessionId,
+          description: `Flight instruction ${params.flightHours}hr + ground ${params.groundHours}hr`,
+          metadata: {
+            flight_hours: params.flightHours,
+            ground_hours: params.groundHours,
+            student_rate_flight: studentRate.flight_instruction_rate,
+            student_rate_ground: studentRate.ground_instruction_rate
+          }
+        },
+        // Instructor receives (credit)
+        {
+          wallet_id: instructorWalletId,
+          amount_cents: instructorTotalCents,
+          ref_type: 'flight_completion',
+          ref_id: params.flightSessionId,
+          description: `Flight instruction payout ${params.flightHours}hr + ground ${params.groundHours}hr`,
+          metadata: {
+            flight_hours: params.flightHours,
+            ground_hours: params.groundHours,
+            payout_rate_flight_cents: payoutRate.flight_instruction_payout_cents,
+            payout_rate_ground_cents: payoutRate.ground_instruction_payout_cents
+          }
+        },
+        // Platform margin (credit)
+        {
+          wallet_id: platformWalletId,
+          amount_cents: marginCents,
+          ref_type: 'platform_margin',
+          ref_id: params.flightSessionId,
+          description: `Platform margin on flight ${params.flightSessionId}`,
+          metadata: {
+            student_charge: studentTotalCents,
+            instructor_payout: instructorTotalCents,
+            margin: marginCents
+          }
+        }
+      ],
+      'USD',
+      true // Use service role for ledger operations
+    )
+    
+    if (!ledgerSuccess || !journal_id) {
+      throw new Error('Failed to post ledger entries')
+    }
+    
+    // 6. Enqueue instructor transfer (outbox pattern for idempotency)
+    const { success: transferSuccess, outbox_id } = await enqueueInstructorTransfer({
+      instructorId: params.instructorId,
+      amountCents: instructorTotalCents,
+      flightSessionId: params.flightSessionId,
+      journalId: journal_id,
+      isInstantPayout: params.isInstantPayout || false,
+      instantFeeChargeToDSA: payoutRate.instant_payout_fee_covered_by_dsa
+    })
+    
+    if (!transferSuccess) {
+      console.error('Transfer enqueue failed but ledger posted - will retry via background job')
+    }
+    
+    return {
+      success: true,
+      margin_cents: marginCents,
+      student_charge_cents: studentTotalCents,
+      instructor_payout_cents: instructorTotalCents,
+      journal_id: journal_id
+    }
+  } catch (error) {
+    console.error('Error processing flight completion billing:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }
+  }
 }
