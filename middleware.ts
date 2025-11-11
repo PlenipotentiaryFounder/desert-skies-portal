@@ -95,7 +95,10 @@ export async function middleware(request: NextRequest) {
       // List of dashboards the user can access
       const validDashboards = [];
       if (hasAdmin) validDashboards.push('/admin/dashboard');
-      if (hasInstructor) validDashboards.push('/instructor/dashboard');
+      if (hasInstructor) {
+        validDashboards.push('/instructor/dashboard');
+        validDashboards.push('/instructor/onboarding');
+      }
       if (hasStudent) {
         validDashboards.push('/student/dashboard');
         validDashboards.push('/student/onboarding');
@@ -103,7 +106,29 @@ export async function middleware(request: NextRequest) {
 
       // Pick a default dashboard (priority: instructor > admin > student)
       let defaultDashboard = '';
-      if (hasInstructor) defaultDashboard = '/instructor/dashboard';
+      if (hasInstructor) {
+        // Check if instructor has completed onboarding
+        try {
+          const { data: instructorOnboarding } = await supabase
+            .from('instructor_onboarding')
+            .select('completed_at')
+            .eq('user_id', user.id)
+            .single();
+
+          if (!instructorOnboarding?.completed_at) {
+            // Instructor hasn't completed onboarding
+            defaultDashboard = '/instructor/onboarding';
+            console.log(`Instructor has not completed onboarding, redirecting to: ${defaultDashboard}`);
+          } else {
+            // Instructor has completed onboarding
+            defaultDashboard = '/instructor/dashboard';
+          }
+        } catch (onboardingError) {
+          console.error("Error checking instructor onboarding status:", onboardingError);
+          // If there's an error (e.g., no record exists), direct to onboarding
+          defaultDashboard = '/instructor/onboarding';
+        }
+      }
       else if (hasAdmin) defaultDashboard = '/admin/dashboard';
       else if (hasStudent) {
         // Check if student has completed onboarding
@@ -138,6 +163,12 @@ export async function middleware(request: NextRequest) {
       if (path === '/student/onboarding' && hasStudent && defaultDashboard === '/student/dashboard') {
         console.log(`Student has completed onboarding, redirecting from onboarding to dashboard`);
         return NextResponse.redirect(new URL('/student/dashboard', request.url));
+      }
+
+      // Special case: if instructor is on onboarding page and has completed it, redirect to dashboard
+      if (path === '/instructor/onboarding' && hasInstructor && defaultDashboard === '/instructor/dashboard') {
+        console.log(`Instructor has completed onboarding, redirecting from onboarding to dashboard`);
+        return NextResponse.redirect(new URL('/instructor/dashboard', request.url));
       }
 
       // Otherwise, redirect to the default dashboard
