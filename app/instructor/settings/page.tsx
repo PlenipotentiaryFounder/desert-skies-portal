@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CalendarOAuthService } from "@/lib/calendar-oauth-service"
 import { CalendarService } from "@/lib/calendar-service"
@@ -14,7 +14,7 @@ import {
   Calendar,
   Plus,
   Settings,
-  Sync,
+  RefreshCw,
   Trash2,
   CheckCircle,
   AlertCircle,
@@ -47,7 +47,7 @@ interface SyncLog {
   errors: string[]
 }
 
-export default function InstructorSettingsPage() {
+function InstructorSettingsContent() {
   const [connections, setConnections] = useState<CalendarConnection[]>([])
   const [syncLogs, setSyncLogs] = useState<Record<string, SyncLog[]>>({})
   const [loading, setLoading] = useState(true)
@@ -354,7 +354,7 @@ export default function InstructorSettingsPage() {
                                 onClick={() => triggerManualSync(connection.id)}
                                 disabled={syncing === connection.id}
                               >
-                                <Sync className={`h-4 w-4 mr-2 ${syncing === connection.id ? 'animate-spin' : ''}`} />
+                                <RefreshCw className={`h-4 w-4 mr-2 ${syncing === connection.id ? 'animate-spin' : ''}`} />
                                 {syncing === connection.id ? 'Syncing...' : 'Sync Now'}
                               </Button>
 
@@ -520,5 +520,20 @@ export default function InstructorSettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+export default function InstructorSettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <span className="ml-2">Loading settings...</span>
+        </div>
+      </div>
+    }>
+      <InstructorSettingsContent />
+    </Suspense>
   )
 }
