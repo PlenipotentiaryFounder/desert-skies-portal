@@ -3,14 +3,27 @@ import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { completePayment, getDiscoveryFlightById } from '@/lib/discovery-flight-service'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-})
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-12-18.acacia',
+  })
+}
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+function getWebhookSecret() {
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    throw new Error('STRIPE_WEBHOOK_SECRET is not configured')
+  }
+  return process.env.STRIPE_WEBHOOK_SECRET
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripe()
+    const webhookSecret = getWebhookSecret()
+    
     const body = await req.text()
     const headersList = await headers()
     const signature = headersList.get('stripe-signature')
