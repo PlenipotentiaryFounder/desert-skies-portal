@@ -23,6 +23,7 @@ import {
   Rocket
 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ScheduleCalendar } from "./schedule-calendar"
 
 interface EnhancedMissionFormProps {
   enrollments: any[]
@@ -69,6 +70,8 @@ export function EnhancedMissionForm({
   const [missionCodePreview, setMissionCodePreview] = useState<string | null>(null)
   const [selectedEnrollment, setSelectedEnrollment] = useState<any>(null)
   const [selectedLesson, setSelectedLesson] = useState<any>(null)
+  const [lessonSuggestions, setLessonSuggestions] = useState<any>(null)
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
   // Fetch aircraft on mount
   useEffect(() => {
@@ -104,12 +107,34 @@ export function EnhancedMissionForm({
     }
   }, [form.enrollmentId, enrollments, selectedEnrollment])
 
-  // Generate mission code preview when enrollment changes
+  // Generate mission code preview and fetch suggestions when enrollment changes
   useEffect(() => {
     if (form.enrollmentId) {
       generateMissionCodePreview()
+      fetchLessonSuggestions()
     }
   }, [form.enrollmentId, form.missionType])
+
+  async function fetchLessonSuggestions() {
+    if (!form.enrollmentId) return
+    
+    setLoadingSuggestions(true)
+    try {
+      const res = await fetch(`/api/enrollments/${form.enrollmentId}/lesson-suggestions`, {
+        credentials: 'include'
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLessonSuggestions(data)
+      } else {
+        console.error("Failed to fetch lesson suggestions")
+      }
+    } catch (err) {
+      console.error("Error fetching lesson suggestions:", err)
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }
 
   async function generateMissionCodePreview() {
     try {
@@ -299,20 +324,26 @@ export function EnhancedMissionForm({
             {selectedEnrollment && (
               <Card className="bg-muted/50">
                 <CardContent className="pt-4">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Student:</span>
-                      <span className="font-medium">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground text-xs">Student</div>
+                      <div className="font-medium">
                         {selectedEnrollment.student?.first_name} {selectedEnrollment.student?.last_name}
-                      </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Program:</span>
-                      <span className="font-medium">{selectedEnrollment.syllabus?.title}</span>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground text-xs">Program</div>
+                      <div className="font-medium">{selectedEnrollment.syllabus?.title}</div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Status:</span>
-                      <Badge variant="outline">{selectedEnrollment.status}</Badge>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground text-xs">Status</div>
+                      <Badge variant="outline" className="w-fit">{selectedEnrollment.status}</Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground text-xs">Start Date</div>
+                      <div className="font-medium">
+                        {selectedEnrollment.start_date ? new Date(selectedEnrollment.start_date).toLocaleDateString() : 'N/A'}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -331,6 +362,71 @@ export function EnhancedMissionForm({
       {/* Step 2: Mission Details */}
       {step === 2 && (
         <div className="space-y-6">
+          {/* Lesson Suggestions */}
+          {lessonSuggestions && lessonSuggestions.suggestions && (
+            <Card className="border-2 border-primary/30">
+              <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  Suggested Missions
+                </CardTitle>
+                <CardDescription className="text-foreground/70 font-medium">
+                  {lessonSuggestions.progress.percentComplete}% Complete • 
+                  Lesson {lessonSuggestions.progress.completedLessons + 1} of {lessonSuggestions.progress.totalLessons}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-6">
+                {lessonSuggestions.suggestions.map((suggestion: any, idx: number) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (suggestion.lesson) {
+                        handleChange("mode", "precreated")
+                        handleChange("lessonId", suggestion.lesson.id)
+                        handleChange("missionType", 
+                          suggestion.lesson.lesson_type === "Flight" ? "F" : 
+                          suggestion.lesson.lesson_type === "Ground" ? "G" : "S"
+                        )
+                      } else {
+                        handleChange("mode", "custom")
+                      }
+                    }}
+                    className={`w-full p-4 border-2 rounded-lg text-left transition-all hover:shadow-md ${
+                      suggestion.type === "next" 
+                        ? "border-primary bg-primary/10 hover:bg-primary/15" 
+                        : "border-border bg-background hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant={suggestion.type === "next" ? "default" : "outline"} className="font-semibold">
+                            {suggestion.label}
+                          </Badge>
+                          {suggestion.lesson && (
+                            <Badge variant="secondary" className="font-medium">
+                              {suggestion.lesson.lesson_type}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="font-bold text-base text-foreground">
+                          {suggestion.lesson?.title || suggestion.label}
+                        </div>
+                        <div className="text-sm text-foreground/70 mt-1.5">
+                          {suggestion.description}
+                        </div>
+                      </div>
+                      {suggestion.type === "next" && (
+                        <div className="text-primary font-bold text-sm whitespace-nowrap">⭐ Recommended</div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Mission Type Selector */}
           <Card>
             <CardHeader>
@@ -518,34 +614,31 @@ export function EnhancedMissionForm({
 
       {/* Step 3: Schedule */}
       {step === 3 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Schedule
-            </CardTitle>
-            <CardDescription>Set the date and time for this mission</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Date</Label>
-                <Input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => handleChange("date", e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Start Time</Label>
-                <Input
-                  type="time"
-                  value={form.startTime}
-                  onChange={(e) => handleChange("startTime", e.target.value)}
-                />
-              </div>
-            </div>
+        <div className="space-y-6">
+          <ScheduleCalendar
+            instructorId={selectedEnrollment?.instructor_id || ""}
+            selectedDate={form.date}
+            selectedTime={form.startTime}
+            onDateTimeSelect={(date, time) => {
+              handleChange("date", date)
+              handleChange("startTime", time)
+            }}
+          />
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Mission Details</CardTitle>
+              <CardDescription>Additional scheduling options</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {form.date && form.startTime && (
+                <Alert>
+                  <Calendar className="w-4 h-4" />
+                  <AlertDescription>
+                    Mission scheduled for <strong>{new Date(form.date).toLocaleDateString()}</strong> at <strong>{form.startTime}</strong>
+                  </AlertDescription>
+                </Alert>
+              )}
 
             <Separator />
 
@@ -580,16 +673,17 @@ export function EnhancedMissionForm({
               />
             </div>
 
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={handleBack}>
-                ← Back
-              </Button>
-              <Button onClick={handleNext}>
-                Next: Review →
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handleBack}>
+                  ← Back
+                </Button>
+                <Button onClick={handleNext}>
+                  Next: Review →
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Step 4: Review */}

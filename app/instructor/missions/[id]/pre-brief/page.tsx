@@ -25,6 +25,10 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { PreBriefChecklist } from "@/components/instructor/pre-brief-checklist"
+import { ManeuverDetailCard } from "@/components/shared/maneuver-detail-card"
+import { getRequirePOAAcknowledgement } from "@/lib/organization-settings-service"
+import { completePreBrief } from "@/lib/mission-service"
+import { CompletePrebriefButton } from "@/components/instructor/complete-prebrief-button"
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const mission = await getMissionById(params.id)
@@ -92,6 +96,11 @@ export default async function PreBriefPage({
   if (!poa) {
     notFound()
   }
+
+  // Check if POA acknowledgement is required
+  const requireAcknowledgement = await getRequirePOAAcknowledgement()
+  const poaAcknowledged = !!poa.student_acknowledged_at
+  const canCompleteBrief = !requireAcknowledgement || poaAcknowledged
 
   return (
     <div className="space-y-6">
@@ -221,8 +230,35 @@ export default async function PreBriefPage({
             </Card>
           )}
 
-          {/* Maneuvers to Practice */}
-          {poa.maneuvers_to_practice && poa.maneuvers_to_practice.length > 0 && (
+          {/* Maneuvers to Practice - Enhanced with Details */}
+          {poa.maneuvers_detail && poa.maneuvers_detail.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Maneuvers to Practice
+                </CardTitle>
+                <CardDescription>
+                  Detailed maneuver requirements with proficiency targets and student progress
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {poa.maneuvers_detail.map((maneuver) => (
+                    <ManeuverDetailCard
+                      key={maneuver.maneuver_id}
+                      maneuver={maneuver}
+                      viewType="instructor"
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Fallback to simple list if maneuvers_detail not available */}
+          {(!poa.maneuvers_detail || poa.maneuvers_detail.length === 0) && 
+           poa.maneuvers_to_practice && poa.maneuvers_to_practice.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Maneuvers to Practice</CardTitle>
@@ -362,26 +398,71 @@ export default async function PreBriefPage({
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Flight Plan Details */}
+          {(poa.departure_direction || poa.destination_airport || poa.practice_area || poa.duration_hours) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Flight Plan</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {poa.departure_direction && (
+                  <div>
+                    <div className="text-muted-foreground">Departure Direction</div>
+                    <div className="font-medium text-lg">{poa.departure_direction}</div>
+                  </div>
+                )}
+                {poa.destination_airport && (
+                  <div>
+                    <div className="text-muted-foreground">Destination</div>
+                    <div className="font-medium">{poa.destination_airport}</div>
+                  </div>
+                )}
+                {poa.practice_area && (
+                  <div>
+                    <div className="text-muted-foreground">Practice Area</div>
+                    <div className="font-medium">{poa.practice_area}</div>
+                  </div>
+                )}
+                {poa.duration_hours && (
+                  <div>
+                    <div className="text-muted-foreground">Estimated Duration</div>
+                    <div className="font-medium">{poa.duration_hours} hours</div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Actions */}
           <Card>
             <CardHeader>
               <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {!poa.student_acknowledged_at && (
+              {!canCompleteBrief && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="w-4 h-4" />
+                  <AlertDescription className="text-sm">
+                    Student must acknowledge the Plan of Action before you can complete the pre-brief.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {canCompleteBrief && !poa.student_acknowledged_at && (
                 <Alert>
                   <User className="w-4 h-4" />
                   <AlertDescription className="text-sm">
-                    Waiting for student to acknowledge review
+                    Student hasn't acknowledged yet, but it's not required.
                   </AlertDescription>
                 </Alert>
               )}
               
-              <Button className="w-full" asChild>
-                <Link href={`/instructor/missions/${params.id}`}>
-                  Complete Pre-Brief
-                </Link>
-              </Button>
+              <CompletePrebriefButton 
+                missionId={mission.id}
+                poaId={poa.id}
+                canComplete={canCompleteBrief}
+                alreadyBriefed={!!poa.instructor_briefed_at}
+              />
               
               <Button variant="outline" className="w-full" asChild>
                 <Link href={`/student/missions/${params.id}/poa`}>

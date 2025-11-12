@@ -680,3 +680,21 @@ CREATE TRIGGER update_mission_totals_trigger
 -- END OF MIGRATION
 -- ============================================================================
 
+-- ============================================================================
+-- ENHANCEMENT: Add new columns to plans_of_action table
+-- ============================================================================
+-- Add practice_area, instructor_briefed_at, and maneuvers_detail columns
+-- to support enhanced pre-brief functionality
+
+ALTER TABLE plans_of_action 
+  ADD COLUMN IF NOT EXISTS practice_area TEXT,
+  ADD COLUMN IF NOT EXISTS instructor_briefed_at TIMESTAMP WITH TIME ZONE,
+  ADD COLUMN IF NOT EXISTS maneuvers_detail JSONB;
+
+COMMENT ON COLUMN plans_of_action.practice_area IS 'Designated practice area for maneuvers (e.g., "North Practice Area")';
+COMMENT ON COLUMN plans_of_action.instructor_briefed_at IS 'Timestamp when instructor completed the pre-brief';
+COMMENT ON COLUMN plans_of_action.maneuvers_detail IS 'Rich maneuver data with proficiency targets, success criteria, ACS standards, and student progress';
+
+-- Index for JSONB queries on maneuvers_detail
+CREATE INDEX IF NOT EXISTS idx_poa_maneuvers_detail ON plans_of_action USING GIN (maneuvers_detail);
+

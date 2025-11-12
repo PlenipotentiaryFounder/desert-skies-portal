@@ -19,6 +19,8 @@ export interface PlanOfAction {
   aircraft_tail_number: string | null
   departure_direction: string | null
   destination_airport: string | null
+  practice_area: string | null
+  instructor_briefed_at: string | null
   duration_hours: number
   mission_overview: string | null
   training_objectives: string[] | null
@@ -28,6 +30,7 @@ export interface PlanOfAction {
   video_resources: VideoResource[] | null
   faa_references: FAAReference[] | null
   prep_checklist_items: string[] | null
+  maneuvers_detail: ManeuverDetail[] | null
   status: POAStatus
   shared_with_student_at: string | null
   student_acknowledged_at: string | null
@@ -80,6 +83,22 @@ export interface FAAReference {
   verified: boolean
 }
 
+export interface ManeuverDetail {
+  maneuver_id: string
+  maneuver_name: string
+  category: string
+  target_proficiency: 1 | 2 | 3 | 4
+  proficiency_label: "Rote" | "Understanding" | "Application" | "Correlation"
+  is_required: boolean
+  emphasis_level: "introduction" | "standard" | "proficiency" | "mastery"
+  success_criteria: string[]
+  acs_task_codes: string[]
+  instructor_notes?: string
+  student_prep_notes?: string
+  student_current_proficiency?: number
+  student_trend?: "improving" | "stable" | "declining" | "insufficient_data"
+}
+
 export interface POAFormData {
   mission_id: string
   student_id: string
@@ -113,6 +132,7 @@ export interface AIGeneratedPOA {
   video_resources: VideoResource[]
   faa_references: FAAReference[]
   prep_checklist_items: string[]
+  maneuvers_detail: ManeuverDetail[]
   prior_debrief_insights: any
   generation_metadata: {
     model: string
@@ -448,6 +468,134 @@ async function getPriorDebriefInsights(
 }
 
 /**
+ * Get lesson maneuvers with full details including ACS standards and student progress
+ */
+async function getLessonManeuversWithDetails(
+  lessonId: string,
+  studentId?: string
+): Promise<ManeuverDetail[]> {
+  try {
+    const cookieStore = await cookies()
+    const supabase = await createClient(cookieStore)
+
+    // Query lesson_maneuvers with joins
+    const { data: lessonManeuvers, error } = await supabase
+      .from("lesson_maneuvers")
+      .select(`
+        *,
+        maneuver:maneuver_id (
+          id,
+          name,
+          category,
+          description,
+          acs_standard,
+          performance_standards
+        )
+      `)
+      .eq("lesson_id", lessonId)
+      .order("display_order")
+
+    if (error || !lessonManeuvers) {
+      console.error("Error fetching lesson maneuvers:", error)
+      return []
+    }
+
+    const maneuverDetails: ManeuverDetail[] = []
+
+    for (const lm of lessonManeuvers) {
+      if (!lm.maneuver) continue
+
+      const maneuver = lm.maneuver as any
+
+      // Get ACS task codes for this maneuver
+      const { data: acsLinks } = await supabase
+        .from("maneuver_acs_tasks")
+        .select(`
+          acs_task:acs_task_id (
+            task_code,
+            skill_elements,
+            knowledge_elements
+          )
+        `)
+        .eq("maneuver_id", maneuver.id)
+
+      const acsTaskCodes: string[] = []
+      const successCriteria: string[] = []
+
+      if (acsLinks) {
+        for (const link of acsLinks) {
+          const task = link.acs_task as any
+          if (task && task.task_code) {
+            acsTaskCodes.push(task.task_code)
+            
+            // Extract success criteria from skill elements
+            if (task.skill_elements && Array.isArray(task.skill_elements)) {
+              successCriteria.push(...task.skill_elements)
+            }
+          }
+        }
+      }
+
+      // If no ACS criteria, use performance standards from maneuver
+      if (successCriteria.length === 0 && maneuver.performance_standards) {
+        if (Array.isArray(maneuver.performance_standards)) {
+          successCriteria.push(...maneuver.performance_standards)
+        } else if (typeof maneuver.performance_standards === 'string') {
+          successCriteria.push(maneuver.performance_standards)
+        }
+      }
+
+      // Get student's current proficiency if studentId provided
+      let studentCurrentProficiency: number | undefined
+      let studentTrend: "improving" | "stable" | "declining" | "insufficient_data" | undefined
+
+      if (studentId) {
+        const { data: progress } = await supabase
+          .from("student_maneuver_progress")
+          .select("latest_score, trend")
+          .eq("student_id", studentId)
+          .eq("maneuver_id", maneuver.id)
+          .single()
+
+        if (progress) {
+          studentCurrentProficiency = progress.latest_score
+          studentTrend = progress.trend
+        }
+      }
+
+      // Map proficiency level to label
+      const proficiencyLabels = {
+        1: "Rote" as const,
+        2: "Understanding" as const,
+        3: "Application" as const,
+        4: "Correlation" as const,
+      }
+
+      maneuverDetails.push({
+        maneuver_id: maneuver.id,
+        maneuver_name: maneuver.name,
+        category: maneuver.category || "General",
+        target_proficiency: lm.target_proficiency || 3,
+        proficiency_label: proficiencyLabels[lm.target_proficiency || 3],
+        is_required: lm.is_required !== false,
+        emphasis_level: lm.emphasis_level || "standard",
+        success_criteria: successCriteria,
+        acs_task_codes: acsTaskCodes,
+        instructor_notes: lm.instructor_notes,
+        student_prep_notes: lm.student_prep_notes,
+        student_current_proficiency: studentCurrentProficiency,
+        student_trend: studentTrend,
+      })
+    }
+
+    return maneuverDetails
+  } catch (error) {
+    console.error("Error in getLessonManeuversWithDetails:", error)
+    return []
+  }
+}
+
+/**
  * Get lesson template content
  */
 async function getLessonTemplateContent(
@@ -579,8 +727,15 @@ export async function generatePlanOfActionWithAI(
       resources: [] as Array<{ title: string; url: string }>,
     }
 
+    // Get detailed maneuver information with student progress
+    let maneuversDetail: ManeuverDetail[] = []
+
     if (request.lesson_template_id) {
       lessonContent = await getLessonTemplateContent(request.lesson_template_id)
+      maneuversDetail = await getLessonManeuversWithDetails(
+        request.lesson_template_id,
+        request.student_id
+      )
     }
 
     // ========================================================================
@@ -656,6 +811,7 @@ export async function generatePlanOfActionWithAI(
       video_resources: videoResources,
       faa_references: faaReferences,
       prep_checklist_items: prepChecklistItems,
+      maneuvers_detail: maneuversDetail,
       prior_debrief_insights: priorDebriefs.insights,
       generation_metadata: {
         model: "template-based-v1", // Will be "gpt-4" or "claude-3-opus" in real implementation
@@ -663,6 +819,7 @@ export async function generatePlanOfActionWithAI(
         sources_used: [
           "lesson_template",
           ...(priorDebriefs.debrief_ids.length > 0 ? ["prior_debriefs"] : []),
+          ...(maneuversDetail.length > 0 ? ["maneuvers_with_progress"] : []),
         ],
         confidence_score: 0.85,
       },
@@ -714,6 +871,7 @@ export async function createPlanOfActionFromAI(
       .from("plans_of_action")
       .insert({
         ...formData,
+        maneuvers_detail: aiPOA.maneuvers_detail,
         status: "draft",
         ai_generated: true,
         ai_model_used: aiPOA.generation_metadata.model,

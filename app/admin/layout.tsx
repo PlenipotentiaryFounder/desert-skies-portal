@@ -114,7 +114,8 @@ import {
   BatteryLow,
   BatteryWarning,
   Power,
-  PowerOff
+  PowerOff,
+  Calculator
 } from "lucide-react"
 import { DashboardShell } from "@/components/shared/dashboard-shell"
 import { getUserProfileWithRoles } from "@/lib/user-service"
@@ -203,6 +204,12 @@ const navItems = [
     href: "/admin/billing",
     icon: "dollarSign",
     description: "Financial management and billing"
+  },
+  {
+    title: "Ground School Calculator",
+    href: "/admin/ground-school-calculator",
+    icon: "calculator",
+    description: "Plan and price ground school programs"
   },
   {
     title: "Compliance",

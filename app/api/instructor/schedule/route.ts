@@ -1,107 +1,78 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
-import { getUserFromApiRequest } from "@/lib/user-service"
-import { revalidatePath } from "next/cache"
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const user = await getUserFromApiRequest(req)
+    const supabase = await createClient(await cookies())
+    const { data: { user } } = await supabase.auth.getUser()
+    
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const formData = await req.json()
-    const cookieStore = await cookies()
-    const supabase = await createClient(cookieStore)
+    const searchParams = req.nextUrl.searchParams
+    const start = searchParams.get('start')
+    const end = searchParams.get('end')
 
-    let lessonId = formData.lessonId
-    
-    // If custom mission, create a custom lesson first
-    if (formData.mode === "custom" && formData.custom) {
-      const { data: customLesson, error: lessonError } = await supabase
-        .from("lessons")
-        .insert({
-          title: formData.custom.title,
-          description: formData.custom.objective || "",
-          lesson_type: "flight",
-          syllabus_id: null, // Custom lessons don't belong to a syllabus
-          lesson_order: 999, // Put custom lessons at the end
-          duration_minutes: 60, // Default duration
-          ground_time_minutes: 30,
-          is_solo: false,
-          is_stage_check: false,
-          objectives: formData.custom.objective || "",
-          topics: formData.custom.topics || "",
-          standards: formData.custom.standards || "",
-          prep_work: formData.custom.prep || "",
-          skills: formData.custom.skills || "",
-          common_errors: formData.custom.errors || "",
-          instructor_role: formData.custom.role || "",
-          student_materials: formData.custom.whatToBring || "",
-          notes: formData.custom.notes || "",
-          created_by: user.id,
-        })
-        .select()
-        .single()
+    // Get missions scheduled for this instructor
+    let query = supabase
+      .from('missions')
+      .select(`
+        id,
+        mission_code,
+        mission_type,
+        scheduled_date,
+        scheduled_start_time,
+        scheduled_end_time,
+        status,
+        student:student_id (
+          first_name,
+          last_name
+        ),
+        lesson_template:lesson_template_id (
+          title
+        ),
+        custom_lesson:custom_lesson_id (
+          title
+        )
+      `)
+      .eq('assigned_instructor_id', user.id)
+      .in('status', ['scheduled', 'in_progress'])
 
-      if (lessonError) {
-        console.error("Error creating custom lesson:", lessonError)
-        return NextResponse.json({ error: "Failed to create custom lesson" }, { status: 500 })
-      }
-
-      lessonId = customLesson.id
-
-      // If custom maneuvers were selected, associate them with the lesson
-      if (formData.custom.maneuvers && formData.custom.maneuvers.length > 0) {
-        const lessonManeuvers = formData.custom.maneuvers.map((maneuverId: string) => ({
-          lesson_id: lessonId,
-          maneuver_id: maneuverId,
-          is_required: true,
-        }))
-
-        const { error: maneuverError } = await supabase
-          .from("lesson_maneuvers")
-          .insert(lessonManeuvers)
-
-        if (maneuverError) {
-          console.error("Error associating maneuvers with lesson:", maneuverError)
-          // Don't fail the whole operation for this
-        }
-      }
+    if (start) {
+      query = query.gte('scheduled_date', start)
+    }
+    if (end) {
+      query = query.lte('scheduled_date', end)
     }
 
-    // Create the flight session
-    const { data: flightSession, error: sessionError } = await supabase
-      .from("flight_sessions")
-      .insert({
-        enrollment_id: formData.enrollmentId,
-        lesson_id: lessonId,
-        instructor_id: user.id,
-        aircraft_id: formData.aircraftId,
-        date: formData.date,
-        start_time: formData.startTime,
-        end_time: formData.endTime,
-        hobbs_start: 0, // Will be filled in during the session
-        hobbs_end: 0,
-        status: "scheduled",
-        notes: formData.notes || null,
-        session_type: "mission",
-        prebrief_minutes: 30,
-        postbrief_minutes: 30,
-        request_status: "approved", // Instructor scheduling is auto-approved
-      })
-      .select()
-      .single()
+    const { data: missions, error } = await query.order('scheduled_date', { ascending: true })
 
-    if (sessionError) {
-      console.error("Error creating flight session:", sessionError)
-      return NextResponse.json({ error: "Failed to schedule mission" }, { status: 500 })
+    if (error) {
+      console.error("Error fetching schedule:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, data: flightSession })
-  } catch (error) {
-    console.error("Error in schedule POST:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    // Transform missions into events
+    const events = missions?.map(mission => ({
+      id: mission.id,
+      title: mission.lesson_template?.title || mission.custom_lesson?.title || `Mission ${mission.mission_code}`,
+      date: mission.scheduled_date,
+      start_time: mission.scheduled_start_time || '09:00',
+      end_time: mission.scheduled_end_time,
+      type: mission.mission_type,
+      student_name: mission.student 
+        ? `${mission.student.first_name} ${mission.student.last_name}`
+        : undefined
+    })) || []
+
+    return NextResponse.json({ events })
+  } catch (error: any) {
+    console.error("Error in schedule API:", error)
+    return NextResponse.json(
+      { error: error.message || "Failed to fetch schedule" },
+      { status: 500 }
+    )
   }
 }

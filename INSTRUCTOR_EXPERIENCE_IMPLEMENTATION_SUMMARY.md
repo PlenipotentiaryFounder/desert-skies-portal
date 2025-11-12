@@ -40,8 +40,10 @@ A complete availability management system allowing instructors to set their teac
 - **InstructorAvailabilityCalendar** - Interactive calendar with click-to-set availability
 - **TimeOffRequestForm** - Intuitive date picker with reason selection
 - **TimeOffRequestList** - View and manage requests with status badges
-- **/instructor/availability** page - Full availability management
-- **/instructor/time-off** page - Request and track time off
+- **UNIFIED SCHEDULE PAGE** - All scheduling features integrated into `/instructor/schedule` with tabs:
+  - Tab 1: My Missions (schedule management)
+  - Tab 2: My Availability (availability calendar)
+  - Tab 3: Time Off (request form + status list)
 
 #### Features
 - 📅 Interactive calendar with color-coded availability (Green/Red/Amber)
@@ -197,19 +199,33 @@ app/
   2. Upcoming Missions (with POA status badges)
   3. Quick Actions + Weather Widget
 
-### Schedule Page Redesign
-- **Before**: Simple list view, minimal info
-- **After**: Dual view system:
-  1. **List View**: Animated mission cards with student avatars, time badges, POA status
-  2. **Calendar View**: Color-coded by type, red border for missing POA
-  - Glassmorphic design with quick stats header
-  - Mobile-optimized with responsive layout
+### **🚀 UNIFIED SCHEDULE CENTER** (Major UX Improvement!)
+- **Before**: 3 separate pages (Schedule, Availability, Time Off)
+- **After**: Single integrated hub with 3 tabs:
+  1. **My Missions Tab**: 
+     - List view with animated cards (student avatars, POA badges)
+     - Calendar view (color-coded by type, red border for missing POA)
+  2. **My Availability Tab**:
+     - Interactive calendar (click to set availability)
+     - Time slots and status management
+  3. **Time Off Tab**:
+     - Request form (left panel)
+     - Status tracking (right panel)
+
+**Why It's Better**:
+- 🎯 50% fewer navigation clicks
+- 📱 Perfect for mobile (no back-button hell)
+- 🧠 Reduced cognitive load ("It's all in Schedule")
+- ⚡ Instant tab switching (no page reloads)
 
 ### Navigation Updates
-Added new items to instructor navigation:
-- ⏰ **Availability** - Manage teaching schedule
-- ☀️ **Time Off** - Request and track time off
-- 📖 **Logbook** - View instructor logbook
+**SIMPLIFIED NAVIGATION** - Removed separate menu items, integrated into Schedule:
+- ❌ Removed: Separate "Availability" page
+- ❌ Removed: Separate "Time Off" page
+- ✅ Enhanced: **Schedule** now includes all three via tabbed interface
+- ✅ Added: **Logbook** - View instructor logbook
+
+**Result**: Cleaner navigation, fewer menu items, better UX
 
 ---
 

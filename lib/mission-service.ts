@@ -184,7 +184,7 @@ export interface MissionFormData {
   enrollment_id: string
   assigned_instructor_id: string
   student_id: string
-  program_code: string
+  program_code?: string // Optional - will be looked up from enrollment if not provided
   mission_type: MissionType
   lesson_template_id?: string | null
   customizations?: any
@@ -223,10 +223,22 @@ export async function createMissionFromTemplate(
       return { success: false, error: "Unauthorized" }
     }
 
+    // Get program code from enrollment if not provided
+    let programCode = formData.program_code
+    if (!programCode) {
+      const { data: enrollment } = await supabase
+        .from("student_enrollments")
+        .select("syllabi(code)")
+        .eq("id", formData.enrollment_id)
+        .single()
+      
+      programCode = enrollment?.syllabi?.code || "PPC" // Default to PPC if not found
+    }
+
     // Generate mission code
     const { data: missionCode, error: codeError } = await supabase
       .rpc("generate_mission_code", {
-        p_program_code: formData.program_code,
+        p_program_code: programCode,
         p_mission_type: formData.mission_type,
         p_enrollment_id: formData.enrollment_id,
       })
@@ -830,5 +842,64 @@ export async function getStudentMissionStats(
       total_ground_hours: 0,
       average_assessment_score: null,
     }
+  }
+}
+
+/**
+ * Complete pre-brief for a mission
+ * Marks the POA as briefed and updates mission status
+ */
+export async function completePreBrief(
+  missionId: string,
+  poaId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const cookieStore = await cookies()
+    const supabase = await createClient(cookieStore)
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    const now = new Date().toISOString()
+
+    // 1. Update POA with instructor_briefed_at timestamp
+    const { error: poaError } = await supabase
+      .from("plans_of_action")
+      .update({
+        instructor_briefed_at: now,
+      })
+      .eq("id", poaId)
+
+    if (poaError) {
+      console.error("Error updating POA:", poaError)
+      return { success: false, error: poaError.message }
+    }
+
+    // 2. Update mission with prebriefed_at timestamp (using updated_at as proxy)
+    // Note: If you want a dedicated prebriefed_at column on missions table, add it to schema
+    const { error: missionError } = await supabase
+      .from("missions")
+      .update({
+        updated_at: now,
+      })
+      .eq("id", missionId)
+
+    if (missionError) {
+      console.error("Error updating mission:", missionError)
+      return { success: false, error: missionError.message }
+    }
+
+    // 3. Revalidate paths
+    revalidatePath(`/instructor/missions/${missionId}`)
+    revalidatePath(`/instructor/missions/${missionId}/pre-brief`)
+    revalidatePath(`/student/missions/${missionId}`)
+    revalidatePath(`/student/missions/${missionId}/poa`)
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error in completePreBrief:", error)
+    return { success: false, error: "An unexpected error occurred" }
   }
 }

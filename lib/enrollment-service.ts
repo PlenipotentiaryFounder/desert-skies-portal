@@ -33,7 +33,8 @@ export type Enrollment = {
     avatar_url: string | null
   }
   syllabus?: {
-    name: string
+    title: string
+    name?: string
     description: string
   }
 }
@@ -127,9 +128,11 @@ export async function getEnrollments() {
         avatar_url: null
       },
       syllabus: syllabus ? {
+        title: syllabus.title,
         name: syllabus.title,
         description: syllabus.description
       } : {
+        title: "Unknown Syllabus",
         name: "Unknown Syllabus",
         description: "Syllabus not found"
       }
@@ -295,9 +298,11 @@ export async function getStudentEnrollments(studentId: string) {
         avatar_url: null
       },
       syllabus: syllabus ? {
+        title: syllabus.title,
         name: syllabus.title,
         description: syllabus.description
       } : {
+        title: "Unknown Syllabus",
         name: "Unknown Syllabus",
         description: "Syllabus not found"
       }
@@ -396,9 +401,11 @@ export async function getInstructorEnrollments(instructorId: string) {
         avatar_url: null
       },
       syllabus: syllabus ? {
+        title: syllabus.title,
         name: syllabus.title,
         description: syllabus.description
       } : {
+        title: "Unknown Syllabus",
         name: "Unknown Syllabus",
         description: "Syllabus not found"
       }

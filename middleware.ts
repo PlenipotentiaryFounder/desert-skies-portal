@@ -64,10 +64,14 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  // Public routes that should be accessible without authentication
+  const publicRoutes = ["/instructor/onboarding/accept"]
+  const isPublicRoute = publicRoutes.some((route) => path.startsWith(route))
+
   const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route))
   const isAuthRoute = authRoutes.some((route) => path === route)
 
-  if (!user && isProtectedRoute) {
+  if (!user && isProtectedRoute && !isPublicRoute) {
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('redirectedFrom', path)
     console.log(`Redirecting unauthenticated user from protected route "${path}" to login.`);
@@ -183,7 +187,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (user && isProtectedRoute) {
+  if (user && isProtectedRoute && !isPublicRoute) {
      try {
         const { data: userRoles, error: rolesError } = await supabase.rpc('get_user_roles_for_middleware', { 
           p_user_id: user.id 

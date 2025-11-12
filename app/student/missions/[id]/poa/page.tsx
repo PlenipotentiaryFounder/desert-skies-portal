@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { AcknowledgePOAButton } from "@/components/student/acknowledge-poa-button"
+import { ManeuverDetailCard } from "@/components/shared/maneuver-detail-card"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -296,6 +297,32 @@ export default async function StudentPOAPage({
             </Card>
           )}
 
+          {/* Maneuvers to Practice - Enhanced with Details */}
+          {poa.maneuvers_detail && poa.maneuvers_detail.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Maneuvers to Practice
+                </CardTitle>
+                <CardDescription>
+                  Skills you'll work on with proficiency targets and your current progress
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {poa.maneuvers_detail.map((maneuver) => (
+                    <ManeuverDetailCard
+                      key={maneuver.maneuver_id}
+                      maneuver={maneuver}
+                      viewType="student"
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Pre-Flight Preparation Checklist */}
           {poa.prep_checklist_items && poa.prep_checklist_items.length > 0 && (
             <Card>
@@ -447,6 +474,12 @@ export default async function StudentPOAPage({
                 <div>
                   <div className="text-muted-foreground">Destination</div>
                   <div className="font-medium">{poa.destination_airport}</div>
+                </div>
+              )}
+              {poa.practice_area && (
+                <div>
+                  <div className="text-muted-foreground">Practice Area</div>
+                  <div className="font-medium">{poa.practice_area}</div>
                 </div>
               )}
             </CardContent>

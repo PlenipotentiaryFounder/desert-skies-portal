@@ -48,7 +48,13 @@ interface Mission {
     email: string
     avatar_url: string | null
   } | null
-  aircraft: {
+  scheduled_aircraft: {
+    id: string
+    tail_number: string
+    make: string
+    model: string
+  } | null
+  actual_aircraft: {
     id: string
     tail_number: string
     make: string

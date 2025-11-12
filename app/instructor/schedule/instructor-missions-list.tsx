@@ -45,7 +45,13 @@ interface Mission {
     email: string
     avatar_url: string | null
   } | null
-  aircraft: {
+  scheduled_aircraft: {
+    id: string
+    tail_number: string
+    make: string
+    model: string
+  } | null
+  actual_aircraft: {
     id: string
     tail_number: string
     make: string
@@ -324,10 +330,13 @@ export function InstructorMissionsList({ missions }: InstructorMissionsListProps
 
                             {/* Mission Details */}
                             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                              {mission.aircraft && (
+                              {(mission.actual_aircraft || mission.scheduled_aircraft) && (
                                 <div className="flex items-center gap-2">
                                   <Plane className="w-4 h-4" />
-                                  <span>{mission.aircraft.tail_number} ({mission.aircraft.make} {mission.aircraft.model})</span>
+                                  <span>
+                                    {(mission.actual_aircraft || mission.scheduled_aircraft)?.tail_number} 
+                                    ({(mission.actual_aircraft || mission.scheduled_aircraft)?.make} {(mission.actual_aircraft || mission.scheduled_aircraft)?.model})
+                                  </span>
                                 </div>
                               )}
                             </div>

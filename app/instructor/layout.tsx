@@ -34,16 +34,6 @@ const navItems = [
     icon: "calendar",
   },
   {
-    title: "Availability",
-    href: "/instructor/availability",
-    icon: "clock",
-  },
-  {
-    title: "Time Off",
-    href: "/instructor/time-off",
-    icon: "sun",
-  },
-  {
     title: "Logbook",
     href: "/instructor/logbook",
     icon: "book",

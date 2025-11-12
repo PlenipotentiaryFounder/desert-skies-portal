@@ -48,6 +48,14 @@ CREATE TABLE IF NOT EXISTS flight_log_entries (
   -- Additional Information
   remarks TEXT,
   
+  -- ForeFlight Import Metadata (optional)
+  ff_import_metadata JSONB,
+  hobbs_start DECIMAL(5,2),
+  hobbs_end DECIMAL(5,2),
+  day_takeoffs INTEGER DEFAULT 0,
+  night_takeoffs INTEGER DEFAULT 0,
+  all_landings INTEGER DEFAULT 0,
+  
   -- Status Management
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'final', 'voided')),
   voided_by UUID REFERENCES profiles(id),

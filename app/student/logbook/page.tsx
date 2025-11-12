@@ -7,7 +7,6 @@ import { Plane, ChevronDown, ChevronUp, Edit, Trash2, CheckCircle, Loader2, Plus
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-// TODO: Import API hooks and UI components for logbook
 
 const DESERT_SKIES_COLORS = {
   primary: 'bg-sky-500',
@@ -651,9 +650,15 @@ export default function StudentLogbookPage() {
           </div>
         </div>
 
-        {/* Logbook Table (to be enhanced next) */}
-        <h1 className="text-3xl font-bold mb-6">Flight Logbook</h1>
-        <button className="btn btn-primary mb-4" onClick={() => { setSelectedEntry(null); setShowModal(true); }}>New Entry</button>
+        {/* Logbook Table */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <h2 className="text-2xl font-bold">Flight Entries</h2>
+          <div className="flex gap-2">
+            <Button onClick={() => { setSelectedEntry(null); setShowModal(true); }}>
+              <Plus className="mr-2 h-4 w-4" /> Add Flight
+            </Button>
+          </div>
+        </div>
         {error && <div className="text-red-600 mb-2">{error}</div>}
         {loading ? (
           <AviationSkeleton />

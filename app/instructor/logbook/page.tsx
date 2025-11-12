@@ -22,8 +22,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { format, parseISO } from 'date-fns'
-import { Plane, Calendar, Clock, User, FileText, Download, CheckCircle, XCircle } from 'lucide-react'
+import { Plane, Calendar, Clock, User, FileText, Download, CheckCircle, XCircle, Upload } from 'lucide-react'
 import { toast } from 'sonner'
+import { ForeFlightImportDialog } from '@/components/instructor/ForeFlightImportDialog'
 
 interface LogbookEntry {
   id: string
@@ -51,6 +52,7 @@ export default function InstructorLogbookPage() {
   const [loading, setLoading] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<LogbookEntry | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
   const [totals, setTotals] = useState({
     totalTime: 0,
     picTime: 0,
@@ -104,6 +106,12 @@ export default function InstructorLogbookPage() {
     }
   }
 
+  const handleImportComplete = () => {
+    setShowImportDialog(false)
+    fetchLogbookEntries()
+    toast.success('Logbook imported successfully!')
+  }
+
   const openDetails = (entry: LogbookEntry) => {
     setSelectedEntry(entry)
     setIsDetailsOpen(true)
@@ -142,10 +150,16 @@ export default function InstructorLogbookPage() {
               Digital record of all your flight instruction hours
             </p>
           </div>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import ForeFlight
+            </Button>
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          </div>
         </div>
 
         {/* Totals Summary */}
@@ -337,6 +351,13 @@ export default function InstructorLogbookPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ForeFlight Import Dialog */}
+      <ForeFlightImportDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        onImportComplete={handleImportComplete}
+      />
     </div>
   )
 }

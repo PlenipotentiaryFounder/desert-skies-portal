@@ -40,7 +40,7 @@ export default async function InstructorOnboardingPage() {
     
     const { data: profile } = await supabase
       .from('profiles')
-      .select('first_name, last_name, email')
+      .select('*')
       .eq('id', user.id)
       .single()
 

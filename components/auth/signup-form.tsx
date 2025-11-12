@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -41,7 +41,7 @@ const formSchema = z.object({
   password: z.string().min(6, {
     message: "Password must be at least 6 characters.",
   }),
-  role: z.enum(["student", "instructor"]),
+  role: z.enum(["student"]),
 })
 
 export function SignupForm() {
@@ -59,6 +59,11 @@ export function SignupForm() {
       role: "student",
     },
   })
+
+  // Lock role to student - instructors must use invitation system
+  useEffect(() => {
+    form.setValue('role', 'student')
+  }, [])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
@@ -270,37 +275,8 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">I am a</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                          <SelectValue placeholder="Select your role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="student">
-                          <div className="flex items-center gap-2">
-                            <GraduationCap className="w-4 h-4" />
-                            <span>Student Pilot</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="instructor">
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" />
-                            <span>Flight Instructor</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Hidden role field - always student for public signup */}
+              <input type="hidden" name="role" value="student" />
               <Button 
                 type="submit" 
                 className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg transition-all duration-200" 
@@ -321,15 +297,15 @@ export function SignupForm() {
             </form>
           </Form>
 
-          {/* Role Information */}
+          {/* Instructor Information */}
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-blue-900">Account Types</p>
+                <p className="text-sm font-medium text-blue-900">Flight Instructors</p>
                 <p className="text-xs text-blue-700 mt-1">
-                  <strong>Student:</strong> Access flight training, scheduling, and progress tracking<br />
-                  <strong>Instructor:</strong> Requires admin approval before activation
+                  Interested in becoming an instructor? Contact your administrator for an invitation link.
+                  Instructor accounts require proper certification verification.
                 </p>
               </div>
             </div>
