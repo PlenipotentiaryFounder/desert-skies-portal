@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { getCurrentWeather, type WeatherData } from "@/lib/weather-service"
+import { StripeConnectBanner } from "@/components/instructor/dashboard/stripe-connect-banner"
 
 export const metadata = {
   title: "Instructor Dashboard | Desert Skies Aviation",
@@ -405,7 +406,7 @@ export default async function InstructorDashboard() {
   // Get instructor profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name, last_name")
+    .select("id, first_name, last_name, email, stripe_connect_account_id, stripe_connect_onboarding_complete")
     .eq("id", user.id)
     .single()
 
@@ -420,6 +421,20 @@ export default async function InstructorDashboard() {
           Your flight training command center
         </p>
       </div>
+
+      {/* Stripe Connect Banner (if not completed) */}
+      {profile && (
+        <StripeConnectBanner
+          stripeConnectAccountId={profile.stripe_connect_account_id}
+          stripeConnectOnboardingComplete={profile.stripe_connect_onboarding_complete || false}
+          userProfile={{
+            id: profile.id,
+            email: profile.email || '',
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || ''
+          }}
+        />
+      )}
 
       {/* Quick Stats */}
       <Suspense fallback={<Skeleton className="h-32 w-full" />}>

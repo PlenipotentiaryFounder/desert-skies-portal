@@ -165,40 +165,7 @@ export function StripeConnectStep({
         </CardContent>
       </Card>
 
-      {!onboardingComplete ? (
-        <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <h3 className="text-xl font-bold text-gray-900">Ready to Set Up Payments?</h3>
-              <p className="text-gray-600">
-                Click below to connect your bank account via Stripe Connect. You'll be redirected to 
-                Stripe's secure platform to complete the setup.
-              </p>
-              <Button
-                onClick={initiateStripeConnect}
-                disabled={isLoading}
-                size="lg"
-                className="min-w-48"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Connecting to Stripe...
-                  </>
-                ) : (
-                  <>
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Connect with Stripe
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-gray-500 mt-2">
-                You'll be redirected to Stripe and return here automatically
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
+      {onboardingComplete ? (
         <Alert className="bg-green-50 border-green-200">
           <Check className="h-4 w-4 text-green-600" />
           <AlertDescription>
@@ -212,7 +179,7 @@ export function StripeConnectStep({
       )}
 
       <div className="flex justify-center gap-4 pt-6">
-        {onboardingComplete && (
+        {onboardingComplete ? (
           <Button
             onClick={handleComplete}
             disabled={isSaving}
@@ -231,16 +198,47 @@ export function StripeConnectStep({
               </>
             )}
           </Button>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              onClick={onSkip}
+              disabled={isSaving || isLoading}
+              size="lg"
+            >
+              Skip for Now
+            </Button>
+            <Button
+              onClick={initiateStripeConnect}
+              disabled={isLoading}
+              size="lg"
+              className="min-w-48"
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Connecting to Stripe...
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Connect with Stripe
+                </>
+              )}
+            </Button>
+          </>
         )}
       </div>
 
-      <Alert className="bg-yellow-50 border-yellow-200">
-        <AlertTriangle className="h-4 w-4 text-yellow-600" />
-        <AlertDescription className="text-yellow-900 text-xs">
-          <strong>Note:</strong> Stripe may require additional verification documents. You can complete this 
-          process later, but payment setup must be finished before you can receive instructor payments.
-        </AlertDescription>
-      </Alert>
+      {!onboardingComplete && (
+        <Alert className="bg-yellow-50 border-yellow-200">
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-900 text-sm">
+            <strong>You can skip this step</strong> and complete it later from your dashboard. However, 
+            you won't be able to receive payments until you finish connecting your bank account.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   )
 }

@@ -103,7 +103,7 @@ const ONBOARDING_STEPS = [
     title: 'Payment Setup',
     description: 'Connect your bank account',
     icon: DollarSign,
-    required: true,
+    required: false,
     stepNumber: 8
   },
   {
