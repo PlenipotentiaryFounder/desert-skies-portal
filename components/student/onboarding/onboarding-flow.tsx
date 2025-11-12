@@ -533,7 +533,7 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Onboarding</h1>
-          <p className="text-aviation-sunset-200">Complete your profile to get started with Desert Skies</p>
+          <p className="text-gray-700">Complete your profile to get started with Desert Skies</p>
         </div>
 
         {/* Progress Bar */}
@@ -610,6 +610,7 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
             variant="outline"
             onClick={prevStep}
             disabled={getCurrentStepIndex() === 0}
+            className="text-gray-900 hover:bg-gray-100"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Previous

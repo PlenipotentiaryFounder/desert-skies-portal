@@ -176,8 +176,8 @@ export function ProgramSelectionStep({
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <FileText className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Program Selection</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Program Selection</h2>
+        <p className="text-gray-700">
           Choose the training program that best fits your aviation goals
         </p>
       </div>
@@ -219,7 +219,7 @@ export function ProgramSelectionStep({
                     )}
                   </div>
                 </div>
-                <p className="text-gray-600 mt-1">{program.description}</p>
+                <p className="text-gray-700 mt-1">{program.description}</p>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Quick Stats */}
@@ -245,7 +245,7 @@ export function ProgramSelectionStep({
                 {/* Features */}
                 <div>
                   <h4 className="font-medium mb-2">What's Included:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                  <ul className="text-sm text-gray-700 space-y-1">
                     {program.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
@@ -258,7 +258,7 @@ export function ProgramSelectionStep({
                 {/* Requirements */}
                 <div>
                   <h4 className="font-medium mb-2">Requirements:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                  <ul className="text-sm text-gray-700 space-y-1">
                     {program.requirements.map((requirement, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Award className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />

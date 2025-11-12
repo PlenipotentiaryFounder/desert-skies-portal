@@ -565,7 +565,7 @@ export default function StudentDashboard() {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Current Time</p>
-              <p className="text-xl font-mono text-aviation-sunset-300">
+              <p className="text-xl font-mono text-gray-900">
                 {currentTime ? currentTime.toLocaleTimeString() : '--:--:--'}
               </p>
             </div>

@@ -267,8 +267,8 @@ invalid or unenforceable, the remainder shall remain in full effect.
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <Shield className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Liability Waiver</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Liability Waiver</h2>
+        <p className="text-gray-700">
           Please read the complete waiver carefully and provide your electronic signature
         </p>
       </div>

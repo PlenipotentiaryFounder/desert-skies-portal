@@ -173,7 +173,7 @@ export function SignupForm() {
           </div>
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Desert Skies</h1>
-        <p className="text-aviation-sunset-200">
+        <p className="text-gray-700">
           Start your aviation journey with professional flight training
         </p>
       </div>

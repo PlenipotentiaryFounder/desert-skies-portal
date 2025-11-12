@@ -102,7 +102,7 @@ function AviationLogbookRow({ entry, expanded, onExpand, onEdit, onSign, onVoid,
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
                   <div className="font-bold text-sky-700 dark:text-yellow-300 mb-1">Remarks</div>
-                  <div className="text-sm text-aviation-sunset-200">{entry.remarks || <span className="italic text-aviation-sunset-300">No remarks</span>}</div>
+                  <div className="text-sm text-gray-700">{entry.remarks || <span className="italic text-gray-500">No remarks</span>}</div>
                   {entry.attachment_url && (
                     <div className="mt-3 flex items-center gap-2">
                       <Paperclip className="h-4 w-4 text-sky-500" aria-hidden="true" />
