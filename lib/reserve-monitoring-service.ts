@@ -2,11 +2,25 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
-import { getPlatformBalance as getPlatformBalanceFromLedger } from "./ledger-service"
+import { 
+  getPlatformBalance as getPlatformBalanceFromLedger,
+  getStudentBalance as getStudentBalanceFromLedger,
+  getInstructorBalance as getInstructorBalanceFromLedger
+} from "./ledger-service"
 import Stripe from 'stripe'
 
-// Note: getPlatformBalance is imported above and available for use in this file
-// For other files, import directly from "./ledger-service"
+// Re-export ledger functions as async wrappers for compatibility
+export async function getPlatformBalance(): Promise<number> {
+  return getPlatformBalanceFromLedger()
+}
+
+export async function getStudentBalance(studentId: string): Promise<number> {
+  return getStudentBalanceFromLedger(studentId)
+}
+
+export async function getInstructorBalance(instructorId: string): Promise<number> {
+  return getInstructorBalanceFromLedger(instructorId)
+}
 
 // Service client helper
 async function createServiceClient() {

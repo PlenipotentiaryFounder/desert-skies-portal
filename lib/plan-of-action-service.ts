@@ -533,6 +533,15 @@ async function getLessonTemplateContent(
 }
 
 /**
+ * Alias for generatePlanOfActionWithAI (for backward compatibility)
+ */
+export async function generatePlanOfAction(
+  request: AIGenerationRequest
+): Promise<{ success: boolean; data?: AIGeneratedPOA; error?: string }> {
+  return generatePlanOfActionWithAI(request)
+}
+
+/**
  * Generate POA using AI (placeholder - will be implemented with actual AI)
  */
 export async function generatePlanOfActionWithAI(

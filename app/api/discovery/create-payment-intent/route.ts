@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDiscoveryFlightById } from '@/lib/discovery-flight-service'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-})
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-12-18.acacia',
+  })
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +19,8 @@ export async function POST(req: NextRequest) {
     if (!discovery_flight_id) {
       return NextResponse.json({ error: 'Missing discovery flight ID' }, { status: 400 })
     }
+
+    const stripe = getStripe()
 
     // Get discovery flight
     const discoveryFlight = await getDiscoveryFlightById(discovery_flight_id)

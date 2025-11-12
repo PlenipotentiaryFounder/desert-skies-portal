@@ -194,6 +194,13 @@ export async function getMissionTrainingEvents(
 }
 
 /**
+ * Alias for getMissionTrainingEvents (for backward compatibility)
+ */
+export async function getTrainingEventsByMissionId(missionId: string): Promise<TrainingEvent[]> {
+  return getMissionTrainingEvents(missionId)
+}
+
+/**
  * Get a single training event by ID
  */
 export async function getTrainingEventById(

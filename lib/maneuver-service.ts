@@ -67,6 +67,13 @@ export async function getAllManeuvers() {
 }
 
 /**
+ * Alias for getAllManeuvers (for backward compatibility)
+ */
+export async function getManeuvers() {
+  return getAllManeuvers()
+}
+
+/**
  * Get a specific maneuver by ID
  */
 export async function getManeuverById(id: string) {
@@ -140,6 +147,13 @@ export async function getLessonManeuvers(lessonId: string) {
   }
 
   return data as LessonManeuver[]
+}
+
+/**
+ * Alias for getLessonManeuvers (for backward compatibility)
+ */
+export async function getManeuversByLesson(lessonId: string) {
+  return getLessonManeuvers(lessonId)
 }
 
 /**
