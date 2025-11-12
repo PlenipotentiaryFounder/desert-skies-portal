@@ -1,9 +1,14 @@
 import OpenAI from 'openai'
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Initialize OpenAI client only when needed
+function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not configured')
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+}
 
 export interface POAGenerationRequest {
   missionType: 'F' | 'G' | 'S' // Flight, Ground, Simulator
@@ -113,6 +118,7 @@ Return the response as a valid JSON object matching this structure:
 }`
 
   try {
+    const openai = getOpenAI()
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o', // Using GPT-4o for high-quality, structured output
       messages: [
@@ -187,6 +193,7 @@ Return the response as a valid JSON object matching this structure:
 }`
 
   try {
+    const openai = getOpenAI()
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -221,6 +228,7 @@ Return the response as a valid JSON object matching this structure:
  */
 export async function transcribeAudio(audioFile: File): Promise<string> {
   try {
+    const openai = getOpenAI()
     const transcription = await openai.audio.transcriptions.create({
       file: audioFile,
       model: 'whisper-1',
