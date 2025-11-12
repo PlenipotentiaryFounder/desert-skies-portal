@@ -101,8 +101,8 @@ export function PersonalInfoStep({
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <User className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Personal Information</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Personal Information</h2>
+        <p className="text-gray-700">
           Please provide your contact information and address
         </p>
       </div>

@@ -163,8 +163,8 @@ export function InsuranceStep({
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <Shield className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Insurance Verification</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Insurance Verification</h2>
+        <p className="text-gray-700">
           Confirm your insurance coverage and upload policy documents
         </p>
       </div>
@@ -192,7 +192,7 @@ export function InsuranceStep({
 
       <Card>
         <CardHeader>
-          <CardTitle>Insurance Acknowledgment</CardTitle>
+          <CardTitle className="text-gray-900">Insurance Acknowledgment</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
@@ -202,7 +202,7 @@ export function InsuranceStep({
               onCheckedChange={(checked) => handleInputChange('insurance_acknowledged', checked as boolean)}
               className="mt-1"
             />
-            <Label htmlFor="insurance_acknowledged" className="cursor-pointer text-sm leading-relaxed">
+            <Label htmlFor="insurance_acknowledged" className="cursor-pointer text-sm leading-relaxed text-gray-900 font-normal">
               I acknowledge that I am required to maintain aviation liability insurance with minimum coverage of 
               $1,000,000 per occurrence, and I confirm that I have obtained such insurance coverage.
             </Label>
@@ -212,7 +212,7 @@ export function InsuranceStep({
 
       <Card>
         <CardHeader>
-          <CardTitle>Insurance Information</CardTitle>
+          <CardTitle className="text-gray-900">Insurance Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

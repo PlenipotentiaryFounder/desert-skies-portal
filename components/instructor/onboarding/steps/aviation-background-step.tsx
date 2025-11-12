@@ -71,8 +71,8 @@ export function AviationBackgroundStep({
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <Plane className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Aviation Credentials</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Aviation Credentials</h2>
+        <p className="text-gray-700">
           Please provide your flight instructor certificates and experience
         </p>
       </div>

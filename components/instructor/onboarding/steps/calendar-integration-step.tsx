@@ -64,8 +64,8 @@ export function CalendarIntegrationStep({
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <Calendar className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Calendar Integration</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Calendar Integration</h2>
+        <p className="text-gray-700">
           Connect your calendar for seamless scheduling (Optional)
         </p>
       </div>

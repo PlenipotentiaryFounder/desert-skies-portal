@@ -443,8 +443,8 @@ export function DocumentUploadStep({
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <Upload className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Document Upload</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Document Upload</h2>
+        <p className="text-gray-700">
           Upload your flight instructor credentials and identification documents
         </p>
       </div>

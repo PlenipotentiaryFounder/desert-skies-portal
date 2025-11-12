@@ -449,6 +449,7 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
               variant="outline"
               onClick={previousStep}
               disabled={currentStepIndex === 0}
+              className="text-gray-900 hover:bg-gray-100"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Previous Step

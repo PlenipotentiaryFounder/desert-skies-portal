@@ -86,8 +86,8 @@ export function EmergencyContactStep({
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <Phone className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Emergency Contact</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Emergency Contact</h2>
+        <p className="text-gray-700">
           Please provide emergency contact information for safety and regulatory compliance
         </p>
       </div>

@@ -100,8 +100,8 @@ export function ContractorAgreementStep({
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <FileText className="w-12 h-12 text-blue-600 mx-auto" />
-        <h2 className="text-3xl font-bold">Independent Contractor Agreement</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold text-gray-900">Independent Contractor Agreement</h2>
+        <p className="text-gray-700">
           Please review and sign the 1099 contractor agreement
         </p>
       </div>
@@ -212,10 +212,10 @@ For full contract details, see the complete DSA Independent Contractor Agreement
 
       <Card>
         <CardHeader>
-          <CardTitle>Acknowledgments</CardTitle>
+          <CardTitle className="text-gray-900">Acknowledgments</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-700 mb-4">
             Please confirm that you have read and understand the following:
           </p>
 
@@ -227,7 +227,7 @@ For full contract details, see the complete DSA Independent Contractor Agreement
                 onCheckedChange={(checked) => handleCheckboxChange('acknowledged_terms', checked as boolean)}
                 className="mt-1"
               />
-              <Label htmlFor="acknowledged_terms" className="cursor-pointer text-sm leading-relaxed">
+              <Label htmlFor="acknowledged_terms" className="cursor-pointer text-sm leading-relaxed text-gray-900 font-normal">
                 I have read and understand the complete Independent Contractor Agreement, including all exhibits
               </Label>
             </div>
@@ -239,7 +239,7 @@ For full contract details, see the complete DSA Independent Contractor Agreement
                 onCheckedChange={(checked) => handleCheckboxChange('acknowledged_independent_contractor', checked as boolean)}
                 className="mt-1"
               />
-              <Label htmlFor="acknowledged_independent_contractor" className="cursor-pointer text-sm leading-relaxed">
+              <Label htmlFor="acknowledged_independent_contractor" className="cursor-pointer text-sm leading-relaxed text-gray-900 font-normal">
                 I understand that I am an <strong>independent contractor</strong>, not an employee, and I am responsible for all taxes and insurance
               </Label>
             </div>
@@ -251,7 +251,7 @@ For full contract details, see the complete DSA Independent Contractor Agreement
                 onCheckedChange={(checked) => handleCheckboxChange('acknowledged_insurance', checked as boolean)}
                 className="mt-1"
               />
-              <Label htmlFor="acknowledged_insurance" className="cursor-pointer text-sm leading-relaxed">
+              <Label htmlFor="acknowledged_insurance" className="cursor-pointer text-sm leading-relaxed text-gray-900 font-normal">
                 I acknowledge the insurance requirements and will maintain the required coverage limits at all times
               </Label>
             </div>
@@ -263,7 +263,7 @@ For full contract details, see the complete DSA Independent Contractor Agreement
                 onCheckedChange={(checked) => handleCheckboxChange('acknowledged_taxes', checked as boolean)}
                 className="mt-1"
               />
-              <Label htmlFor="acknowledged_taxes" className="cursor-pointer text-sm leading-relaxed">
+              <Label htmlFor="acknowledged_taxes" className="cursor-pointer text-sm leading-relaxed text-gray-900 font-normal">
                 I understand that DSA will not withhold taxes and I am solely responsible for all tax obligations, including self-employment tax
               </Label>
             </div>
@@ -275,7 +275,7 @@ For full contract details, see the complete DSA Independent Contractor Agreement
                 onCheckedChange={(checked) => handleCheckboxChange('acknowledged_no_guarantee', checked as boolean)}
                 className="mt-1"
               />
-              <Label htmlFor="acknowledged_no_guarantee" className="cursor-pointer text-sm leading-relaxed">
+              <Label htmlFor="acknowledged_no_guarantee" className="cursor-pointer text-sm leading-relaxed text-gray-900 font-normal">
                 I understand that DSA does not guarantee any minimum number of flight hours or earnings
               </Label>
             </div>
@@ -287,7 +287,7 @@ For full contract details, see the complete DSA Independent Contractor Agreement
                 onCheckedChange={(checked) => handleCheckboxChange('acknowledged_at_will', checked as boolean)}
                 className="mt-1"
               />
-              <Label htmlFor="acknowledged_at_will" className="cursor-pointer text-sm leading-relaxed">
+              <Label htmlFor="acknowledged_at_will" className="cursor-pointer text-sm leading-relaxed text-gray-900 font-normal">
                 I understand that either party may terminate this agreement at any time with 14 days notice
               </Label>
             </div>
