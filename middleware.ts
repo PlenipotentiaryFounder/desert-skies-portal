@@ -71,6 +71,8 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route))
   const isAuthRoute = authRoutes.some((route) => path === route)
 
+  console.log(`Is public route: ${isPublicRoute}, Is protected: ${isProtectedRoute}`);
+
   if (!user && isProtectedRoute && !isPublicRoute) {
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('redirectedFrom', path)

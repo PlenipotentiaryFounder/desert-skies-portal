@@ -270,7 +270,7 @@ export function InsuranceStep({
                 isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
               }`}
             >
-              <input {...inputProps} />
+              <input {...getInputProps()} />
               <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
               <p className="text-sm text-gray-600">
                 {isDragActive ? 'Drop the file here...' : 'Drag & drop a file here, or click to select'}
