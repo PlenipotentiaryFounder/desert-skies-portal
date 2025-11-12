@@ -19,19 +19,34 @@ const navItems = [
     icon: "users",
   },
   {
+    title: "Missions",
+    href: "/instructor/missions",
+    icon: "rocket",
+  },
+  {
     title: "Syllabi",
     href: "/instructor/syllabi",
     icon: "bookOpen",
   },
   {
-    title: "Flight Sessions",
-    href: "/instructor/flight-sessions",
-    icon: "plane",
-  },
-  {
     title: "Schedule",
     href: "/instructor/schedule",
     icon: "calendar",
+  },
+  {
+    title: "Availability",
+    href: "/instructor/availability",
+    icon: "clock",
+  },
+  {
+    title: "Time Off",
+    href: "/instructor/time-off",
+    icon: "sun",
+  },
+  {
+    title: "Logbook",
+    href: "/instructor/logbook",
+    icon: "book",
   },
   {
     title: "Documents",

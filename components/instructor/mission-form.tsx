@@ -46,7 +46,9 @@ export function MissionForm({ enrollments, lessons, maneuvers, onSubmit, initial
       setAircraftLoading(true)
       setAircraftError(null)
       try {
-        const res = await fetch("/api/instructor/schedule/aircraft")
+        const res = await fetch("/api/instructor/schedule/aircraft", {
+          credentials: 'include'
+        })
         const data = await res.json()
         setAircraftOptions(data.aircraft || [])
       } catch (e) {

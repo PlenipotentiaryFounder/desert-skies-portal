@@ -52,12 +52,14 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Zap
+  Zap,
+  Maximize2
 } from "lucide-react"
 import type { SyllabusLesson } from "@/lib/syllabus-service"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ComprehensiveLessonEditor } from "./comprehensive-lesson-editor"
 
 interface LessonWithManeuvers extends SyllabusLesson {
   maneuvers?: Array<{
@@ -91,6 +93,7 @@ export function EnhancedLessonManager({
   const [lessons, setLessons] = useState<LessonWithManeuvers[]>(initialLessons)
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set())
   const [editingLesson, setEditingLesson] = useState<LessonWithManeuvers | null>(null)
+  const [comprehensiveEditLesson, setComprehensiveEditLesson] = useState<LessonWithManeuvers | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
   const [isReordering, setIsReordering] = useState(false)
@@ -100,7 +103,14 @@ export function EnhancedLessonManager({
   const [editingManeuvers, setEditingManeuvers] = useState<{[key: string]: any[]}>({})
 
   useEffect(() => {
-    setLessons(initialLessons)
+    // Deduplicate lessons by ID to prevent React key conflicts
+    const uniqueLessons = initialLessons.reduce((acc, lesson) => {
+      if (!acc.find(l => l.id === lesson.id)) {
+        acc.push(lesson)
+      }
+      return acc
+    }, [] as LessonWithManeuvers[])
+    setLessons(uniqueLessons)
   }, [initialLessons])
 
   // Fetch all maneuvers for the syllabus
@@ -110,12 +120,21 @@ export function EnhancedLessonManager({
       .then(data => setAllManeuvers(data.maneuvers || []))
   }, [syllabusId])
 
-  const filteredLessons = lessons.filter(lesson => {
-    const matchesSearch = lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         lesson.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter = filterType === "all" || lesson.lesson_type === filterType
-    return matchesSearch && matchesFilter
-  })
+  // Filter and deduplicate lessons
+  const filteredLessons = lessons
+    .filter(lesson => {
+      const matchesSearch = lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           lesson.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      // Normalize lesson type for comparison (case-insensitive)
+      const normalizedLessonType = lesson.lesson_type?.toLowerCase()
+      const normalizedFilterType = filterType.toLowerCase()
+      const matchesFilter = filterType === "all" || normalizedLessonType === normalizedFilterType
+      return matchesSearch && matchesFilter
+    })
+    // Ensure no duplicate IDs in filtered results
+    .filter((lesson, index, self) => 
+      index === self.findIndex(l => l.id === lesson.id)
+    )
 
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return
@@ -253,21 +272,33 @@ export function EnhancedLessonManager({
   }
 
   const getLessonTypeIcon = (type: string) => {
-    switch (type) {
-      case "Flight": return <Plane className="w-4 h-4" />
-      case "Ground": return <BookOpen className="w-4 h-4" />
-      case "Simulator": return <Monitor className="w-4 h-4" />
-      case "Checkride": return <Award className="w-4 h-4" />
-      default: return <Target className="w-4 h-4" />
+    // Normalize to handle case variations
+    const normalized = type?.toLowerCase() || 'ground'
+    switch (normalized) {
+      case "flight": return <Plane className="w-4 h-4" />
+      case "ground": return <BookOpen className="w-4 h-4" />
+      case "simulator": 
+      case "sim": return <Monitor className="w-4 h-4" />
+      case "briefing": return <BookOpen className="w-4 h-4" />
+      case "checkride":
+      case "stage_check":
+      case "check_ride": return <Award className="w-4 h-4" />
+      default: return <BookOpen className="w-4 h-4" />
     }
   }
 
   const getLessonTypeColor = (type: string) => {
-    switch (type) {
-      case "Flight": return "bg-blue-100 text-blue-800 border-blue-200"
-      case "Ground": return "bg-green-100 text-green-800 border-green-200"
-      case "Simulator": return "bg-purple-100 text-purple-800 border-purple-200"
-      case "Checkride": return "bg-orange-100 text-orange-800 border-orange-200"
+    // Normalize to handle case variations
+    const normalized = type?.toLowerCase() || 'ground'
+    switch (normalized) {
+      case "flight": return "bg-blue-100 text-blue-800 border-blue-200"
+      case "ground": return "bg-green-100 text-green-800 border-green-200"
+      case "simulator":
+      case "sim": return "bg-purple-100 text-purple-800 border-purple-200"
+      case "briefing": return "bg-gray-100 text-gray-800 border-gray-200"
+      case "checkride":
+      case "stage_check":
+      case "check_ride": return "bg-orange-100 text-orange-800 border-orange-200"
       default: return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
@@ -275,7 +306,7 @@ export function EnhancedLessonManager({
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-lg border">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-lg border">
         <div className="flex flex-1 gap-4 items-center">
           <div className="flex-1">
             <Input
@@ -338,7 +369,7 @@ export function EnhancedLessonManager({
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       className={cn(
-                        "bg-white rounded-lg border shadow-sm transition-all duration-200",
+                        "rounded-lg border shadow-sm transition-all duration-200",
                         snapshot.isDragging && "shadow-lg ring-2 ring-blue-200",
                         lesson.is_active === false && "opacity-60"
                       )}
@@ -361,7 +392,7 @@ export function EnhancedLessonManager({
                           {/* Title and Status */}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-lg">{lesson.title}</h3>
+                              <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">{lesson.title}</h3>
                               <Badge className={cn("text-xs", getLessonTypeColor(lesson.lesson_type))}>
                                 {getLessonTypeIcon(lesson.lesson_type)}
                                 <span className="ml-1">{lesson.lesson_type}</span>
@@ -373,11 +404,11 @@ export function EnhancedLessonManager({
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-aviation-sunset-200 line-clamp-1">{lesson.description}</p>
+                            <p className="text-sm text-foreground line-clamp-1">{lesson.description || 'No description'}</p>
                           </div>
 
                           {/* Quick Stats */}
-                          <div className="flex items-center gap-4 text-sm text-aviation-sunset-300">
+                          <div className="flex items-center gap-4 text-sm text-foreground">
                             <div className="flex items-center gap-1">
                               <Clock className="w-4 h-4" />
                               {lesson.estimated_hours}h
@@ -404,6 +435,17 @@ export function EnhancedLessonManager({
                               )}
                             </Button>
 
+                            {/* Full Edit Button - Primary Action */}
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => setComprehensiveEditLesson(lesson)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Maximize2 className="w-3 h-3 mr-1" />
+                              Full Edit
+                            </Button>
+
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm">
@@ -415,6 +457,11 @@ export function EnhancedLessonManager({
                                   <Pencil className="w-4 h-4 mr-2" />
                                   Quick Edit
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setComprehensiveEditLesson(lesson)}>
+                                  <Maximize2 className="w-4 h-4 mr-2" />
+                                  Full Edit (All Fields)
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => onLessonDuplicate(lesson.id)}>
                                   <Copy className="w-4 h-4 mr-2" />
                                   Duplicate
@@ -464,21 +511,21 @@ export function EnhancedLessonManager({
                             <TabsContent value="details" className="space-y-4">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                  <Label className="text-sm font-medium">Description</Label>
-                                  <p className="text-sm text-aviation-sunset-200 mt-1">{lesson.description}</p>
+                                  <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">Description</Label>
+                                  <p className="text-sm text-foreground mt-1">{lesson.description || 'No description provided'}</p>
                                 </div>
                                 <div className="space-y-2">
                                   <div className="flex justify-between">
-                                    <span className="text-sm font-medium">Estimated Hours:</span>
-                                    <span className="text-sm">{lesson.estimated_hours}</span>
+                                    <span className="text-sm font-medium text-foreground">Estimated Hours:</span>
+                                    <span className="text-sm font-medium text-foreground">{lesson.estimated_hours}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-sm font-medium">Lesson Type:</span>
-                                    <span className="text-sm">{lesson.lesson_type}</span>
+                                    <span className="text-sm font-medium text-foreground">Lesson Type:</span>
+                                    <span className="text-sm font-medium text-foreground">{lesson.lesson_type}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-sm font-medium">Order:</span>
-                                    <span className="text-sm">{lesson.order_index + 1}</span>
+                                    <span className="text-sm font-medium text-foreground">Order:</span>
+                                    <span className="text-sm font-medium text-foreground">{lesson.order_index + 1}</span>
                                   </div>
                                 </div>
                               </div>
@@ -515,10 +562,10 @@ export function EnhancedLessonManager({
 
                                 {/* Selected maneuvers */}
                                 <div>
-                                  <h4 className="font-medium mb-2">Selected Maneuvers</h4>
+                                  <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Selected Maneuvers</h4>
                                   {getCurrentManeuvers(lesson.id).length === 0 ? (
-                                    <div className="text-center py-4 text-aviation-sunset-300">
-                                      <Target className="w-8 h-8 mx-auto mb-2 text-aviation-sunset-300" />
+                                    <div className="text-center py-4 text-gray-600 dark:text-gray-400">
+                                      <Target className="w-8 h-8 mx-auto mb-2 text-gray-600 dark:text-gray-400" />
                                       <p className="text-sm">No maneuvers selected</p>
                                     </div>
                                   ) : (
@@ -526,7 +573,7 @@ export function EnhancedLessonManager({
                                       {getCurrentManeuvers(lesson.id).map((maneuver) => (
                                         <div key={maneuver.lesson_maneuver_id || maneuver.id} className="border rounded p-2 bg-muted/50">
                                           <div className="flex items-center justify-between mb-2">
-                                            <span className="font-medium text-sm">{maneuver.name}</span>
+                                            <span className="font-medium text-sm text-gray-900 dark:text-gray-100">{maneuver.name}</span>
                                             <Button 
                                               variant="ghost" 
                                               size="sm" 
@@ -563,7 +610,7 @@ export function EnhancedLessonManager({
                             <TabsContent value="settings" className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="space-y-2">
-                                    <Label>Quick Actions</Label>
+                                    <Label className="text-gray-900 dark:text-gray-100">Quick Actions</Label>
                                     <div className="flex gap-2">
                                       <Button 
                                         variant="outline" 
@@ -593,7 +640,7 @@ export function EnhancedLessonManager({
                                     </div>
                                   </div>
                                   <div className="space-y-2">
-                                    <Label>Status</Label>
+                                    <Label className="text-gray-900 dark:text-gray-100">Status</Label>
                                     <div className="flex items-center gap-2">
                                       {lesson.is_active !== false ? (
                                         <Badge className="bg-green-100 text-green-800">
@@ -707,6 +754,31 @@ export function EnhancedLessonManager({
           </div>
         </div>
       )}
+
+      {/* Comprehensive Lesson Editor Dialog */}
+      <Dialog open={!!comprehensiveEditLesson} onOpenChange={(open) => !open && setComprehensiveEditLesson(null)}>
+        <DialogContent className="max-w-[95vw] w-full h-[95vh] max-h-[95vh] overflow-hidden p-0" aria-describedby="lesson-editor-description">
+          <DialogTitle className="sr-only">
+            Edit Lesson: {comprehensiveEditLesson?.title || 'Lesson'}
+          </DialogTitle>
+          <DialogDescription id="lesson-editor-description" className="sr-only">
+            Comprehensive editor for modifying all lesson fields including objectives, standards, maneuvers, resources, and settings
+          </DialogDescription>
+          <div className="h-full overflow-y-auto p-6">
+            {comprehensiveEditLesson && (
+              <ComprehensiveLessonEditor
+                lesson={comprehensiveEditLesson}
+                syllabusId={syllabusId}
+                onSave={async (lessonId, updates) => {
+                  await onLessonUpdate(lessonId, updates)
+                  setComprehensiveEditLesson(null)
+                }}
+                onClose={() => setComprehensiveEditLesson(null)}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

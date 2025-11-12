@@ -22,6 +22,7 @@ import { TrainingSchedule } from '@/components/student/dashboard/TrainingSchedul
 import { TrainingProgress } from '@/components/student/dashboard/TrainingProgress'
 import { NotificationsTab } from '@/components/student/dashboard/NotificationsTab'
 import { EnhancedTrainingTab } from '@/components/student/dashboard/EnhancedTrainingTab'
+import { InteractiveScheduleCalendar } from './InteractiveScheduleCalendar'
 import {
   Plane,
   Users,
@@ -586,14 +587,16 @@ export default function StudentDashboard() {
       </motion.div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="training">Training</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          <TabsTrigger value="progress">Progress</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
+        <div className="w-full">
+          <TabsList className="inline-flex w-full overflow-x-auto scrollbar-hide sm:grid sm:grid-cols-6 md:grid-cols-6 h-auto">
+            <TabsTrigger value="overview" className="min-w-fit flex-shrink-0">Overview</TabsTrigger>
+            <TabsTrigger value="training" className="min-w-fit flex-shrink-0">Training</TabsTrigger>
+            <TabsTrigger value="schedule" className="min-w-fit flex-shrink-0">Schedule</TabsTrigger>
+            <TabsTrigger value="progress" className="min-w-fit flex-shrink-0">Progress</TabsTrigger>
+            <TabsTrigger value="billing" className="min-w-fit flex-shrink-0">Billing</TabsTrigger>
+            <TabsTrigger value="notifications" className="min-w-fit flex-shrink-0">Notifications</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6">
           {loading ? (
@@ -921,21 +924,24 @@ export default function StudentDashboard() {
               <Button onClick={handleRefresh}>Try Again</Button>
             </div>
           ) : (
-            <TrainingSchedule 
-              upcomingSessions={dashboardData?.upcomingSessions || []}
-              onRequestSession={() => {
-                // Navigate to session request page
-                window.location.href = '/student/schedule/new'
-              }}
-              onViewSession={(sessionId) => {
-                // Navigate to session details
-                window.location.href = `/student/schedule/${sessionId}`
-              }}
-              onEditSession={(sessionId) => {
-                // Navigate to session edit
-                window.location.href = `/student/schedule/${sessionId}/edit`
-              }}
-            />
+            <>
+              {/* Interactive Calendar View */}
+              <InteractiveScheduleCalendar missions={dashboardData?.missions || []} />
+              
+              {/* List View */}
+              <TrainingSchedule 
+                upcomingSessions={dashboardData?.upcomingSessions || []}
+                onRequestSession={() => {
+                  window.location.href = '/student/schedule/new'
+                }}
+                onViewSession={(sessionId) => {
+                  window.location.href = `/student/schedule/${sessionId}`
+                }}
+                onEditSession={(sessionId) => {
+                  window.location.href = `/student/schedule/${sessionId}/edit`
+                }}
+              />
+            </>
           )}
         </TabsContent>
 

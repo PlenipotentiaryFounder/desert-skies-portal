@@ -31,13 +31,14 @@ import UserReportsTab from "./UserReportsTab"
 // import { RecentActivityList } from "@/components/admin/recent-activity-list"
 
 interface UserDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function generateMetadata({ params }: UserDetailPageProps): Promise<Metadata> {
-  const user = await getUserById(params.id)
+  const { id } = await params
+  const user = await getUserById(id)
 
   if (!user) {
     return {

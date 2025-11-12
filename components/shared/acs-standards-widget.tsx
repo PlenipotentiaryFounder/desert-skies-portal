@@ -55,7 +55,9 @@ export function ACSStandardsWidget({ userRole, userId, certificateType }: ACSSta
         setLoading(true)
         setError(null)
         
-        const response = await fetch(`/api/student/acs-progress?certificateType=${certificateType}`)
+        const response = await fetch(`/api/student/acs-progress?certificateType=${certificateType}`, {
+          credentials: 'include'
+        })
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)

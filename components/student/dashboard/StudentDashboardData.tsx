@@ -115,6 +115,34 @@ export function useStudentDashboardData() {
           console.warn('No active enrollment found:', enrollmentError)
         }
 
+        // Get missions for calendar
+        const { data: missions, error: missionsError } = await supabase
+          .from('missions')
+          .select(`
+            id,
+            mission_code,
+            mission_type,
+            status,
+            scheduled_date,
+            scheduled_start_time,
+            plan_of_action_id,
+            debrief_id,
+            lesson_template:lesson_template_id (
+              title
+            ),
+            instructor:assigned_instructor_id (
+              first_name,
+              last_name
+            )
+          `)
+          .eq('student_id', user.id)
+          .in('status', ['scheduled', 'in_progress', 'completed'])
+          .order('scheduled_date', { ascending: true })
+
+        if (missionsError) {
+          console.warn('Failed to fetch missions:', missionsError)
+        }
+
         // Get upcoming flight sessions
         const { data: upcomingSessions, error: sessionsError } = await supabase
           .from('flight_sessions')
@@ -218,6 +246,7 @@ export function useStudentDashboardData() {
             instructor_name: 'Thomas Ferrier',
             syllabus_name: 'Private Pilot Training'
           },
+          missions: missions || [],
           upcomingSessions: (upcomingSessions || []).map(session => ({
             id: session.id,
             date: session.date,

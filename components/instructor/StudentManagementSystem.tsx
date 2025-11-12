@@ -132,7 +132,9 @@ export default function StudentManagementSystem() {
       
       try {
         console.log('📡 [Frontend] Making API request to /api/instructor/students')
-        const response = await fetch('/api/instructor/students')
+        const response = await fetch('/api/instructor/students', {
+          credentials: 'include'
+        })
         
         console.log('📊 [Frontend] Response status:', response.status)
         console.log('📊 [Frontend] Response headers:', Object.fromEntries(response.headers.entries()))

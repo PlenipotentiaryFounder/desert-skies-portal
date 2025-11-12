@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
 
     const { data: aircraft, error } = await supabase
       .from("aircraft")
-      .select("id, tail_number, make, model, status")
-      .eq("status", "active")
+      .select("id, tail_number, make, model, year, category, class, is_active")
+      .eq("is_active", true)
       .order("tail_number")
 
     if (error) {

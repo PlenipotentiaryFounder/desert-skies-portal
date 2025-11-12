@@ -417,20 +417,74 @@ export async function getUserFromRequest(req: NextRequest): Promise<User | null>
 }
 
 export async function getUserFromApiRequest(req: NextRequest): Promise<User | null> {
-  // Parse cookies from the request
-  const cookieHeader = req.headers.get('cookie') || '';
-  console.log('API getUserFromApiRequest cookieHeader:', cookieHeader);
-  const match = cookieHeader.match(/sb-[^=]+-auth-token=([^;]+)/);
-  console.log('API getUserFromApiRequest match:', match);
-  const jwt = match ? decodeURIComponent(match[1]) : undefined;
+  try {
+    // Parse cookies from the request
+    const cookieHeader = req.headers.get('cookie') || '';
+    console.log('[AUTH DEBUG] Cookie header present:', !!cookieHeader);
+    
+    const match = cookieHeader.match(/sb-[^=]+-auth-token=([^;]+)/);
+    
+    if (!match) {
+      console.log('[AUTH DEBUG] No auth token cookie found in header');
+      return null;
+    }
 
-  const supabase = createApiSupabaseClient(jwt);
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return null;
-  const profile = await getUserProfileWithRoles(user.id);
-  if (!profile) return null;
-  if (profile.roles && profile.roles.length > 0) {
-    (profile as any).role = profile.roles[0];
+    console.log('[AUTH DEBUG] Found auth cookie, attempting to decode...');
+    
+    // The cookie value is base64-encoded JSON containing the session
+    const cookieValue = decodeURIComponent(match[1]);
+    
+    let jwt: string | undefined;
+    
+    try {
+      // Try to decode as base64 JSON first (standard Supabase format)
+      const decodedSession = Buffer.from(cookieValue, 'base64').toString('utf-8');
+      const session = JSON.parse(decodedSession);
+      jwt = session.access_token;
+      console.log('[AUTH DEBUG] Successfully decoded base64 session, JWT present:', !!jwt);
+    } catch (decodeError) {
+      // If that fails, maybe it's already a JWT (fallback)
+      console.log('[AUTH DEBUG] Base64 decode failed, treating as direct JWT');
+      jwt = cookieValue;
+    }
+    
+    if (!jwt) {
+      console.log('[AUTH DEBUG] No JWT token available after decoding');
+      return null;
+    }
+
+    console.log('[AUTH DEBUG] Creating Supabase client with JWT');
+    const supabase = createApiSupabaseClient(jwt);
+    
+    console.log('[AUTH DEBUG] Calling supabase.auth.getUser()');
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error) {
+      console.error('[AUTH DEBUG] Error getting user from Supabase:', error);
+      return null;
+    }
+    
+    if (!user) {
+      console.log('[AUTH DEBUG] No user returned from getUser()');
+      return null;
+    }
+    
+    console.log('[AUTH DEBUG] User authenticated successfully:', user.id);
+    
+    const profile = await getUserProfileWithRoles(user.id);
+    if (!profile) {
+      console.log('[AUTH DEBUG] Profile not found for user:', user.id);
+      return null;
+    }
+    
+    if (profile.roles && profile.roles.length > 0) {
+      (profile as any).role = profile.roles[0];
+    }
+    
+    console.log('[AUTH DEBUG] Authentication complete, user:', user.id, 'roles:', profile.roles);
+    return profile;
+  } catch (error) {
+    console.error('[AUTH DEBUG] Unexpected error in getUserFromApiRequest:', error);
+    return null;
   }
-  return profile;
 }

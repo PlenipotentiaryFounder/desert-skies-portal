@@ -517,12 +517,12 @@ export default function StudentLogbookPage() {
 
   useEffect(() => {
     async function fetchRole() {
-      const supabase = await createSupabaseClient();
+      const supabase = createSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single();
-      if (profile?.roles?.includes('admin')) setUserRole('admin');
-      else if (profile?.roles?.includes('instructor')) setUserRole('instructor');
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      if (profile?.role === 'admin') setUserRole('admin');
+      else if (profile?.role === 'instructor') setUserRole('instructor');
       else setUserRole('student');
     }
     fetchRole();

@@ -1,18 +1,16 @@
 import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
-import { getStudentFlightSessions } from "@/lib/flight-session-service"
+import { getStudentMissions } from "@/lib/mission-service"
 import { Skeleton } from "@/components/ui/skeleton"
-import { StudentFlightSessionsList } from "./student-flight-sessions-list"
-import { StudentScheduleCalendar } from "./StudentScheduleCalendar"
-import { Plus } from "lucide-react"
-import Link from "next/link"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { InteractiveScheduleCalendar } from "./InteractiveScheduleCalendar"
+import { StudentMissionsList } from "./student-missions-list"
+import { Calendar, List } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export const metadata = {
-  title: "My Flight Schedule | Desert Skies Aviation",
-  description: "View your scheduled flight sessions",
+  title: "My Schedule | Desert Skies Aviation",
+  description: "View your scheduled training missions - flights, ground, and simulator sessions",
 }
 
 export default async function StudentSchedulePage() {
@@ -26,43 +24,51 @@ export default async function StudentSchedulePage() {
     return null
   }
 
-  const flightSessions = await getStudentFlightSessions(user.id)
+  console.log('[StudentSchedulePage] Loading schedule for user:', user.id)
+
+  const missions = await getStudentMissions(user.id)
+  
+  console.log('[StudentSchedulePage] Loaded missions:', missions.length)
 
   return (
     <div className="relative flex flex-col gap-6">
-      {/* Glassmorphic summary card */}
-      <div className="backdrop-blur-md bg-white/60 dark:bg-zinc-900/60 rounded-2xl shadow-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-zinc-200 dark:border-zinc-800">
+      {/* Header */}
+      <div className="backdrop-blur-md bg-white/60 dark:bg-zinc-900/60 rounded-2xl shadow-xl p-6 border border-zinc-200 dark:border-zinc-800">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-1">My Flight Schedule</h1>
-          <p className="text-muted-foreground">View your scheduled and completed flight sessions</p>
-        </div>
-        <div className="flex gap-2 items-center">
-          <Link href="/student/schedule/new">
-            <Button size="lg" className="rounded-full shadow-lg transition-transform hover:scale-105 focus:ring-2 focus:ring-primary/50" aria-label="Schedule New Flight">
-              <Plus className="h-5 w-5" />
-              <span className="ml-2 hidden md:inline">New Flight</span>
-            </Button>
-          </Link>
+          <h1 className="text-3xl font-bold tracking-tight mb-1">My Training Schedule</h1>
+          <p className="text-muted-foreground">
+            View your scheduled training missions - flights, ground instruction, and simulator sessions
+          </p>
         </div>
       </div>
 
-      {/* View toggle (table/calendar) */}
-      {/* For now, always show both; can add toggle logic if desired */}
-      <div className="flex flex-col gap-6">
-        <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-xl" />}>
-          <StudentFlightSessionsList initialSessions={flightSessions} />
-        </Suspense>
-        <div className="rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60 p-4">
-          <StudentScheduleCalendar sessions={flightSessions} />
-        </div>
-      </div>
+      {/* View toggle (list/calendar) */}
+      <Tabs defaultValue="list" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            List View
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Calendar View
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Floating Action Button for mobile */}
-      <Link href="/student/schedule/new" className="fixed bottom-6 right-6 z-50 md:hidden">
-        <Button size="icon" className="rounded-full shadow-2xl bg-primary text-white hover:scale-110 transition-transform" aria-label="Schedule New Flight">
-          <Plus className="h-6 w-6" />
-        </Button>
-      </Link>
+        <TabsContent value="list" className="mt-6">
+          <Suspense fallback={<Skeleton className="h-[600px] w-full rounded-xl" />}>
+            <StudentMissionsList missions={missions} />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="calendar" className="mt-6">
+          <div className="rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+            <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
+              <InteractiveScheduleCalendar missions={missions} />
+            </Suspense>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

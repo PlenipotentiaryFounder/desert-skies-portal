@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +34,7 @@ export function SyllabusEditClient({
   syllabusId
 }: SyllabusEditClientProps) {
   const [activeTab, setActiveTab] = useState("settings")
+  const router = useRouter()
   const { toast } = useToast()
 
   // Lesson management handlers (same as in detail page)
@@ -69,6 +71,8 @@ export function SyllabusEditClient({
 
   const handleLessonUpdate = async (lessonId: string, updates: Partial<LessonWithManeuvers>) => {
     try {
+      console.log('[CLIENT] Updating lesson:', lessonId, 'with:', updates)
+      
       const response = await fetch(`/api/admin/syllabi/${syllabusId}/lessons/${lessonId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -76,17 +80,26 @@ export function SyllabusEditClient({
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update lesson')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('[CLIENT] Update failed:', errorData)
+        throw new Error(errorData.error || 'Failed to update lesson')
       }
+
+      const result = await response.json()
+      console.log('[CLIENT] Update successful:', result)
 
       toast({
         title: "Lesson updated",
         description: "Lesson has been updated successfully.",
       })
+
+      // Refresh the page data to show updated lesson
+      router.refresh()
     } catch (error) {
+      console.error('[CLIENT] Update error:', error)
       toast({
         title: "Error",
-        description: "Failed to update lesson. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update lesson. Please try again.",
         variant: "destructive",
       })
       throw error

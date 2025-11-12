@@ -73,6 +73,7 @@ interface DashboardShellProps {
   title?: string
   description?: string
   showNav?: boolean
+  showTopHeader?: boolean
   className?: string
   profile?: any
   userRole?: 'instructor' | 'admin' | 'student'
@@ -130,6 +131,7 @@ export function DashboardShell({
   title, 
   description, 
   showNav = true,
+  showTopHeader = false,
   className,
   profile,
   userRole,
@@ -500,7 +502,7 @@ export function DashboardShell({
         showNav ? "lg:pl-80" : ""
       )}>
         {/* Top Navigation */}
-        {showNav && (
+        {showTopHeader && (
           <motion.header 
             className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-aviation-sky-200/50"
             initial={{ opacity: 0, y: -20 }}

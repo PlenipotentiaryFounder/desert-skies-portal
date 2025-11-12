@@ -169,6 +169,15 @@
     min-height: 100vh;
   }
   
+  /* On-brand dark color for page headings */
+  h1[class*="text-3xl"][class*="font-bold"][class*="tracking-tight"] {
+    color: #1E3A8A;
+  }
+  
+  h2[class*="text-3xl"][class*="font-bold"][class*="tracking-tight"] {
+    color: #1E3A8A;
+  }
+  
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
@@ -292,6 +301,16 @@
   .aviation-border-glow {
     border: 1px solid rgba(255, 179, 71, 0.4);
     box-shadow: 0 0 10px rgba(255, 179, 71, 0.2);
+  }
+  
+  /* Hide scrollbar while allowing scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
   }
   
   /* Responsive Text */

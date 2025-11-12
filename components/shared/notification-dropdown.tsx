@@ -26,7 +26,9 @@ export function NotificationDropdown({ onClose, profile }: NotificationDropdownP
 
     const fetchNotifications = async () => {
       setLoading(true)
-      const res = await fetch(`/api/notifications?userId=${profile.id}`)
+      const res = await fetch(`/api/notifications?userId=${profile.id}`, {
+        credentials: 'include'
+      })
       const data = await res.json()
       setNotifications(data)
       setLoading(false)

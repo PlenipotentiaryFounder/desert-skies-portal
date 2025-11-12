@@ -15,6 +15,16 @@ const navItems = [
     icon: "home",
   },
   {
+    title: "Missions",
+    href: "/student/missions",
+    icon: "rocket",
+  },
+  {
+    title: "Progress",
+    href: "/student/progress",
+    icon: "trendingUp",
+  },
+  {
     title: "Logbook",
     href: "/student/logbook",
     icon: "bookOpen",
@@ -23,11 +33,6 @@ const navItems = [
     title: "Syllabus",
     href: "/student/syllabus",
     icon: "bookOpen",
-  },
-  {
-    title: "Flight Sessions",
-    href: "/student/flight-sessions",
-    icon: "plane",
   },
   {
     title: "Schedule",

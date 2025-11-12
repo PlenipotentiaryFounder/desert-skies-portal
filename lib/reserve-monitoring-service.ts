@@ -2,8 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
-import { getPlatformBalance } from "./ledger-service"
+import { getPlatformBalance as getPlatformBalanceFromLedger } from "./ledger-service"
 import Stripe from 'stripe'
+
+// Re-export for convenience
+export { getPlatformBalance } from "./ledger-service"
 
 // Service client helper
 async function createServiceClient() {
@@ -50,7 +53,7 @@ export async function checkPlatformReserve(): Promise<{
   }
   
   // Get current platform balance (from ledger - source of truth)
-  const platformBalanceCents = await getPlatformBalance()
+  const platformBalanceCents = await getPlatformBalanceFromLedger()
   
   // Get Stripe available balance (for reconciliation comparison, not summation)
   const stripe = getStripe()

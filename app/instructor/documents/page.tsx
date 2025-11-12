@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { InstructorDocumentsList } from "./instructor-documents-list"
+import InstructorDocumentsList from "./instructor-documents-list"
 
 export const metadata = {
   title: "Documents | Desert Skies",

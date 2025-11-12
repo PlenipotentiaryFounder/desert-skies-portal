@@ -1,0 +1,444 @@
+"use client"
+
+import { useEffect, useState, useMemo } from 'react'
+import { Calendar, momentLocalizer } from 'react-big-calendar'
+import moment from 'moment'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Plane, BookOpen, Rocket, Calendar as CalendarIcon, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { DayClickModal } from './DayClickModal'
+import { MissionEventPopover } from './MissionEventPopover'
+import { format } from 'date-fns'
+import { cn } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
+import 'react-big-calendar/lib/css/react-big-calendar.css'
+
+const localizer = momentLocalizer(moment)
+
+interface Mission {
+  id: string
+  mission_code: string
+  mission_type: string
+  status: string
+  scheduled_date: string
+  scheduled_start_time: string | null
+  plan_of_action_id: string | null
+  debrief_id: string | null
+  lesson_template?: {
+    title: string
+  }
+  instructor?: {
+    first_name: string
+    last_name: string
+  }
+}
+
+interface CalendarEvent {
+  id: string
+  title: string
+  start: Date
+  end: Date
+  resource: Mission
+}
+
+interface Availability {
+  id: string
+  date: string
+  status: 'available' | 'not_available' | 'tentative'
+  notes?: string
+}
+
+export function InteractiveScheduleCalendar({ missions }: { missions: Mission[] }) {
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month')
+  const [date, setDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [availability, setAvailability] = useState<Availability[]>([])
+  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
+
+  // Fetch availability for current month
+  useEffect(() => {
+    fetchAvailability()
+  }, [date])
+
+  const fetchAvailability = async () => {
+    try {
+      const startOfMonth = moment(date).startOf('month').format('YYYY-MM-DD')
+      const endOfMonth = moment(date).endOf('month').format('YYYY-MM-DD')
+      
+      const response = await fetch(
+        `/api/student/availability?startDate=${startOfMonth}&endDate=${endOfMonth}`
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        setAvailability(data.availability || [])
+      }
+    } catch (error) {
+      console.error('Error fetching availability:', error)
+    }
+  }
+
+  // Convert missions to calendar events
+  const events = useMemo(() => {
+    return missions
+      .filter(m => m.status === 'scheduled' || m.status === 'in_progress')
+      .map((mission): CalendarEvent => {
+        const missionDate = new Date(mission.scheduled_date)
+        
+        if (mission.scheduled_start_time) {
+          const [hours, minutes] = mission.scheduled_start_time.split(':')
+          missionDate.setHours(parseInt(hours), parseInt(minutes))
+        } else {
+          missionDate.setHours(9, 0)
+        }
+        
+        const defaultDuration = 
+          mission.mission_type === 'G' ? 60 : 
+          mission.mission_type === 'S' ? 120 : 150
+        
+        const endDate = new Date(missionDate.getTime() + defaultDuration * 60000)
+        
+        const missionTypeLabel = 
+          mission.mission_type === 'F' ? '✈️ Flight' :
+          mission.mission_type === 'G' ? '📚 Ground' :
+          mission.mission_type === 'S' ? '🚀 Sim' : '✈️'
+        
+        return {
+          id: mission.id,
+          title: `${missionTypeLabel}: ${mission.mission_code}`,
+          start: missionDate,
+          end: endDate,
+          resource: mission
+        }
+      })
+  }, [missions])
+
+  // Handle day click (empty space on calendar)
+  const handleSelectSlot = (slotInfo: { start: Date; end: Date; action: string }) => {
+    // Only open modal if clicking on a day cell, not dragging
+    if (slotInfo.action === 'click' || slotInfo.action === 'select') {
+      setSelectedDate(slotInfo.start)
+      setModalOpen(true)
+    }
+  }
+
+  // Handle modal submission
+  const handleModalSubmit = async (data: {
+    action: 'request_flight' | 'set_availability'
+    availability?: 'available' | 'not_available'
+    timeSlot?: 'all_day' | 'morning' | 'afternoon' | 'evening' | 'night'
+    notes?: string
+  }) => {
+    if (!selectedDate) return
+
+    setLoading(true)
+    try {
+      if (data.action === 'request_flight') {
+        // Send flight request
+        const response = await fetch('/api/student/flight-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: format(selectedDate, 'yyyy-MM-dd'),
+            notes: data.notes
+          })
+        })
+
+        if (!response.ok) throw new Error('Failed to send request')
+
+        toast({
+          title: "Flight Request Sent! ✈️",
+          description: "Your instructor will review and respond soon.",
+        })
+      } else {
+        // Set availability with time slot
+        const timeSlotMap = {
+          all_day: { start: null, end: null },
+          morning: { start: '06:00', end: '11:00' },
+          afternoon: { start: '12:00', end: '15:00' },
+          evening: { start: '15:00', end: '19:00' },
+          night: { start: '20:00', end: '23:59' }
+        }
+
+        const timeRange = timeSlotMap[data.timeSlot || 'all_day']
+
+        const response = await fetch('/api/student/availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: format(selectedDate, 'yyyy-MM-dd'),
+            status: data.availability,
+            start_time: timeRange.start,
+            end_time: timeRange.end,
+            notes: data.notes
+          })
+        })
+
+        if (!response.ok) throw new Error('Failed to set availability')
+
+        const timeSlotLabel = data.timeSlot === 'all_day' ? '' : ` (${data.timeSlot})`
+        toast({
+          title: data.availability === 'available' 
+            ? `Marked as Available${timeSlotLabel} ✅` 
+            : "Marked as Not Available ❌",
+          description: "Your calendar has been updated.",
+        })
+
+        // Refresh availability
+        fetchAvailability()
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Style events and day cells based on availability
+  const dayPropGetter = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    const dayAvailability = availability.find(a => a.date === dateStr)
+    
+    if (dayAvailability) {
+      if (dayAvailability.status === 'available') {
+        return {
+          className: 'bg-green-50 dark:bg-green-950/20 border-green-200',
+          style: {
+            backgroundColor: '#f0fdf4',
+            borderLeft: '3px solid #22c55e'
+          }
+        }
+      } else if (dayAvailability.status === 'not_available') {
+        return {
+          className: 'bg-red-50 dark:bg-red-950/20 border-red-200',
+          style: {
+            backgroundColor: '#fef2f2',
+            borderLeft: '3px solid #ef4444'
+          }
+        }
+      }
+    }
+    
+    return {}
+  }
+
+  const eventStyleGetter = (event: CalendarEvent) => {
+    const mission = event.resource
+    
+    let backgroundColor = '#0ea5e9'
+    let borderColor = '#0284c7'
+    
+    if (mission.mission_type === 'G') {
+      backgroundColor = '#10b981'
+      borderColor = '#059669'
+    } else if (mission.mission_type === 'S') {
+      backgroundColor = '#8b5cf6'
+      borderColor = '#7c3aed'
+    }
+    
+    if (mission.status === 'in_progress') {
+      backgroundColor = '#f59e0b'
+      borderColor = '#d97706'
+    }
+    
+    return {
+      style: {
+        backgroundColor,
+        borderLeft: `4px solid ${borderColor}`,
+        borderRadius: '6px',
+        color: 'white',
+        border: `1px solid ${borderColor}`,
+        padding: '4px 8px',
+        fontSize: '13px',
+        fontWeight: '500',
+        cursor: 'pointer'
+      }
+    }
+  }
+
+  // Custom event component wrapped in popover
+  const CustomEvent = ({ event }: { event: CalendarEvent }) => {
+    const mission = event.resource
+    
+    return (
+      <MissionEventPopover
+        mission={mission}
+        onRescheduleRequest={(id) => {
+          toast({
+            title: "Reschedule Request",
+            description: "Feature coming soon! You can contact your instructor directly.",
+          })
+        }}
+        onCancelRequest={(id) => {
+          toast({
+            title: "Cancel Request",
+            description: "Feature coming soon! You can contact your instructor directly.",
+          })
+        }}
+      >
+        <div className="flex flex-col gap-0.5 w-full h-full">
+          <div className="font-semibold text-xs truncate">
+            {event.title}
+          </div>
+          {mission.lesson_template?.title && (
+            <div className="text-[10px] opacity-90 truncate">
+              {mission.lesson_template.title}
+            </div>
+          )}
+          {mission.plan_of_action_id && (
+            <div className="text-[10px] opacity-90">✨ POA</div>
+          )}
+        </div>
+      </MissionEventPopover>
+    )
+  }
+
+  // Show empty state if no missions
+  if (events.length === 0 && availability.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="w-5 h-5" />
+            Training Calendar
+          </CardTitle>
+          <CardDescription>Click any day to request a flight or set your availability</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <CalendarIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Scheduled Missions</h3>
+            <p className="text-muted-foreground mb-4">
+              Get started by requesting a flight or marking your available dates
+            </p>
+          </div>
+          <div className="bg-white dark:bg-zinc-950 rounded-lg overflow-hidden border min-h-[400px]">
+            <Calendar
+              localizer={localizer}
+              events={[]}
+              startAccessor="start"
+              endAccessor="end"
+              view={view}
+              onView={(newView) => setView(newView as 'month' | 'week' | 'day')}
+              date={date}
+              onNavigate={(newDate) => setDate(newDate)}
+              onSelectSlot={handleSelectSlot}
+              selectable
+              dayPropGetter={dayPropGetter}
+              views={['month', 'week']}
+              defaultView="month"
+              toolbar={true}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5" />
+                Training Calendar
+              </CardTitle>
+              <CardDescription>
+                Click any day to request a flight or set availability • Click a mission for options
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/student/schedule">
+                View Full Schedule
+              </Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-4 text-xs pb-4 border-b">
+            <div className="font-semibold">Missions:</div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-aviation-sky-500 rounded"></div>
+              <Plane className="w-3 h-3" />
+              <span>Flight</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded"></div>
+              <BookOpen className="w-3 h-3" />
+              <span>Ground</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-purple-500 rounded"></div>
+              <Rocket className="w-3 h-3" />
+              <span>Simulator</span>
+            </div>
+            <div className="border-l pl-4 ml-2 font-semibold">Your Availability:</div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-3 h-3 text-green-600" />
+              <span>Available</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <XCircle className="w-3 h-3 text-red-600" />
+              <span>Not Available</span>
+            </div>
+          </div>
+
+          {/* Calendar */}
+          <div className="bg-white dark:bg-zinc-950 rounded-lg overflow-hidden border min-h-[500px]">
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              view={view}
+              onView={(newView) => setView(newView as 'month' | 'week' | 'day')}
+              date={date}
+              onNavigate={(newDate) => setDate(newDate)}
+              onSelectSlot={handleSelectSlot}
+              selectable
+              eventPropGetter={eventStyleGetter}
+              dayPropGetter={dayPropGetter}
+              components={{
+                event: CustomEvent as any
+              }}
+              onSelectEvent={(event) => {
+                // Event clicks are handled by the popover
+              }}
+              views={['month', 'week']}
+              defaultView="month"
+              toolbar={true}
+              popup={false}
+              tooltipAccessor={(event) => {
+                const mission = event.resource
+                return `${event.title}${mission.instructor ? ` with ${mission.instructor.first_name} ${mission.instructor.last_name}` : ''}`
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Day Click Modal */}
+      <DayClickModal
+        date={selectedDate}
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false)
+          setSelectedDate(null)
+        }}
+        onSubmit={handleModalSubmit}
+      />
+    </>
+  )
+}
+

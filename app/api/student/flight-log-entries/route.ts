@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     // Students see their own, instructors/admins can filter by student_id
     const studentId = req.nextUrl.searchParams.get('student_id') || user.id;
-    const entries = await getFlightLogEntries(studentId);
+    const entries = await getFlightLogEntriesOld(studentId);
     return NextResponse.json(entries);
   } catch (err: any) {
     console.error('GET /api/student/flight-log-entries error:', err);

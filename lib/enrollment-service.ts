@@ -127,7 +127,7 @@ export async function getEnrollments() {
         avatar_url: null
       },
       syllabus: syllabus ? {
-        name: syllabus.name,
+        name: syllabus.title,
         description: syllabus.description
       } : {
         name: "Unknown Syllabus",
@@ -214,7 +214,7 @@ export async function getEnrollmentById(id: string) {
       avatar_url: null
     },
     syllabus: syllabus ? {
-      name: syllabus.name,
+      name: syllabus.title,
       description: syllabus.description
     } : {
       name: "Unknown Syllabus",
@@ -253,7 +253,7 @@ export async function getStudentEnrollments(studentId: string) {
   const syllabusIds = enrollments.map(e => e.syllabus_id)
   const { data: syllabi } = await supabase
     .from("syllabi")
-    .select("id, name, description")
+    .select("id, title, description")
     .in("id", syllabusIds)
 
   // Create lookup maps
@@ -295,7 +295,7 @@ export async function getStudentEnrollments(studentId: string) {
         avatar_url: null
       },
       syllabus: syllabus ? {
-        name: syllabus.name,
+        name: syllabus.title,
         description: syllabus.description
       } : {
         name: "Unknown Syllabus",
@@ -346,7 +346,7 @@ export async function getInstructorEnrollments(instructorId: string) {
   const syllabusIds = enrollments.map(e => e.syllabus_id)
   const { data: syllabi } = await supabase
     .from("syllabi")
-    .select("id, name, description")
+    .select("id, title, description")
     .in("id", syllabusIds)
 
   // Create lookup maps
@@ -396,7 +396,7 @@ export async function getInstructorEnrollments(instructorId: string) {
         avatar_url: null
       },
       syllabus: syllabus ? {
-        name: syllabus.name,
+        name: syllabus.title,
         description: syllabus.description
       } : {
         name: "Unknown Syllabus",

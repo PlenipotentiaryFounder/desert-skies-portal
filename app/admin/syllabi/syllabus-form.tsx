@@ -10,6 +10,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { type Syllabus, createSyllabus, updateSyllabus } from "@/lib/syllabus-service"
 import { useToast } from "@/hooks/use-toast"
 
@@ -46,6 +47,7 @@ const syllabusFormSchema = z.object({
     .max(20, {
       message: "Version must not exceed 20 characters.",
     }),
+  training_part: z.enum(["61", "141"]).default("61"),
   is_active: z.boolean().default(true),
 })
 
@@ -66,6 +68,7 @@ export function SyllabusForm({ syllabus }: SyllabusFormProps) {
     description: syllabus?.description || "",
     faa_type: syllabus?.faa_type || "",
     version: syllabus?.version || "",
+    training_part: (syllabus as any)?.training_part || "61",
     is_active: syllabus?.is_active ?? true,
   }
 
@@ -185,6 +188,44 @@ export function SyllabusForm({ syllabus }: SyllabusFormProps) {
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="training_part"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Training Regulation</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex space-x-4"
+                >
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="61" />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">
+                      Part 61 (Traditional)
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="141" />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">
+                      Part 141 (Approved School)
+                    </FormLabel>
+                  </FormItem>
+                </RadioGroup>
+              </FormControl>
+              <FormDescription>
+                Part 61 is for traditional flight training, Part 141 is for FAA-approved flight schools with reduced hour requirements.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

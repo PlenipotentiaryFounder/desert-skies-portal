@@ -1,0 +1,1319 @@
+"use client"
+
+import React, { useState, useEffect } from 'react'
+import { getCurrentWeather, getWeatherTrend, type WeatherData, type WeatherTrendData } from '@/lib/weather-service'
+import { motion } from 'framer-motion'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { 
+  DashboardWidget, 
+  QuickStatsWidget, 
+  ActivityFeedWidget, 
+  AlertsWidget 
+} from '@/components/ui/aviation-dashboard-widget'
+import { 
+  AviationMetric, 
+  WeatherMetrics, 
+  AircraftMetrics, 
+  FlightProgress 
+} from '@/components/ui/aviation-metrics'
+import { 
+  FlightDataDisplay,
+  CompactFlightDataDisplay,
+  FlightStatusIndicator
+} from '@/components/ui/flight-data-display'
+import {
+  AviationCommandCenter,
+  CompactCommandCenter
+} from '@/components/ui/aviation-command-center'
+import {
+  AviationNotificationCenter,
+  CompactNotificationWidget,
+  NotificationBadge
+} from '@/components/ui/aviation-notifications'
+import StudentManagementSystem from '@/components/instructor/StudentManagementSystem'
+import {
+  AviationLineChart,
+  AviationBarChart,
+  AviationPieChart,
+  AviationRadarChart,
+  AviationComposedChart,
+  AviationAreaChart,
+  FlightPerformanceChart,
+  WeatherTrendChart,
+  StudentProgressChart,
+  AircraftUtilizationChart,
+  ManeuverPerformanceChart,
+  RevenueTrendChart
+} from '@/components/ui/aviation-charts'
+import {
+  Plane,
+  Users,
+  Calendar,
+  Clock,
+  MapPin,
+  Wind,
+  Thermometer,
+  Eye,
+  Gauge,
+  Fuel,
+  Compass,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
+  MoreHorizontal,
+  RefreshCw,
+  Settings,
+  Maximize2,
+  Minimize2,
+  Zap,
+  Target,
+  Award,
+  FileText,
+  BarChart3,
+  Activity,
+  Bell,
+  Star,
+  BookOpen,
+  GraduationCap,
+  Clock3,
+  CalendarDays,
+  UserCheck,
+  UserX,
+  PlaneTakeoff,
+  PlaneLanding,
+  Navigation,
+  Cloud,
+  Sun,
+  Moon,
+  CloudRain,
+  CloudLightning,
+  Shield,
+  Lock,
+  Unlock,
+  Key,
+  Radio,
+  Wifi,
+  DollarSign,
+  Receipt,
+  X,
+  Signal,
+  EyeOff,
+  Trash2,
+  Archive,
+  MessageSquare,
+  Phone,
+  Mail,
+  ChevronDown,
+  ChevronUp,
+  MoreHorizontal as MoreHorizontalIcon,
+  ExternalLink,
+  Download,
+  Share2,
+  Edit,
+  Copy,
+  Bookmark,
+  BookmarkPlus,
+  Search,
+  Filter,
+  Eye as EyeIcon,
+  EyeOff as EyeOffIcon,
+  Maximize2 as Maximize2Icon,
+  Minimize2 as Minimize2Icon,
+  RotateCcw,
+  Play,
+  Pause,
+  Stop,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Laptop,
+  Desktop,
+  Server,
+  Database,
+  HardDrive,
+  MemoryStick,
+  Cpu,
+  Gpu,
+  Network,
+  Wifi as WifiIcon,
+  WifiOff,
+  Signal as SignalIcon,
+  SignalHigh,
+  SignalMedium,
+  SignalLow,
+  Battery,
+  BatteryCharging,
+  BatteryFull,
+  BatteryMedium,
+  BatteryLow,
+  BatteryWarning,
+  Power,
+  PowerOff,
+  Zap as ZapIcon,
+  Lightning,
+  Thunder,
+  Rain,
+  Snow,
+  Hail,
+  Fog,
+  Mist,
+  Drizzle,
+  Hurricane,
+  Tornado,
+  Earthquake,
+  Volcano,
+  Tsunami,
+  Fire,
+  Flood,
+  Drought,
+  Heat,
+  Cold,
+  Humidity,
+  Pressure,
+  Visibility,
+  Ceiling,
+  Turbulence,
+  Icing,
+  WindShear,
+  Microburst,
+  ClearAirTurbulence,
+  MountainWave,
+  JetStream,
+  Front,
+  WarmFront,
+  ColdFront,
+  StationaryFront,
+  OccludedFront,
+  HighPressure,
+  LowPressure,
+  Ridge,
+  Trough,
+  Convergence,
+  Divergence,
+  Advection,
+  Convection,
+  Radiation,
+  Conduction,
+  Evaporation,
+  Condensation,
+  Sublimation,
+  Deposition,
+  Melting,
+  Freezing,
+  Boiling,
+  CondensationNuclei,
+  CloudCondensationNuclei,
+  IceNuclei,
+  Aerosol,
+  Particulate,
+  Pollutant,
+  Greenhouse,
+  Ozone,
+  CarbonDioxide,
+  Methane,
+  NitrousOxide,
+  SulfurDioxide,
+  NitrogenOxide,
+  CarbonMonoxide,
+  Lead,
+  Mercury,
+  Arsenic,
+  Cadmium,
+  Chromium,
+  Nickel,
+  Zinc,
+  Copper,
+  Iron,
+  Aluminum,
+  Silicon,
+  Calcium,
+  Magnesium,
+  Sodium,
+  Potassium,
+  Chlorine,
+  Fluorine,
+  Bromine,
+  Iodine,
+  Helium,
+  Neon,
+  Argon,
+  Krypton,
+  Xenon,
+  Radon,
+  Hydrogen,
+  Oxygen,
+  Nitrogen,
+  Carbon,
+  Phosphorus,
+  Sulfur,
+  Selenium,
+  Manganese,
+  Cobalt,
+  Molybdenum,
+  Vanadium,
+  Tungsten,
+  Titanium,
+  Zirconium,
+  Hafnium,
+  Niobium,
+  Tantalum,
+  Rhenium,
+  Osmium,
+  Iridium,
+  Platinum,
+  Gold,
+  Silver,
+  Palladium,
+  Rhodium,
+  Ruthenium,
+  Technetium,
+  Promethium,
+  Neodymium,
+  Praseodymium,
+  Cerium,
+  Lanthanum,
+  Actinium,
+  Thorium,
+  Protactinium,
+  Uranium,
+  Neptunium,
+  Plutonium,
+  Americium,
+  Curium,
+  Berkelium,
+  Californium,
+  Einsteinium,
+  Fermium,
+  Mendelevium,
+  Nobelium,
+  Lawrencium,
+  Rutherfordium,
+  Dubnium,
+  Seaborgium,
+  Bohrium,
+  Hassium,
+  Meitnerium,
+  Darmstadtium,
+  Roentgenium,
+  Copernicium,
+  Nihonium,
+  Flerovium,
+  Moscovium,
+  Livermorium,
+  Tennessine,
+  Oganesson
+} from 'lucide-react'
+
+export default function InstructorDashboard() {
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('overview')
+
+  const handleTabChange = (value: string) => {
+    console.log('Tab changed to:', value)
+    setActiveTab(value)
+  }
+  const [showFlightData, setShowFlightData] = useState(true)
+  const [showNotifications, setShowNotifications] = useState(true)
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
+  const [weatherTrendData, setWeatherTrendData] = useState<WeatherTrendData[]>([])
+  const [weatherLoading, setWeatherLoading] = useState(false)
+
+  useEffect(() => {
+    // Set initial time on client side only
+    setCurrentTime(new Date())
+    
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    async function fetchWeatherData() {
+      try {
+        setWeatherLoading(true)
+        const [currentWeather, trendData] = await Promise.all([
+          getCurrentWeather(),
+          getWeatherTrend()
+        ])
+        setWeatherData(currentWeather)
+        setWeatherTrendData(trendData)
+      } catch (error) {
+        console.error('Error fetching weather data:', error)
+      } finally {
+        setWeatherLoading(false)
+      }
+    }
+
+    fetchWeatherData()
+  }, [])
+
+  // Mock data - in real app, this would come from API calls
+  const quickStats = [
+    {
+      label: "Active Students",
+      value: 24,
+      unit: "",
+      icon: <Users className="w-6 h-6" />,
+      trend: "up" as const,
+      trendValue: "+3 this week",
+      color: "text-aviation-sunset-400"
+    },
+    {
+      label: "Flight Hours",
+      value: 156,
+      unit: "hrs",
+      icon: <Clock className="w-6 h-6" />,
+      trend: "up" as const,
+      trendValue: "+12 this month",
+      color: "text-aviation-sky-400"
+    },
+    {
+      label: "Sessions Today",
+      value: 8,
+      unit: "",
+      icon: <Calendar className="w-6 h-6" />,
+      trend: "stable" as const,
+      color: "text-aviation-success-400"
+    },
+    {
+      label: "Completion Rate",
+      value: 94,
+      unit: "%",
+      icon: <Target className="w-6 h-6" />,
+      trend: "up" as const,
+      trendValue: "+2%",
+      color: "text-aviation-warning-400"
+    }
+  ]
+
+  const recentActivities = [
+    {
+      id: "1",
+      type: "session" as const,
+      title: "Flight Session Completed",
+      description: "Student John Smith completed Lesson 3 - Basic Maneuvers",
+      timestamp: "2 hours ago",
+      status: "completed" as const,
+      user: "John Smith"
+    },
+    {
+      id: "2",
+      type: "document" as const,
+      title: "Document Uploaded",
+      description: "Medical certificate uploaded for Sarah Johnson",
+      timestamp: "4 hours ago",
+      status: "completed" as const,
+      user: "Sarah Johnson"
+    },
+    {
+      id: "3",
+      type: "assessment" as const,
+      title: "Progress Assessment",
+      description: "Mike Davis passed Stage 1 Check",
+      timestamp: "6 hours ago",
+      status: "completed" as const,
+      user: "Mike Davis"
+    },
+    {
+      id: "4",
+      type: "endorsement" as const,
+      title: "Endorsement Required",
+      description: "Solo flight endorsement needed for Lisa Chen",
+      timestamp: "1 day ago",
+      status: "pending" as const,
+      user: "Lisa Chen"
+    },
+    {
+      id: "5",
+      type: "maintenance" as const,
+      title: "Aircraft Maintenance",
+      description: "Cessna 172 scheduled for 100-hour inspection",
+      timestamp: "2 days ago",
+      status: "warning" as const,
+      user: "Maintenance Team"
+    }
+  ]
+
+  const activeAlerts = [
+    {
+      id: "1",
+      type: "warning" as const,
+      title: "Weather Advisory",
+      message: "Crosswinds exceeding 15 knots expected this afternoon",
+      timestamp: "30 minutes ago",
+      priority: "medium" as const,
+      action: "Review"
+    },
+    {
+      id: "2",
+      type: "danger" as const,
+      title: "Aircraft Maintenance Due",
+      message: "Cessna 172 N12345 requires immediate inspection",
+      timestamp: "2 hours ago",
+      priority: "high" as const,
+      action: "Schedule"
+    },
+    {
+      id: "3",
+      type: "info" as const,
+      title: "New Student Enrollment",
+      message: "Welcome aboard! New student registration completed",
+      timestamp: "1 day ago",
+      priority: "low" as const,
+      action: "View"
+    }
+  ]
+
+  // Use real weather data from API
+  const currentWeatherData = weatherData || {
+    temperature: 72,
+    windSpeed: 8,
+    visibility: 10,
+    conditions: "Clear",
+    pressure: 1013,
+    humidity: 45
+  }
+
+  // Mock weather trend data for fallback
+  const mockWeatherTrendData = [
+    { time: "06:00", temperature: 65, windSpeed: 5 },
+    { time: "08:00", temperature: 68, windSpeed: 6 },
+    { time: "10:00", temperature: 72, windSpeed: 8 },
+    { time: "12:00", temperature: 75, windSpeed: 10 },
+    { time: "14:00", temperature: 78, windSpeed: 12 },
+    { time: "16:00", temperature: 76, windSpeed: 11 }
+  ]
+
+  // Use weather trend data from API with fallback to mock data
+  const weatherTrendDataForChart = weatherTrendData.length > 0 ? weatherTrendData : mockWeatherTrendData
+
+  // TODO: Fetch aircraft status from aircraft table or current flight session
+  const aircraftData = {
+    fuelLevel: 85,
+    altitude: 2500,
+    speed: 120,
+    heading: 270,
+    engineHours: 2450,
+    nextMaintenance: 150
+  }
+
+  // TODO: Fetch flight progress from current flight session
+  const flightProgressData = {
+    currentPhase: "En Route",
+    phases: [
+      { name: "Preflight", completed: true, current: false, time: "15 min" },
+      { name: "Takeoff", completed: true, current: false, time: "5 min" },
+      { name: "En Route", completed: false, current: true, time: "45 min" },
+      { name: "Approach", completed: false, current: false },
+      { name: "Landing", completed: false, current: false }
+    ],
+    totalTime: "1:05",
+    remainingTime: "20 min"
+  }
+
+  const studentProgress = [
+    { name: "John Smith", progress: 85, status: "active", nextLesson: "Cross-Country Navigation" },
+    { name: "Sarah Johnson", progress: 72, status: "active", nextLesson: "Emergency Procedures" },
+    { name: "Mike Davis", progress: 95, status: "ready", nextLesson: "Checkride Prep" },
+    { name: "Lisa Chen", progress: 68, status: "active", nextLesson: "Solo Flight" },
+    { name: "Alex Rodriguez", progress: 45, status: "active", nextLesson: "Advanced Maneuvers" }
+  ]
+
+  const upcomingSessions = [
+    { time: "09:00", student: "John Smith", aircraft: "Cessna 172", lesson: "Cross-Country Planning" },
+    { time: "11:30", student: "Sarah Johnson", aircraft: "Cessna 172", lesson: "Emergency Procedures" },
+    { time: "14:00", student: "Mike Davis", aircraft: "Piper Arrow", lesson: "Complex Aircraft" },
+    { time: "16:30", student: "Lisa Chen", aircraft: "Cessna 172", lesson: "Solo Flight Prep" }
+  ]
+
+  // Mock flight data for real-time display
+  const flightData = {
+    altitude: 2500,
+    speed: 120,
+    heading: 270,
+    fuelLevel: 85,
+    engineHours: 2450.5,
+    temperature: 72,
+    windSpeed: 8,
+    visibility: 10,
+    pressure: 1013,
+    location: {
+      lat: 33.7490,
+      lng: -84.3880
+    },
+    status: 'normal' as const,
+    timestamp: new Date()
+  }
+
+  // TODO: Fetch real chart data from flight sessions and performance tracking
+  const flightPerformanceData = [
+    { time: "00:00", altitude: 0, speed: 0, fuel: 100 },
+    { time: "00:05", altitude: 500, speed: 60, fuel: 95 },
+    { time: "00:10", altitude: 1500, speed: 110, fuel: 90 },
+    { time: "00:15", altitude: 2500, speed: 120, fuel: 85 },
+    { time: "00:20", altitude: 2500, speed: 125, fuel: 80 },
+    { time: "00:25", altitude: 2400, speed: 115, fuel: 75 }
+  ]
+
+  const studentProgressData = [
+    { student: "John Smith", progress: 85 },
+    { student: "Sarah Johnson", progress: 72 },
+    { student: "Mike Davis", progress: 95 },
+    { student: "Lisa Chen", progress: 68 },
+    { student: "Alex Rodriguez", progress: 45 }
+  ]
+
+  const aircraftUtilizationData = [
+    { aircraft: "Cessna 172", hours: 45 },
+    { aircraft: "Piper Arrow", hours: 32 },
+    { aircraft: "Cessna 152", hours: 28 },
+    { aircraft: "Diamond DA40", hours: 15 }
+  ]
+
+  const maneuverPerformanceData = [
+    { subject: "Steep Turns", score: 85 },
+    { subject: "Slow Flight", score: 92 },
+    { subject: "Stalls", score: 78 },
+    { subject: "Emergency Procedures", score: 88 },
+    { subject: "Landings", score: 82 },
+    { subject: "Navigation", score: 90 }
+  ]
+
+  const revenueTrendData = [
+    { month: "Jan", revenue: 45000 },
+    { month: "Feb", revenue: 52000 },
+    { month: "Mar", revenue: 48000 },
+    { month: "Apr", revenue: 61000 },
+    { month: "May", revenue: 58000 },
+    { month: "Jun", revenue: 65000 }
+  ]
+
+  // TODO: Fetch real notifications from notifications table
+  const notifications = [
+    {
+      id: "1",
+      type: "flight" as const,
+      priority: "medium" as const,
+      title: "Flight Session Completed",
+      message: "Student John Smith completed Lesson 3 - Basic Maneuvers",
+      timestamp: new Date(Date.now() - 7200000),
+      read: false,
+      acknowledged: false,
+      user: "John Smith",
+      category: "Training",
+      metadata: {
+        flightId: "FL-2024-001",
+        studentId: "ST-001",
+        location: "Phoenix Sky Harbor"
+      }
+    },
+    {
+      id: "2",
+      type: "weather" as const,
+      priority: "high" as const,
+      title: "Weather Advisory",
+      message: "Crosswinds exceeding 15 knots expected this afternoon",
+      timestamp: new Date(Date.now() - 1800000),
+      read: false,
+      acknowledged: false,
+      category: "Weather",
+      metadata: {
+        location: "Training Area",
+        weather: {
+          temperature: 75,
+          windSpeed: 18,
+          visibility: 8,
+          conditions: "Windy"
+        }
+      }
+    },
+    {
+      id: "3",
+      type: "maintenance" as const,
+      priority: "critical" as const,
+      title: "Aircraft Maintenance Due",
+      message: "Cessna 172 N12345 requires immediate inspection",
+      timestamp: new Date(Date.now() - 3600000),
+      read: true,
+      acknowledged: false,
+      category: "Maintenance",
+      metadata: {
+        aircraftId: "AC-001",
+        maintenance: {
+          type: "100-hour inspection",
+          dueDate: new Date(Date.now() + 86400000),
+          severity: "Critical"
+        }
+      }
+    }
+  ]
+
+  const handleRefresh = async () => {
+    setIsLoading(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsLoading(false)
+  }
+
+  const handleMarkRead = (id: string) => {
+    // Handle mark as read
+    console.log('Mark as read:', id)
+  }
+
+  const handleDelete = (id: string) => {
+    // Handle delete
+    console.log('Delete:', id)
+  }
+
+  const handleAction = (id: string, action: string) => {
+    // Handle action
+    console.log('Action:', id, action)
+  }
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-night-sky p-6">
+      {/* Header Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold title-gold-glow title-gold-glow-hover font-display">
+              Flight Command Center
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Welcome back, Instructor. Here's your aviation operations overview.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Current Time</p>
+              <p className="text-xl font-mono text-aviation-sunset-300">
+                {currentTime ? currentTime.toLocaleTimeString() : '--:--:--'}
+              </p>
+            </div>
+            <NotificationBadge count={notifications.filter(n => !n.read).length} critical={notifications.filter(n => n.priority === 'critical').length} />
+            <Button
+              variant="aviation"
+              onClick={handleRefresh}
+              loading={isLoading}
+              icon={<RefreshCw className="w-4 h-4" />}
+            >
+              Refresh Data
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+        <div className="mb-4">
+          <p className="text-sm text-muted-foreground mb-2">Current Tab: <span className="text-aviation-sunset-300 font-semibold">{activeTab}</span></p>
+        </div>
+        <div className="w-full">
+          <TabsList className="inline-flex w-full overflow-x-auto scrollbar-hide sm:grid sm:grid-cols-7 md:grid-cols-7 h-auto bg-white/10 backdrop-blur-sm border border-white/20">
+            <TabsTrigger value="overview" className="min-w-fit flex-shrink-0 data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Overview</TabsTrigger>
+            <TabsTrigger value="flights" className="min-w-fit flex-shrink-0 data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Flights</TabsTrigger>
+            <TabsTrigger value="students" className="min-w-fit flex-shrink-0 data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Students</TabsTrigger>
+            <TabsTrigger value="billing" className="min-w-fit flex-shrink-0 data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Billing</TabsTrigger>
+            <TabsTrigger value="analytics" className="min-w-fit flex-shrink-0 data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Analytics</TabsTrigger>
+            <TabsTrigger value="notifications" className="min-w-fit flex-shrink-0 data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Notifications</TabsTrigger>
+            <TabsTrigger value="settings" className="min-w-fit flex-shrink-0 data-[state=active]:bg-aviation-sunset-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200">Settings</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="overview" className="space-y-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Quick Stats Row */}
+            <motion.div variants={itemVariants}>
+              <QuickStatsWidget stats={quickStats} />
+            </motion.div>
+
+            {/* Quick Actions */}
+            <motion.div variants={itemVariants}>
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                    <Zap className="w-5 h-5" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <Button variant="aviation" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <PlaneTakeoff className="w-6 h-6" />
+                      <span className="text-sm">New Session</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <UserCheck className="w-6 h-6" />
+                      <span className="text-sm">Add Student</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <BookOpen className="w-6 h-6" />
+                      <span className="text-sm">View Syllabus</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <BarChart3 className="w-6 h-6" />
+                      <span className="text-sm">Reports</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Settings className="w-6 h-6" />
+                      <span className="text-sm">Settings</span>
+                    </Button>
+                    <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
+                      <Bell className="w-6 h-6" />
+                      <span className="text-sm">Notifications</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Billing Overview Widget */}
+            <motion.div variants={itemVariants}>
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                    <DollarSign className="w-5 h-5" />
+                    Billing Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Revenue Summary */}
+                    <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                      <div className="text-2xl font-bold text-green-600 mb-2">
+                        $3,450.00
+                      </div>
+                      <div className="text-sm text-muted-foreground">This Month</div>
+                      <div className="flex gap-2 mt-2 justify-center">
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <BarChart3 className="w-3 h-3 mr-1" />
+                          View Reports
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Pending Approvals */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Pending Approvals</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center p-2 bg-orange-50 rounded border border-orange-200">
+                          <span className="text-sm">John Smith - Lesson 3</span>
+                          <Badge variant="outline" className="text-orange-600">$125.00</Badge>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-orange-50 rounded border border-orange-200">
+                          <span className="text-sm">Sarah Johnson - Ground</span>
+                          <Badge variant="outline" className="text-orange-600">$75.00</Badge>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => setActiveTab('billing')}>
+                        Review All Sessions
+                      </Button>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Quick Actions</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <FileText className="w-4 h-4 mr-1" />
+                          View Invoices
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <Settings className="w-4 h-4 mr-1" />
+                          Manage Rates
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <Users className="w-4 h-4 mr-1" />
+                          Student Accounts
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/instructor/billing'}>
+                          <Receipt className="w-4 h-4 mr-1" />
+                          Create Invoice
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Main Dashboard Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Weather & Aircraft */}
+              <div className="space-y-6">
+                <motion.div variants={itemVariants}>
+                  <WeatherMetrics {...currentWeatherData} />
+                </motion.div>
+                
+                <motion.div variants={itemVariants}>
+                  <Card variant="dashboard" className="h-full">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                        <Plane className="w-5 h-5" />
+                        Aircraft Status
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <AircraftMetrics {...aircraftData} />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+
+              {/* Center Column - Flight Progress & Alerts */}
+              <div className="space-y-6">
+                <motion.div variants={itemVariants}>
+                  <FlightProgress {...flightProgressData} />
+                </motion.div>
+                
+                <motion.div variants={itemVariants}>
+                  <AlertsWidget alerts={activeAlerts} />
+                </motion.div>
+              </div>
+
+              {/* Right Column - Activity Feed */}
+              <div className="space-y-6">
+                <motion.div variants={itemVariants}>
+                  <ActivityFeedWidget activities={recentActivities} />
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Real-time Flight Data */}
+            <motion.div variants={itemVariants}>
+              <FlightDataDisplay
+                data={flightData}
+                variant="aviation"
+                showControls={true}
+                onRefresh={handleRefresh}
+              />
+            </motion.div>
+
+            {/* Student Progress & Upcoming Sessions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div variants={itemVariants}>
+                <Card variant="dashboard" className="h-full">
+                  <CardHeader>
+                                          <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                        <GraduationCap className="w-5 h-5" />
+                        Student Progress Overview
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {studentProgress.map((student, index) => (
+                        <motion.div
+                          key={student.name}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-foreground">{student.name}</span>
+                              <Badge 
+                                variant={student.status === 'ready' ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {student.status}
+                              </Badge>
+                            </div>
+                            <Progress value={student.progress} className="h-2 mb-2" />
+                            <p className="text-xs text-muted-foreground">
+                              {student.progress}% complete • Next: {student.nextLesson}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <Card variant="dashboard" className="h-full">
+                  <CardHeader>
+                                          <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                        <CalendarDays className="w-5 h-5" />
+                        Today's Schedule
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {upcomingSessions.map((session, index) => (
+                        <motion.div
+                          key={session.time}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors border-l-4 border-aviation-sunset-500"
+                        >
+                          <div className="text-center min-w-[60px]">
+                            <p className="text-lg font-bold text-aviation-sunset-300">{session.time}</p>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-foreground">{session.student}</p>
+                            <p className="text-sm text-muted-foreground">{session.lesson}</p>
+                            <p className="text-xs text-aviation-sky-300">{session.aircraft}</p>
+                          </div>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="flights" className="space-y-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={itemVariants}>
+              <FlightPerformanceChart data={flightPerformanceData} />
+            </motion.div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div variants={itemVariants}>
+                <WeatherTrendChart data={weatherTrendDataForChart} />
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <AircraftUtilizationChart data={aircraftUtilizationData} />
+              </motion.div>
+            </div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="students" className="space-y-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Small Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div variants={itemVariants} className="h-80">
+                <StudentProgressChart data={studentProgressData} />
+              </motion.div>
+              
+              <motion.div variants={itemVariants} className="h-80">
+                <ManeuverPerformanceChart data={maneuverPerformanceData} />
+              </motion.div>
+            </div>
+
+            {/* Student Management System */}
+            <motion.div variants={itemVariants} className="h-[800px]">
+              <StudentManagementSystem />
+            </motion.div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={itemVariants}>
+              <RevenueTrendChart data={revenueTrendData} />
+            </motion.div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div variants={itemVariants}>
+                <AviationBarChart
+                  title="Monthly Flight Hours"
+                  subtitle="Total flight hours by month"
+                  data={[
+                    { name: "Jan", value: 120 },
+                    { name: "Feb", value: 135 },
+                    { name: "Mar", value: 142 },
+                    { name: "Apr", value: 158 },
+                    { name: "May", value: 165 },
+                    { name: "Jun", value: 178 }
+                  ]}
+                  icon={<Clock className="w-5 h-5" />}
+                />
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <AviationPieChart
+                  title="Student Distribution"
+                  subtitle="Students by certification level"
+                  data={[
+                    { name: "Private Pilot", value: 15 },
+                    { name: "Instrument Rating", value: 8 },
+                    { name: "Commercial Pilot", value: 5 },
+                    { name: "Flight Instructor", value: 3 }
+                  ]}
+                  icon={<GraduationCap className="w-5 h-5" />}
+                />
+              </motion.div>
+            </div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Revenue Overview */}
+              <Card variant="dashboard" className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                    <TrendingUp className="w-5 h-5" />
+                    Revenue Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Monthly Revenue */}
+                  <div className="text-center p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                    <div className="text-4xl font-bold text-green-600 mb-2">
+                      $3,450.00
+                    </div>
+                    <div className="text-sm text-muted-foreground">This Month's Revenue</div>
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600">$2,150</div>
+                        <div className="text-xs text-muted-foreground">Flight Hours</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-purple-600">$1,300</div>
+                        <div className="text-xs text-muted-foreground">Ground Hours</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-orange-600">15</div>
+                        <div className="text-xs text-muted-foreground">Sessions</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="text-2xl font-bold text-blue-600">$2,750.00</div>
+                      <div className="text-sm text-muted-foreground">Pending Payments</div>
+                    </div>
+                    <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="text-2xl font-bold text-orange-600">3</div>
+                      <div className="text-sm text-muted-foreground">Sessions to Approve</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card variant="dashboard">
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                    <Receipt className="w-4 h-4 mr-2" />
+                    Create Invoice
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage Rates
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                    <Users className="w-4 h-4 mr-2" />
+                    Student Accounts
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    View Reports
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Pending Approvals */}
+              <Card variant="dashboard" className="lg:col-span-3">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                    <Clock className="w-5 h-5" />
+                    Pending Approvals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-blue-100 text-blue-600">
+                          <Plane className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium">John Smith - Flight Training</p>
+                          <p className="text-sm text-muted-foreground">Jan 15, 2024 • 2.0 hours flight</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">$150.00</p>
+                        <div className="flex gap-2 mt-1">
+                          <Button size="sm" variant="outline">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <X className="w-3 h-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-green-100 text-green-600">
+                          <Clock className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Sarah Johnson - Ground Instruction</p>
+                          <p className="text-sm text-muted-foreground">Jan 14, 2024 • 1.5 hours ground</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">$112.50</p>
+                        <div className="flex gap-2 mt-1">
+                          <Button size="sm" variant="outline">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <X className="w-3 h-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t">
+                    <Button variant="outline" className="w-full" onClick={() => window.location.href = '/instructor/billing'}>
+                      <Clock className="w-4 h-4 mr-2" />
+                      View All Pending Sessions
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={itemVariants}>
+              <AviationNotificationCenter
+                notifications={notifications}
+                onMarkRead={handleMarkRead}
+                onDelete={handleDelete}
+                onAction={handleAction}
+                onRefresh={handleRefresh}
+              />
+            </motion.div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={itemVariants}>
+              <Card variant="dashboard">
+                <CardHeader>
+                                      <CardTitle className="flex items-center gap-2 title-gold-glow title-gold-glow-hover">
+                      <Settings className="w-5 h-5" />
+                      System Settings
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
+                      <div>
+                        <h4 className="font-medium title-gold-glow">Real-time Flight Data</h4>
+                        <p className="text-sm text-muted-foreground">Show live flight telemetry</p>
+                      </div>
+                      <Button
+                        variant={showFlightData ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setShowFlightData(!showFlightData)}
+                      >
+                        {showFlightData ? "Enabled" : "Disabled"}
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
+                      <div>
+                        <h4 className="font-medium title-gold-glow">Notifications</h4>
+                        <p className="text-sm text-muted-foreground">Show notification center</p>
+                      </div>
+                      <Button
+                        variant={showNotifications ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setShowNotifications(!showNotifications)}
+                      >
+                        {showNotifications ? "Enabled" : "Disabled"}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}

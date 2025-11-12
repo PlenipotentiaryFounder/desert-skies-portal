@@ -83,7 +83,6 @@ import {
   RotateCcw,
   Play,
   Pause,
-  Stop,
   SkipBack,
   SkipForward,
   Volume2,
@@ -96,13 +95,11 @@ import {
   Smartphone,
   Tablet,
   Laptop,
-  Desktop,
   Server,
   Database,
   HardDrive,
   MemoryStick,
   Cpu,
-  Gpu,
   Network,
   Wifi as WifiIcon,
   WifiOff,
@@ -251,7 +248,6 @@ export default async function AdminLayout({
       navItems={navItems} 
       userRole="admin" 
       profile={profile}
-      showNav={true}
     >
       {children}
     </DashboardShell>

@@ -41,6 +41,16 @@ export function getScoreLabel(score: number) {
   return { label: "Unsatisfactory", color: "text-red-500" }
 }
 
-export function getInitials(firstName: string, lastName: string) {
+export function getInitials(firstName: string | null | undefined, lastName: string | null | undefined) {
+  if (!firstName || !lastName) {
+    return '??'
+  }
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+}
+
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount)
 }

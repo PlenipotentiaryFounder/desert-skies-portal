@@ -286,44 +286,78 @@ export async function createSyllabusLesson(formData: SyllabusLessonFormData) {
   return { success: true, data: data?.[0] }
 }
 
-export async function updateSyllabusLesson(id: string, updates: Partial<SyllabusLessonFormData>) {
+export async function updateSyllabusLesson(id: string, updates: Partial<SyllabusLessonFormData> & Record<string, any>) {
   const supabase = await createClient(await cookies());
 
-  // Fetch current lesson
+  console.log('[updateSyllabusLesson] Starting update for lesson:', id);
+  console.log('[updateSyllabusLesson] Updates received:', JSON.stringify(updates, null, 2));
+
+  // Fetch current lesson to get required fields if not in updates
   const { data: current, error: fetchError } = await supabase
     .from("syllabus_lessons")
-    .select("*")
+    .select("title, description, order_index, lesson_type, estimated_hours, syllabus_id")
     .eq("id", id)
     .single();
 
   if (fetchError || !current) {
+    console.error('[updateSyllabusLesson] Error fetching current lesson:', fetchError);
     return { success: false, error: "Lesson not found" };
   }
 
-  // Merge updates with current
-  const merged = { ...current, ...updates };
+  console.log('[updateSyllabusLesson] Current lesson:', JSON.stringify(current, null, 2));
 
-  // Validate required fields (use as any for dynamic access)
+  // Only include valid updateable columns
+  // Filter out any extra fields that might have been included
+  const validColumns = [
+    'title', 'description', 'order_index', 'lesson_type', 'estimated_hours', 
+    'syllabus_id', 'objective', 'performance_standards', 'notes', 'final_thoughts',
+    'email_subject', 'email_body'
+  ];
+
+  // Build update object with only valid columns from updates
+  const updateData: any = {};
+  for (const key of validColumns) {
+    const updateValue = (updates as any)[key];
+    // If the field is in updates and has a value (not null/undefined), use it
+    if (key in updates && updateValue !== undefined && updateValue !== null) {
+      updateData[key] = updateValue;
+    } else if (key in current && !(key in updates)) {
+      // Include current value for required fields if not in updates
+      if (['title', 'description', 'order_index', 'lesson_type', 'estimated_hours', 'syllabus_id'].includes(key)) {
+        updateData[key] = (current as any)[key];
+      }
+    } else if (key in updates && updateValue === null) {
+      // Explicitly set null values for optional fields
+      updateData[key] = null;
+    }
+  }
+
+  console.log('[updateSyllabusLesson] Update data to be sent:', JSON.stringify(updateData, null, 2));
+
+  // Validate required fields
   const required = ["title", "description", "order_index", "lesson_type", "estimated_hours", "syllabus_id"];
   for (const field of required) {
-    if ((merged as any)[field] == null || (merged as any)[field] === "") {
+    if (updateData[field] == null || updateData[field] === "") {
+      console.error(`[updateSyllabusLesson] Missing required field: ${field}`);
       return { success: false, error: `Missing required field: ${field}` };
     }
   }
 
-  // Update
+  // Update only the specified fields
   const { data, error } = await supabase
     .from("syllabus_lessons")
-    .update(merged)
+    .update(updateData)
     .eq("id", id)
     .select();
 
   if (error) {
-    console.error("Error updating syllabus lesson:", error);
+    console.error("[updateSyllabusLesson] Error updating syllabus lesson:", error);
     return { success: false, error: error.message };
   }
 
-  revalidatePath(`/admin/syllabi/${(merged as any).syllabus_id}`);
+  console.log('[updateSyllabusLesson] Update successful. Updated data:', JSON.stringify(data?.[0], null, 2));
+
+  revalidatePath(`/admin/syllabi/${updateData.syllabus_id || current.syllabus_id}`);
   return { success: true, data: data?.[0] };
 }
 
@@ -607,4 +641,35 @@ export async function toggleLessonActive(lessonId: string, syllabusId: string, i
 
   revalidatePath(`/admin/syllabi/${syllabusId}`)
   return { success: true }
+}
+
+/**
+ * Get all maneuvers linked to a specific lesson
+ */
+export async function getLessonManeuvers(lessonId: string) {
+  const supabase = await createClient(await cookies())
+
+  const { data, error } = await supabase
+    .from("lesson_maneuvers")
+    .select(`
+      *,
+      maneuver:maneuvers (
+        id,
+        name,
+        description,
+        category,
+        faa_reference,
+        primary_acs_task_code,
+        related_acs_task_codes
+      )
+    `)
+    .eq("lesson_id", lessonId)
+    .order("display_order")
+
+  if (error) {
+    console.error("Error fetching lesson maneuvers:", error)
+    return []
+  }
+
+  return data || []
 }

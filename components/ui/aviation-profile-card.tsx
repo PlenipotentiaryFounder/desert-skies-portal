@@ -61,9 +61,16 @@ export function AviationProfileCard({
   const { toast } = useToast()
   const supabase = createClient()
 
-  // Get user roles
-  const userRoles = userProfile?.roles?.map((r: any) => r.role_name) || []
+  // Get user roles - filter out any undefined or null role_name values
+  const userRoles = userProfile?.roles
+    ?.map((r: any) => r?.role_name)
+    .filter((role: string | undefined | null): role is string => role != null && role !== '') || []
   const hasMultipleRoles = userRoles.length > 1
+
+  // Early return if essential data is missing
+  if (!user && !userProfile) {
+    return null
+  }
 
   // Set initial role based on current path or first role
   React.useEffect(() => {
@@ -229,7 +236,7 @@ export function AviationProfileCard({
                                 {role === 'instructor' ? 'Instructor' : 
                                  role === 'admin' ? 'Admin' : 
                                  role === 'student' ? 'Student' : 
-                                 role.charAt(0).toUpperCase() + role.slice(1)}
+                                 role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Unknown'}
                               </span>
                               {currentRole === role && (
                                 <div className="ml-auto w-2 h-2 bg-white rounded-full" />
@@ -282,20 +289,26 @@ export function AviationProfileCard({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1"
+                      className="flex-1 relative overflow-hidden group border-2 border-aviation-sunset-200 bg-aviation-sunset-500/10 backdrop-blur-sm text-aviation-sunset-700 hover:bg-aviation-sunset-500/20 hover:border-aviation-sunset-300 hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
                       onClick={handleProfile}
                     >
-                      <User className="w-4 h-4 mr-2" />
-                      Profile
+                      <span className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent"></span>
+                      <span className="relative flex items-center gap-2">
+                        <User className="w-4 h-4 mr-2" />
+                        Profile
+                      </span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1"
+                      className="flex-1 relative overflow-hidden group border-2 border-aviation-sunset-200 bg-aviation-sunset-500/10 backdrop-blur-sm text-aviation-sunset-700 hover:bg-aviation-sunset-500/20 hover:border-aviation-sunset-300 hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
                       onClick={handleSettings}
                     >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
+                      <span className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent"></span>
+                      <span className="relative flex items-center gap-2">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </span>
                     </Button>
                   </div>
 
@@ -303,12 +316,15 @@ export function AviationProfileCard({
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="w-full"
+                    className="w-full relative overflow-hidden group bg-gradient-to-r from-aviation-danger-500 to-aviation-danger-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
                     onClick={handleSignOut}
                     disabled={isLoading}
                   >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {isLoading ? 'Signing out...' : 'Sign Out'}
+                    <span className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent"></span>
+                    <span className="relative flex items-center gap-2">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      {isLoading ? 'Signing out...' : 'Sign Out'}
+                    </span>
                   </Button>
                 </div>
               </motion.div>

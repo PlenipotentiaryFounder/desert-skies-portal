@@ -18,7 +18,9 @@ export function NotificationBell({ profile }: NotificationBellProps) {
     if (!profile) return
 
     const fetchUnreadCount = async () => {
-      const res = await fetch(`/api/notifications/unread?userId=${profile.id}`)
+      const res = await fetch(`/api/notifications/unread?userId=${profile.id}`, {
+        credentials: 'include'
+      })
       const data = await res.json()
       setUnreadCount(data.count)
     }

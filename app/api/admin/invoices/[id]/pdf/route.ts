@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/api-route"
+import { createApiRouteClient } from "@/lib/supabase/api-route"
 import { getInstructorInvoices } from "@/lib/instructor-billing-service"
 import { generateInvoicePDF, getCompanyInfo } from "@/lib/invoice-pdf-service"
 
@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient(request)
+    const supabase = await createApiRouteClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {

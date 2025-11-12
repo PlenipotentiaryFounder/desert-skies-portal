@@ -30,13 +30,9 @@ const PRESET_GROUND_HOURS = [2, 5, 10, 15]
 
 // Payment Form Component
 function PaymentForm({
-  flightHours,
-  groundHours,
   totalCost,
   onSuccess
 }: {
-  flightHours: number
-  groundHours: number
   totalCost: number
   onSuccess: () => void
 }) {
@@ -56,29 +52,9 @@ function PaymentForm({
     setErrorMessage(null)
 
     try {
-      // Create Payment Intent
-      const response = await fetch('/api/student/billing/purchase-hours', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          flightHours,
-          groundHours,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create payment intent')
-      }
-
-      const { clientSecret } = await response.json()
-
       // Confirm the payment
       const { error } = await stripe.confirmPayment({
         elements,
-        clientSecret,
         confirmParams: {
           return_url: `${window.location.origin}/student/billing`,
         },
@@ -156,6 +132,9 @@ export default function PurchaseHoursPage() {
   const [customFlightHours, setCustomFlightHours] = useState<string>("")
   const [customGroundHours, setCustomGroundHours] = useState<string>("")
   const [showPaymentForm, setShowPaymentForm] = useState<boolean>(false)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [isCreatingPayment, setIsCreatingPayment] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Default rates - in real app, this would come from API
   const flightRate = 75.00
@@ -189,8 +168,36 @@ export default function PurchaseHoursPage() {
     }
   }
 
-  const handleProceedToPayment = () => {
-    setShowPaymentForm(true)
+  const handleProceedToPayment = async () => {
+    setIsCreatingPayment(true)
+    setError(null)
+    
+    try {
+      // Create Payment Intent
+      const response = await fetch('/api/student/billing/purchase-hours', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          flightHours,
+          groundHours,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create payment intent')
+      }
+
+      const { clientSecret: secret } = await response.json()
+      setClientSecret(secret)
+      setShowPaymentForm(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setIsCreatingPayment(false)
+    }
   }
 
   const handlePaymentSuccess = () => {
@@ -216,7 +223,7 @@ export default function PurchaseHoursPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Flight Hours Selection */}
           <Card>
@@ -353,6 +360,15 @@ export default function PurchaseHoursPage() {
           </CardContent>
         </Card>
 
+        {/* Error Message */}
+        {error && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-4">
+              <p className="text-red-800 text-sm">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Proceed to Payment */}
         {!showPaymentForm ? (
           <>
@@ -371,38 +387,47 @@ export default function PurchaseHoursPage() {
                 variant="outline"
                 className="flex-1"
                 onClick={() => router.back()}
+                disabled={isCreatingPayment}
               >
                 Cancel
               </Button>
               <Button
+                type="button"
                 className="flex-1"
-                disabled={flightHours < 0.5 || groundHours < 0.5}
+                disabled={flightHours < 0.5 || groundHours < 0.5 || isCreatingPayment}
                 onClick={handleProceedToPayment}
               >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Proceed to Payment - ${totalCost.toFixed(2)}
+                {isCreatingPayment ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Preparing payment...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Proceed to Payment - ${totalCost.toFixed(2)}
+                  </>
+                )}
               </Button>
             </div>
           </>
-        ) : (
+        ) : clientSecret ? (
           <Elements
             stripe={stripePromise}
             options={{
+              clientSecret,
               appearance: {
                 theme: 'stripe',
               },
-              paymentMethodOrder: ['apple_pay', 'google_pay', 'card'],
             }}
           >
             <PaymentForm
-              flightHours={flightHours}
-              groundHours={groundHours}
               totalCost={totalCost}
               onSuccess={handlePaymentSuccess}
             />
           </Elements>
-        )}
-      </form>
+        ) : null}
+      </div>
 
       {/* Info */}
       <Card>

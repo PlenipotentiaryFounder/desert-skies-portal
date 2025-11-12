@@ -24,7 +24,7 @@ import {
 import Link from "next/link"
 import { StudentRateManager } from "./rates/student-rate-manager"
 import { StudentAccountsOverview } from "./student-accounts-overview"
-import { InvoiceManagement } from "./invoice-management"
+import InvoiceManagement from "./invoice-management"
 
 export const metadata = {
   title: "Billing Management | Desert Skies Aviation",
