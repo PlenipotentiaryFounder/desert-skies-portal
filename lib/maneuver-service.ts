@@ -39,8 +39,8 @@ export type LessonManeuver = {
   maneuver?: Maneuver
 }
 
-// Export FOI levels (re-exported from shared file for backward compatibility)
-export { FOI_PROFICIENCY_LEVELS } from "./foi-levels"
+// Note: FOI_PROFICIENCY_LEVELS is imported above and available for use in this file
+// For client components, import directly from "./foi-levels"
 
 // =====================================================================
 // MANEUVER CRUD OPERATIONS

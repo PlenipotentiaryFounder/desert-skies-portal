@@ -5,8 +5,8 @@ import { cookies } from "next/headers"
 import { getPlatformBalance as getPlatformBalanceFromLedger } from "./ledger-service"
 import Stripe from 'stripe'
 
-// Re-export for convenience
-export { getPlatformBalance } from "./ledger-service"
+// Note: getPlatformBalance is imported above and available for use in this file
+// For other files, import directly from "./ledger-service"
 
 // Service client helper
 async function createServiceClient() {
