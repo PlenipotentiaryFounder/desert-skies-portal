@@ -165,7 +165,7 @@ export function StripeConnectStep({
         </CardContent>
       </Card>
 
-      {onboardingComplete ? (
+      {onboardingComplete && (
         <Alert className="bg-green-50 border-green-200">
           <Check className="h-4 w-4 text-green-600" />
           <AlertDescription>
