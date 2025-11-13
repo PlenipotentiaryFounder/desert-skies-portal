@@ -481,9 +481,31 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
     await saveProgress(currentStep, mergedData, true)
     setOnboardingData(mergedData)
     
-    // If this is the completion step, redirect to dashboard instead of nextStep
+    // If this is the completion step, call completion API and redirect to dashboard
     if (currentStep === 'completion') {
-      // Add a small delay to ensure the completion is saved, then redirect
+      try {
+        // Call the completion API to create enrollment, Stripe customer, billing account, and send emails
+        const response = await fetch('/api/student/complete-onboarding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error('Failed to complete onboarding:', errorData)
+          toast.error('Failed to complete onboarding. Please contact support.')
+        } else {
+          const result = await response.json()
+          console.log('Onboarding completed successfully:', result)
+          toast.success('Welcome to Desert Skies Aviation! Your enrollment is pending admin approval.')
+        }
+      } catch (error) {
+        console.error('Error calling completion API:', error)
+        toast.error('An error occurred during onboarding completion.')
+      }
+      
+      // Redirect to dashboard after a short delay
       setTimeout(() => {
         exitOnboarding()
       }, 1000)

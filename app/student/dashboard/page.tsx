@@ -733,66 +733,51 @@ export default function StudentDashboard() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* Account Balance */}
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-primary mb-2">
-                          $1,250.00
+                    {!dashboardData.enrollment || dashboardData.enrollment.status === 'pending_approval' ? (
+                      /* New student - show helpful info */
+                      <div className="space-y-4">
+                        <div className="text-center p-6 bg-blue-50 rounded-lg border-2 border-blue-200">
+                          <Clock className="w-12 h-12 mx-auto text-blue-600 mb-3" />
+                          <h4 className="font-semibold text-blue-900 mb-2">Enrollment Pending</h4>
+                          <p className="text-sm text-blue-800 mb-4">
+                            Your enrollment is being reviewed. Billing will be available once approved.
+                          </p>
+                          <div className="grid grid-cols-2 gap-3 text-left">
+                            <div className="bg-white/50 p-3 rounded">
+                              <p className="text-xs text-blue-900 font-medium">Initial Deposit</p>
+                              <p className="text-lg font-bold text-blue-700">$1,500</p>
+                              <p className="text-xs text-muted-foreground">Recommended</p>
+                            </div>
+                            <div className="bg-white/50 p-3 rounded">
+                              <p className="text-xs text-blue-900 font-medium">Payment Options</p>
+                              <p className="text-sm font-semibold text-blue-700">Flexible</p>
+                              <p className="text-xs text-muted-foreground">Pay-as-you-go</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">Account Balance</div>
-                        <div className="flex gap-2 mt-2 justify-center">
-                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing/add-funds'}>
-                            <Plus className="w-3 h-3 mr-1" />
-                            Add Funds
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setActiveTab('billing')}>
+                            <FileText className="w-4 h-4 mr-1" />
+                            Learn More
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => window.open('https://www.aopa.org/training-and-safety/flight-training-financing', '_blank')}>
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            Financing
                           </Button>
                         </div>
                       </div>
-
-                      {/* Recent Sessions */}
-                      <div className="space-y-3">
-                        <h4 className="font-medium">Recent Sessions</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                            <span className="text-sm">Flight Training - Lesson 3</span>
-                            <Badge variant="outline">$125.00</Badge>
-                          </div>
-                          <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                            <span className="text-sm">Ground Instruction</span>
-                            <Badge variant="outline">$75.00</Badge>
-                          </div>
-                          <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                            <span className="text-sm">Cross-Country Planning</span>
-                            <Badge variant="outline">$150.00</Badge>
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm" className="w-full" onClick={() => setActiveTab('billing')}>
-                          View All Billing
+                    ) : (
+                      /* Active student - show real data (to be implemented) */
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Billing data will appear here once you begin training
+                        </p>
+                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing'}>
+                          <Receipt className="w-4 h-4 mr-2" />
+                          View Full Billing Dashboard
                         </Button>
                       </div>
-
-                      {/* Quick Actions */}
-                      <div className="space-y-3">
-                        <h4 className="font-medium">Quick Actions</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing'}>
-                            <FileText className="w-4 h-4 mr-1" />
-                            View Invoices
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing/pay-balance'}>
-                            <CreditCard className="w-4 h-4 mr-1" />
-                            Pay Balance
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing/add-funds'}>
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add Funds
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing/purchase-hours'}>
-                            <Clock className="w-4 h-4 mr-1" />
-                            Buy Hours
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -855,55 +840,17 @@ export default function StudentDashboard() {
                       </div>
           ) : (
             <EnhancedTrainingTab
-              trainingData={{
-                currentLesson: {
-                  id: "lesson-4",
-                  title: "Cross-Country Navigation",
-                  description: "Learn flight planning and navigation techniques",
-                  order_index: 4,
-                  lesson_type: "Flight Training",
-                  estimated_hours: 2.5,
-                  objective: "Complete cross-country flight planning and weather analysis",
-                  performance_standards: "Plan and execute a cross-country flight",
-                  completed: false,
-                  progress: 75
-                },
-                upcomingLessons: [
-                  {
-                    id: "lesson-5",
-                    title: "Solo Cross-Country",
-                    description: "First solo cross-country flight",
-                    order_index: 5,
-                    lesson_type: "Solo Flight",
-                    estimated_hours: 3.0,
-                    completed: false,
-                    progress: 0
-                  },
-                  {
-                    id: "lesson-6",
-                    title: "Advanced Maneuvers",
-                    description: "Complex flight maneuvers",
-                    order_index: 6,
-                    lesson_type: "Flight Training",
-                    estimated_hours: 2.0,
-                    completed: false,
-                    progress: 0
-                  }
-                ],
+              trainingData={dashboardData?.training || {
+                currentLesson: null,
+                upcomingLessons: [],
                 completedLessons: [],
-                maneuverScores: currentManeuverPerformanceData.map(m => ({
-                  id: m.subject,
-                  maneuver_name: m.subject,
-                  score: m.score,
-                  last_assessed: "2024-01-15",
-                  meets_acs_standard: m.score >= 80
-                })),
-                syllabusProgress: dashboardData?.progress.syllabusProgress || 75,
-                totalLessons: 20,
-                completedLessons: 15
+                maneuverScores: [],
+                syllabusProgress: 0,
+                totalLessons: 0,
+                completedLessons: 0
               }}
               onStartLesson={(lessonId) => console.log('Start lesson:', lessonId)}
-              onViewLesson={(lessonId) => window.location.href = `/student/syllabus/lesson/${lessonId}`}
+              onViewLesson={(lessonId) => window.location.href = `/student/syllabus/${lessonId}`}
               onViewSyllabus={() => window.location.href = '/student/syllabus'}
               onViewProgress={() => setActiveTab('progress')}
             />
@@ -961,17 +908,17 @@ export default function StudentDashboard() {
           ) : (
             <TrainingProgress
               progress={dashboardData?.progress || {
-                totalHours: 45.5,
-                soloHours: 12.3,
-                crossCountryHours: 8.7,
-                nightHours: 3.2,
-                instrumentHours: 2.1,
-                syllabusProgress: 75
+                totalHours: 0,
+                soloHours: 0,
+                crossCountryHours: 0,
+                nightHours: 0,
+                instrumentHours: 0,
+                syllabusProgress: 0
               }}
-              skillAssessments={currentManeuverPerformanceData.map(m => ({
-                subject: m.subject,
+              skillAssessments={(dashboardData?.training?.maneuverScores || []).map(m => ({
+                subject: m.maneuver_name,
                 score: m.score,
-                lastAssessed: "2024-01-15"
+                lastAssessed: m.last_assessed
               }))}
               onViewDetails={(type) => {
                 switch (type) {
@@ -1006,141 +953,130 @@ export default function StudentDashboard() {
         </TabsContent>
 
         <TabsContent value="billing" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Account Overview */}
-            <Card className="lg:col-span-2">
+          {!dashboardData?.enrollment || dashboardData.enrollment.status === 'pending_approval' ? (
+            /* New Student - Enrollment Pending */
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
-                  Account Overview
+                  Account & Billing Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Account Balance */}
-                <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
-                  <div className="text-4xl font-bold text-blue-600 mb-2">
-                    $1,250.00
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Clock className="w-8 h-8 text-blue-600" />
                   </div>
-                  <div className="text-sm text-muted-foreground">Available Balance</div>
-                  <div className="flex gap-2 mt-4 justify-center">
-                    <Button size="sm" onClick={() => window.location.href = '/student/billing/add-funds'}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Funds
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => window.location.href = '/student/billing'}>
-                      <FileText className="w-4 h-4 mr-2" />
-                      View History
-                    </Button>
+                  <h3 className="text-xl font-semibold mb-2">Enrollment Pending Approval</h3>
+                  <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                    Your enrollment is currently being reviewed by our admin team. Once approved, you'll be able to view your billing information and manage your account here.
+                  </p>
+                </div>
+
+                {/* Billing Information for New Students */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6">
+                  <h4 className="text-lg font-semibold text-blue-900 mb-4">How Desert Skies Billing Works</h4>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h5 className="font-medium text-blue-900 mb-2">Payment Structure</h5>
+                      <ul className="text-sm text-blue-800 space-y-2">
+                        <li>• <strong>Initial Deposit:</strong> $1,500 recommended (flexible, pay-as-you-go available)</li>
+                        <li>• <strong>Installments:</strong> Add funds in $500+ increments</li>
+                        <li>• <strong>Prepaid Hours:</strong> Purchase flight/ground hours in advance for discounted rates</li>
+                        <li>• <strong>Post-Flight Billing:</strong> Sessions charged after completion</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="font-medium text-blue-900 mb-2">What You Pay For</h5>
+                      <ul className="text-sm text-blue-800 space-y-2">
+                        <li>• <strong>Flight Instruction:</strong> Hourly rate with your instructor</li>
+                        <li>• <strong>Aircraft Rental:</strong> We pay SWAZ on your behalf for convenience</li>
+                        <li>• <strong>Ground School:</strong> Pre-flight briefings and classroom time</li>
+                        <li>• <strong>Fuel:</strong> You'll need a separate Cunningham account</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-4 bg-white/50 rounded-lg">
+                    <p className="text-sm text-blue-900">
+                      <strong>Note:</strong> You pay Desert Skies for instruction and aircraft rental (we handle SWAZ payments). 
+                      Fuel is purchased separately through your Cunningham account, which we'll help you set up.
+                    </p>
                   </div>
                 </div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                    <div className="text-2xl font-bold text-green-600">12.5</div>
-                    <div className="text-sm text-muted-foreground">Flight Hours Available</div>
-                  </div>
-                  <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                    <div className="text-2xl font-bold text-orange-600">8.3</div>
-                    <div className="text-sm text-muted-foreground">Ground Hours Available</div>
-                  </div>
-                </div>
+                {/* Financing Options */}
+                <Card className="border-orange-200 bg-orange-50/50">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Financing Options</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Need help financing your training? We partner with several aviation financing companies:
+                    </p>
+                    <div className="grid md:grid-cols-3 gap-3">
+                      <Button variant="outline" className="w-full" onClick={() => window.open('https://www.aopa.org/training-and-safety/flight-training-financing', '_blank')}>
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        AOPA Financing
+                      </Button>
+                      <Button variant="outline" className="w-full" onClick={() => window.open('https://www.meritize.com/aviation/', '_blank')}>
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Meritize
+                      </Button>
+                      <Button variant="outline" className="w-full" onClick={() => window.open('https://stratus.finance/', '_blank')}>
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Stratus Finance
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full" onClick={() => window.location.href = '/student/billing/pay-balance'}>
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Pay Outstanding Balance
-                </Button>
-                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/student/billing/add-funds'}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Funds to Account
-                </Button>
-                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/student/billing/purchase-hours'}>
-                  <Clock className="w-4 h-4 mr-2" />
-                  Purchase Prepaid Hours
-                </Button>
-                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/student/billing'}>
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  View Detailed Billing
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Recent Transactions */}
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Receipt className="w-5 h-5" />
-                  Recent Billing Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-blue-100 text-blue-600">
-                        <Plane className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Flight Training - Lesson 3</p>
-                        <p className="text-sm text-muted-foreground">Jan 15, 2024 • 2.0 hours</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">$150.00</p>
-                      <Badge variant="outline" className="text-green-600">Paid</Badge>
-                    </div>
+          ) : (
+            /* Active Student - Show Real Billing Data */
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Account Overview - Will be populated with real data */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Account Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground">
+                      Your billing information will be displayed here once your enrollment is approved and you begin training.
+                    </p>
+                    <Button className="mt-4" onClick={() => window.location.href = '/student/billing'}>
+                      <Receipt className="w-4 h-4 mr-2" />
+                      View Detailed Billing Page
+                    </Button>
                   </div>
+                </CardContent>
+              </Card>
 
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-green-100 text-green-600">
-                        <Clock className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Ground Instruction</p>
-                        <p className="text-sm text-muted-foreground">Jan 14, 2024 • 1.5 hours</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">$112.50</p>
-                      <Badge variant="outline" className="text-green-600">Paid</Badge>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-purple-100 text-purple-600">
-                        <Plus className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Account Deposit</p>
-                        <p className="text-sm text-muted-foreground">Jan 12, 2024 • Credit Card</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-green-600">+$500.00</p>
-                      <Badge variant="outline" className="text-green-600">Completed</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t">
-                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/student/billing'}>
-                    <Receipt className="w-4 h-4 mr-2" />
-                    View Complete Billing History
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button className="w-full" onClick={() => window.location.href = '/student/billing'}>
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    View Full Billing Dashboard
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  <Button variant="outline" className="w-full" disabled>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Add Payment Method
+                  </Button>
+                  <Button variant="outline" className="w-full" disabled>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Purchase Prepaid Hours
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

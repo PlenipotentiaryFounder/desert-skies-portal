@@ -261,7 +261,7 @@ export function NotificationsTab({
                       <div className="flex items-center gap-4">
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {notification.timestamp.toLocaleDateString('en-US', {
+                          {new Date(notification.timestamp).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
                             hour: 'numeric',

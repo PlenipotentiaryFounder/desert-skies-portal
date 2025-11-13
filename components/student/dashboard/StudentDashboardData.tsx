@@ -23,7 +23,10 @@ export interface StudentDashboardData {
     status: string
     instructor_name?: string
     syllabus_name?: string
-  }
+  } | null
+  
+  // Missions (from missions table)
+  missions?: Array<any>
   
   // Flight Sessions
   upcomingSessions: Array<{
@@ -45,6 +48,17 @@ export interface StudentDashboardData {
     nightHours: number
     instrumentHours: number
     syllabusProgress: number
+  }
+  
+  // Training Data (real syllabus lessons)
+  training?: {
+    currentLesson: any | null
+    upcomingLessons: any[]
+    completedLessons: any[]
+    maneuverScores: any[]
+    syllabusProgress: number
+    totalLessons: number
+    completedLessons: number
   }
   
   // Recent Activity
@@ -196,6 +210,19 @@ export function useStudentDashboardData() {
           }
         ]
 
+        // Get training data from syllabus lessons
+        let trainingData = null
+        if (enrollment && enrollment.syllabus_id) {
+          try {
+            const response = await fetch(`/api/student/training-data?studentId=${user.id}`)
+            if (response.ok) {
+              trainingData = await response.json()
+            }
+          } catch (error) {
+            console.warn('Error fetching training data:', error)
+          }
+        }
+
         // Get notifications (mock for now)
         const notifications = [
           {
@@ -237,15 +264,7 @@ export function useStudentDashboardData() {
               `${enrollment.profiles.first_name} ${enrollment.profiles.last_name}` : 
               'Thomas Ferrier',
             syllabus_name: enrollment.syllabi?.title || 'Unknown Syllabus'
-          } : {
-            id: 'default',
-            syllabus_id: 'default',
-            instructor_id: '7e6acaad-5d48-46e3-ad10-fa9144c541dc',
-            start_date: new Date().toISOString().split('T')[0],
-            status: 'active',
-            instructor_name: 'Thomas Ferrier',
-            syllabus_name: 'Private Pilot Training'
-          },
+          } : null,
           missions: missions || [],
           upcomingSessions: (upcomingSessions || []).map(session => ({
             id: session.id,
@@ -260,6 +279,7 @@ export function useStudentDashboardData() {
             status: session.status
           })),
           progress,
+          training: trainingData,
           recentActivity,
           notifications
         })
