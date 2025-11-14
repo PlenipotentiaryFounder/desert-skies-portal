@@ -170,15 +170,6 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
     return Math.round((completedCount / ONBOARDING_STEPS.length) * 100)
   }
 
-  // Syllabus mapping for program selection
-  const SYLLABUS_MAP: Record<string, string> = {
-    private_pilot: '11111111-1111-1111-1111-111111111111',
-    instrument_rating: '22222222-2222-2222-2222-222222222222',
-    commercial_pilot: 'ab399a65-ea7e-4560-bd02-55a0e15c41c1',
-    discovery_flight: '56ce2fe4-b63d-4f58-9755-0ccf4c2adf18',
-  }
-  const DEFAULT_INSTRUCTOR_ID = '7e6acaad-5d48-46e3-ad10-fa9144c541dc'
-
   const saveProgress = async (stepId: string, data: any, isComplete: boolean = false) => {
     // Prevent rapid successive calls
     const now = Date.now()
@@ -271,35 +262,10 @@ export function OnboardingFlow({ initialOnboarding, userProfile, userId }: Onboa
           }
         }
         
-        // If this is the program-selection step, map to syllabus_id and create enrollment
+        // If this is the program-selection step, just save the program
+        // Enrollment will be created by the complete-onboarding API to avoid duplicates
         if (stepId === 'program-selection' && data?.desired_program) {
-          const syllabus_id = SYLLABUS_MAP[data.desired_program]
-          if (syllabus_id) {
-            payload = { ...payload, syllabus_id }
-            // Check if enrollment already exists for this user and syllabus
-            const { data: existing, error: existingError } = await supabase
-              .from('student_enrollments')
-              .select('id')
-              .eq('student_id', userId)
-              .eq('syllabus_id', syllabus_id)
-              .maybeSingle()
-            if (!existing && !existingError) {
-              // Insert new active enrollment
-              const { error: enrollError } = await supabase
-                .from('student_enrollments')
-                .insert({
-                  student_id: userId,
-                  syllabus_id,
-                  instructor_id: DEFAULT_INSTRUCTOR_ID,
-                  start_date: new Date().toISOString().slice(0, 10),
-                  status: 'active',
-                })
-              if (enrollError) {
-                console.error('Failed to create enrollment:', enrollError)
-                toast.error('Failed to create enrollment: ' + enrollError.message)
-              }
-            }
-          }
+          console.log('📋 Program selected:', data.desired_program, '- enrollment will be created on completion')
         }
         
         if (isComplete && stepId === 'completion') {

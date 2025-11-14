@@ -275,7 +275,7 @@ export async function createMissionFromTemplate(
 
       if (template) {
         templateSnapshot = template
-        lessonCode = `${formData.program_code}-L${template.order_index}`
+        lessonCode = `${programCode}-L${template.order_index}`
         isCustomized = !!formData.customizations
       }
     }
@@ -287,7 +287,7 @@ export async function createMissionFromTemplate(
       student_id: formData.student_id,
       mission_code: missionCode as string,
       mission_number: nextMissionNumber,
-      program_code: formData.program_code,
+      program_code: programCode,
       mission_type: formData.mission_type,
       lesson_template_id: formData.lesson_template_id || null,
       lesson_code: lessonCode,

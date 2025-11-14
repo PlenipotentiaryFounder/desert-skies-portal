@@ -67,11 +67,6 @@ export function AviationProfileCard({
     .filter((role: string | undefined | null): role is string => role != null && role !== '') || []
   const hasMultipleRoles = userRoles.length > 1
 
-  // Early return if essential data is missing
-  if (!user && !userProfile) {
-    return null
-  }
-
   // Set initial role based on current path or first role
   React.useEffect(() => {
     const path = pathname
@@ -93,6 +88,11 @@ export function AviationProfileCard({
     // Set current role
     setCurrentRole(detectedRole)
   }, [userRoles, pathname]) // Add router.asPath to dependencies
+
+  // Early return if essential data is missing (AFTER all hooks)
+  if (!user && !userProfile) {
+    return null
+  }
 
   // Profile card state
 

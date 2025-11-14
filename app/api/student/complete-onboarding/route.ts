@@ -165,10 +165,27 @@ TSA Status: ${onboarding.tsa_citizenship_status || 'Not specified'}.`
 
     // 6. Send email notification to admin
     try {
-      const { data: admins } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name')
-        .eq('role', 'admin')
+      // Get all users with admin role
+      const { data: adminRoles } = await supabase
+        .from('user_roles')
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            email,
+            first_name,
+            last_name
+          )
+        `)
+        .eq('role_id', (
+          await supabase
+            .from('roles')
+            .select('id')
+            .eq('name', 'admin')
+            .single()
+        ).data?.id)
+
+      const admins = adminRoles?.map((ar: any) => ar.profiles).filter(Boolean) || []
 
       if (admins && admins.length > 0) {
         for (const admin of admins) {

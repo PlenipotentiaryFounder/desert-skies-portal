@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
-import { Calendar as BigCalendar, momentLocalizer, View } from "react-big-calendar"
+import { useState, useMemo, useCallback, useEffect } from "react"
+import { Calendar as BigCalendar, momentLocalizer, View, SlotInfo } from "react-big-calendar"
 import moment from "moment"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import { Card, CardContent } from "@/components/ui/card"
@@ -29,6 +29,9 @@ import {
   Eye
 } from "lucide-react"
 import Link from "next/link"
+import { ExpressScheduleModal, type ScheduleData } from "@/components/instructor/express-schedule-modal"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 const localizer = momentLocalizer(moment)
 
@@ -87,6 +90,114 @@ export function InstructorScheduleCalendar({ missions }: { missions: Mission[] }
   const [date, setDate] = useState(new Date())
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  
+  // Express Schedule Modal state
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
+  const [selectedSlotDate, setSelectedSlotDate] = useState<Date | undefined>()
+  const [selectedSlotTime, setSelectedSlotTime] = useState<string>("")
+  const [students, setStudents] = useState<any[]>([])
+  const [lessons, setLessons] = useState<any[]>([])
+  const [aircraft, setAircraft] = useState<any[]>([])
+  
+  const router = useRouter()
+  const { toast } = useToast()
+
+  // Fetch students and aircraft when modal opens
+  useEffect(() => {
+    if (scheduleModalOpen) {
+      fetchStudentsAndAircraft()
+    }
+  }, [scheduleModalOpen])
+
+  const fetchStudentsAndAircraft = async () => {
+    try {
+      // Fetch active students
+      const studentsRes = await fetch('/api/instructor/students/active')
+      if (studentsRes.ok) {
+        const data = await studentsRes.json()
+        setStudents(data.students || [])
+      }
+
+      // Fetch aircraft
+      const aircraftRes = await fetch('/api/aircraft')
+      if (aircraftRes.ok) {
+        const data = await aircraftRes.json()
+        setAircraft(data.aircraft || [])
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    }
+  }
+
+  // Handle slot selection (click on empty calendar space)
+  const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
+    // Only allow scheduling future dates
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    
+    const slotDate = new Date(slotInfo.start)
+    slotDate.setHours(0, 0, 0, 0)
+    
+    if (slotDate < now) {
+      toast({
+        title: "Cannot schedule in the past",
+        description: "Please select a future date",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setSelectedSlotDate(slotInfo.start)
+    
+    // Extract time from slot
+    const hours = slotInfo.start.getHours()
+    const minutes = slotInfo.start.getMinutes()
+    setSelectedSlotTime(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
+    
+    setScheduleModalOpen(true)
+  }, [toast])
+
+  // Handle scheduling from modal
+  const handleSchedule = async (scheduleData: ScheduleData) => {
+    try {
+      const response = await fetch('/api/instructor/missions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enrollmentId: scheduleData.enrollmentId,
+          studentId: scheduleData.studentId,
+          lessonId: scheduleData.lessonId,
+          mode: 'precreated',
+          missionType: scheduleData.missionType,
+          date: scheduleData.date,
+          startTime: scheduleData.startTime,
+          aircraftId: scheduleData.aircraftId,
+          generatePOA: scheduleData.generatePOA
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to schedule mission')
+      }
+
+      toast({
+        title: 'Mission Scheduled!',
+        description: 'Mission has been scheduled successfully.'
+      })
+
+      // Navigate to mission detail page
+      router.push(`/instructor/missions/${result.data.id}`)
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to schedule mission',
+        variant: 'destructive'
+      })
+      throw error
+    }
+  }
 
   // Convert missions to calendar events
   const events = useMemo(() => {
@@ -126,6 +237,20 @@ export function InstructorScheduleCalendar({ missions }: { missions: Mission[] }
     })
   }, [missions])
 
+  // Calculate day availability for heatmap
+  const getDayAvailability = useCallback((date: Date): 'available' | 'busy' | 'full' | 'none' => {
+    const dateStr = date.toISOString().split('T')[0]
+    const dayEvents = events.filter(event => {
+      const eventDate = event.start.toISOString().split('T')[0]
+      return eventDate === dateStr
+    })
+
+    if (dayEvents.length === 0) return 'available'
+    if (dayEvents.length >= 4) return 'full' // 4 or more missions = fully booked
+    if (dayEvents.length >= 2) return 'busy' // 2-3 missions = busy
+    return 'none' // 1 mission = has something but not busy
+  }, [events])
+
   // Style events based on mission type and POA status
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
     const mission = event.resource
@@ -151,6 +276,44 @@ export function InstructorScheduleCalendar({ missions }: { missions: Mission[] }
       }
     }
   }, [])
+
+  // Style day cells based on availability (heatmap)
+  const dayPropGetter = useCallback((date: Date) => {
+    const availability = getDayAvailability(date)
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const isPast = date < now
+
+    let style: any = {}
+
+    if (!isPast) {
+      switch (availability) {
+        case 'available':
+          // Green tint for available days
+          style = {
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.2)'
+          }
+          break
+        case 'busy':
+          // Yellow tint for busy days
+          style = {
+            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            border: '1px solid rgba(245, 158, 11, 0.3)'
+          }
+          break
+        case 'full':
+          // Red tint for fully booked days
+          style = {
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)'
+          }
+          break
+      }
+    }
+
+    return { style }
+  }, [getDayAvailability])
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEvent(event)
@@ -303,22 +466,40 @@ export function InstructorScheduleCalendar({ missions }: { missions: Mission[] }
 
       <div className="space-y-4">
         {/* Legend */}
-        <div className="flex items-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-blue-600"></div>
-            <span>Flight</span>
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-6 text-sm">
+            <div className="font-semibold text-muted-foreground">Mission Types:</div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-blue-600"></div>
+              <span>Flight</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-green-600"></div>
+              <span>Ground</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-purple-600"></div>
+              <span>Simulator</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded border-2 border-red-500"></div>
+              <span>Needs POA</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-green-600"></div>
-            <span>Ground</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-purple-600"></div>
-            <span>Simulator</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded border-2 border-red-500"></div>
-            <span>Needs POA</span>
+          <div className="flex flex-wrap items-center gap-6 text-sm">
+            <div className="font-semibold text-muted-foreground">Day Availability:</div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-green-500/20 border border-green-500/30"></div>
+              <span>Available</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-yellow-500/20 border border-yellow-500/30"></div>
+              <span>Busy (2-3 missions)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-red-500/20 border border-red-500/30"></div>
+              <span>Full (4+ missions)</span>
+            </div>
           </div>
         </div>
 
@@ -335,7 +516,10 @@ export function InstructorScheduleCalendar({ missions }: { missions: Mission[] }
             date={date}
             onNavigate={handleNavigate}
             onSelectEvent={handleSelectEvent}
+            onSelectSlot={handleSelectSlot}
+            selectable
             eventPropGetter={eventStyleGetter}
+            dayPropGetter={dayPropGetter}
             components={{
               toolbar: CustomToolbar
             }}
@@ -475,6 +659,18 @@ export function InstructorScheduleCalendar({ missions }: { missions: Mission[] }
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Express Schedule Modal */}
+      <ExpressScheduleModal
+        open={scheduleModalOpen}
+        onOpenChange={setScheduleModalOpen}
+        preselectedDate={selectedSlotDate}
+        preselectedTime={selectedSlotTime}
+        students={students}
+        lessons={lessons}
+        aircraft={aircraft}
+        onSchedule={handleSchedule}
+      />
     </>
   )
 }

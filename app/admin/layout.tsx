@@ -152,10 +152,10 @@ const navItems = [
     description: "User management and roles"
   },
   {
-    title: "Instructor Approvals",
+    title: "Instructors",
     href: "/admin/instructors",
     icon: "userCheck",
-    description: "Instructor certification and approvals"
+    description: "Instructor management and approvals"
   },
   {
     title: "Students",

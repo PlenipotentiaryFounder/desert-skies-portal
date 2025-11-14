@@ -24,16 +24,12 @@ export async function GET(req: NextRequest) {
         mission_type,
         scheduled_date,
         scheduled_start_time,
-        scheduled_end_time,
         status,
         student:student_id (
           first_name,
           last_name
         ),
         lesson_template:lesson_template_id (
-          title
-        ),
-        custom_lesson:custom_lesson_id (
           title
         )
       `)
@@ -57,10 +53,9 @@ export async function GET(req: NextRequest) {
     // Transform missions into events
     const events = missions?.map(mission => ({
       id: mission.id,
-      title: mission.lesson_template?.title || mission.custom_lesson?.title || `Mission ${mission.mission_code}`,
+      title: mission.lesson_template?.title || `Mission ${mission.mission_code}`,
       date: mission.scheduled_date,
       start_time: mission.scheduled_start_time || '09:00',
-      end_time: mission.scheduled_end_time,
       type: mission.mission_type,
       student_name: mission.student 
         ? `${mission.student.first_name} ${mission.student.last_name}`

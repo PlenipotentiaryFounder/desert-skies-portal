@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
-    const { enrollment_id, notes } = await request.json()
+    const { enrollmentId, instructorId, syllabusId, approvalNotes, approvedBy } = await request.json()
 
-    if (!enrollment_id) {
+    if (!enrollmentId) {
       return NextResponse.json({ error: 'Enrollment ID is required' }, { status: 400 })
     }
 
@@ -54,28 +54,36 @@ export async function POST(request: NextRequest) {
         ),
         syllabus:syllabi(
           id,
-          name,
-          description
+          title,
+          faa_type,
+          code
         )
       `)
-      .eq('id', enrollment_id)
+      .eq('id', enrollmentId)
       .single()
 
     if (enrollmentError || !enrollment) {
       return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
     }
 
+    // Build update object
+    const updateData: any = {
+      status: 'active',
+      approved_by: approvedBy || user.id,
+      approved_at: new Date().toISOString(),
+      approval_notes: approvalNotes || null,
+      updated_at: new Date().toISOString()
+    }
+
+    // Update instructor and syllabus if provided
+    if (instructorId) updateData.instructor_id = instructorId
+    if (syllabusId) updateData.syllabus_id = syllabusId
+
     // Update enrollment status to active
     const { error: updateError } = await supabase
       .from('student_enrollments')
-      .update({
-        status: 'active',
-        approved_by: user.id,
-        approved_at: new Date().toISOString(),
-        approval_notes: notes || null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', enrollment_id)
+      .update(updateData)
+      .eq('id', enrollmentId)
 
     if (updateError) {
       console.error('Error updating enrollment:', updateError)
@@ -94,7 +102,7 @@ export async function POST(request: NextRequest) {
           
           <h3>Your Training Details:</h3>
           <ul>
-            <li><strong>Program:</strong> ${enrollment.syllabus?.name || 'To be determined'}</li>
+            <li><strong>Program:</strong> ${enrollment.syllabus?.title || 'To be determined'}</li>
             <li><strong>Instructor:</strong> ${enrollment.instructor ? `${enrollment.instructor.first_name} ${enrollment.instructor.last_name}` : 'To be assigned'}</li>
             <li><strong>Start Date:</strong> ${new Date(enrollment.start_date).toLocaleDateString()}</li>
           </ul>
@@ -107,7 +115,7 @@ export async function POST(request: NextRequest) {
             <li><strong>Review Study Materials:</strong> Access your training materials in the student portal</li>
           </ol>
           
-          ${notes ? `<div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 16px; margin: 20px 0;"><p><strong>Note from Admin:</strong><br/>${notes}</p></div>` : ''}
+          ${approvalNotes ? `<div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 16px; margin: 20px 0;"><p><strong>Note from Admin:</strong><br/>${approvalNotes}</p></div>` : ''}
           
           <p>If you have any questions, please don't hesitate to reach out to your instructor or our administrative team.</p>
           
@@ -136,7 +144,7 @@ export async function POST(request: NextRequest) {
             <ul>
               <li><strong>Name:</strong> ${enrollment.student.first_name} ${enrollment.student.last_name}</li>
               <li><strong>Email:</strong> ${enrollment.student.email}</li>
-              <li><strong>Program:</strong> ${enrollment.syllabus?.name || 'To be determined'}</li>
+              <li><strong>Program:</strong> ${enrollment.syllabus?.title || 'To be determined'}</li>
               <li><strong>Start Date:</strong> ${new Date(enrollment.start_date).toLocaleDateString()}</li>
             </ul>
             

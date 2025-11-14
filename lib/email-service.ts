@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
+import React from 'react'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Initialize Resend only if API key is available
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 // =====================================================
 // EMAIL TEMPLATES
@@ -300,18 +302,65 @@ The Desert Skies Aviation Team
 export async function sendEmail(params: {
   to: string
   subject: string
-  html: string
-  text: string
+  html?: string
+  text?: string
+  reactComponent?: React.ComponentType<any>
+  reactProps?: any
   from?: string
   reply_to?: string
 }): Promise<{ success: boolean; message_id?: string; error?: string }> {
+  // If React component provided, render it to HTML
+  let html = params.html
+  let text = params.text
+  
+  if (params.reactComponent && !html) {
+    try {
+      // Dynamically import renderToStaticMarkup to avoid SSR issues
+      const { renderToStaticMarkup } = await import('react-dom/server')
+      html = renderToStaticMarkup(
+        React.createElement(params.reactComponent, params.reactProps || {})
+      )
+      
+      // If no text provided, create a simple text version from the component props
+      if (!text && params.reactProps) {
+        text = `Email from Desert Skies Aviation\n\nPlease view this email in an HTML-capable email client.`
+      }
+    } catch (renderError) {
+      console.error('Error rendering React component to HTML:', renderError)
+      return {
+        success: false,
+        error: 'Failed to render email template'
+      }
+    }
+  }
+  
+  // Ensure we have HTML content
+  if (!html) {
+    return {
+      success: false,
+      error: 'No email content provided (html or reactComponent required)'
+    }
+  }
+  
+  // If Resend is not initialized (no API key), log and return success (dev mode)
+  if (!resend) {
+    console.log('[DEV MODE] Email would be sent:', {
+      to: params.to,
+      subject: params.subject,
+      from: params.from || 'Desert Skies Aviation <noreply@desertskiesaviationaz.com>',
+      hasReactComponent: !!params.reactComponent,
+      htmlLength: html?.length || 0
+    })
+    return { success: true, message_id: 'dev-mode-no-email-sent' }
+  }
+
   try {
     const { data, error } = await resend.emails.send({
       from: params.from || 'Desert Skies Aviation <noreply@desertskiesaviationaz.com>',
       to: params.to,
       subject: params.subject,
-      html: params.html,
-      text: params.text,
+      html: html,
+      text: text || '',
       reply_to: params.reply_to || 'thomas@desertskiesaviationaz.com',
     })
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -24,6 +25,7 @@ import {
 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScheduleCalendar } from "./schedule-calendar"
+import { TimeBlocksDisplay } from "./time-blocks-display"
 
 interface EnhancedMissionFormProps {
   enrollments: any[]
@@ -72,6 +74,29 @@ export function EnhancedMissionForm({
   const [selectedLesson, setSelectedLesson] = useState<any>(null)
   const [lessonSuggestions, setLessonSuggestions] = useState<any>(null)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+
+  // Get URL params
+  const searchParams = useSearchParams()
+  const preselectedStudentId = searchParams.get('studentId')
+
+  // Auto-populate from URL params (runs once on mount)
+  useEffect(() => {
+    if (preselectedStudentId && enrollments.length > 0 && !form.studentId) {
+      // Find enrollment for this student
+      const enrollment = enrollments.find(e => e.student_id === preselectedStudentId)
+      if (enrollment) {
+        // Auto-populate enrollment and student
+        setForm(prev => ({
+          ...prev,
+          enrollmentId: enrollment.id,
+          studentId: preselectedStudentId
+        }))
+        setSelectedEnrollment(enrollment)
+        // Skip to step 2 (Mission Details)
+        setStep(2)
+      }
+    }
+  }, [preselectedStudentId, enrollments])
 
   // Fetch aircraft on mount
   useEffect(() => {
@@ -126,6 +151,20 @@ export function EnhancedMissionForm({
       if (res.ok) {
         const data = await res.json()
         setLessonSuggestions(data)
+        
+        // Auto-select the "next" recommended lesson if student was pre-selected
+        if (preselectedStudentId && data.suggestions && data.suggestions.length > 0) {
+          const nextLesson = data.suggestions.find((s: any) => s.type === 'next')
+          if (nextLesson && nextLesson.lesson) {
+            setForm(prev => ({
+              ...prev,
+              lessonId: nextLesson.lesson.id,
+              missionType: nextLesson.lesson.lesson_type === 'Flight' ? 'F' : 
+                          nextLesson.lesson.lesson_type === 'Ground' ? 'G' : 'S'
+            }))
+            setSelectedLesson(nextLesson.lesson)
+          }
+        }
       } else {
         console.error("Failed to fetch lesson suggestions")
       }
@@ -754,47 +793,14 @@ export function EnhancedMissionForm({
                 </Alert>
               )}
 
-              {/* Training Events Preview */}
-              <Card className="bg-muted/50">
-                <CardHeader>
-                  <CardTitle className="text-base">Training Events</CardTitle>
-                  <CardDescription className="text-sm">
-                    This mission will include the following billable events
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {form.missionType !== "G" && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Pre-Brief</span>
-                        <Badge variant="outline">30 min</Badge>
-                      </div>
-                    )}
-                    {form.missionType === "F" && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Flight Training</span>
-                        <Badge variant="outline">TBD</Badge>
-                      </div>
-                    )}
-                    {form.missionType === "G" && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Ground Instruction</span>
-                        <Badge variant="outline">TBD</Badge>
-                      </div>
-                    )}
-                    {form.missionType === "S" && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Simulator Session</span>
-                        <Badge variant="outline">TBD</Badge>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Post-Brief / Debrief</span>
-                      <Badge variant="outline">30 min</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Mission Timeline with Time Blocks */}
+              {form.startTime && (
+                <TimeBlocksDisplay
+                  missionType={form.missionType}
+                  startTime={form.startTime}
+                  trainingDurationMinutes={selectedLesson?.estimated_duration_hours ? selectedLesson.estimated_duration_hours * 60 : 120}
+                />
+              )}
             </CardContent>
           </Card>
 

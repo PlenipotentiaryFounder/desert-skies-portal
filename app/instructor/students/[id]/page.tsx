@@ -13,6 +13,7 @@ import { SyllabusProgress } from "@/components/student/syllabus-progress"
 import { formatDate, getInitials } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import { StudentDetailsSafe } from "@/components/instructor/student-details-safe"
+import { StudentQuickScheduleButton } from "@/components/instructor/student-quick-schedule-button"
 
 interface StudentDetailPageProps {
   params: Promise<{
@@ -130,11 +131,26 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
               {(student as any).bio && <p className="mt-2">{(student as any).bio}</p>}
             </div>
             <div className="flex flex-col gap-2">
-              <Button asChild>
-                <Link href={`/instructor/missions/new?studentId=${student.id}`}>
-                  Schedule Flight
-                </Link>
-              </Button>
+              {activeEnrollment && (
+                <StudentQuickScheduleButton
+                  student={{
+                    id: student.id,
+                    first_name: student.first_name,
+                    last_name: student.last_name,
+                    email: student.email
+                  }}
+                  enrollmentId={activeEnrollment.id}
+                  size="lg"
+                  className="w-full"
+                />
+              )}
+              {!activeEnrollment && (
+                <Button asChild>
+                  <Link href={`/instructor/missions/new?studentId=${student.id}`}>
+                    Schedule Flight
+                  </Link>
+                </Button>
+              )}
               <Button variant="outline">Message Student</Button>
               <Button asChild variant="secondary">
                 <Link href={`/instructor/students/new?studentId=${student.id}`}>

@@ -71,7 +71,7 @@ async function UpcomingMissions({ instructorId }: { instructorId: string }) {
         title,
         description
       ),
-      plan_of_action:plans_of_action (
+      plan_of_action:plans_of_action!fk_missions_plan_of_action (
         id,
         status
       )

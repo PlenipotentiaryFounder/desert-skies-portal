@@ -12,6 +12,10 @@ function isUser(obj: any): obj is { id: string } {
 
 export async function POST(req: NextRequest) {
   try {
+    // Initialize Supabase client
+    const cookieStore = await cookies();
+    const supabase = await createClient(cookieStore);
+    
     const data = await req.json();
     const { email, firstName, lastName, phone, syllabusId, instructorId } = data;
     let studentId = null;
@@ -27,8 +31,6 @@ export async function POST(req: NextRequest) {
     if (!isUser(student)) {
       // Try to find by email in profiles
       try {
-        const cookieStore = await cookies();
-        const supabase = await createClient(cookieStore);
         const { data: found, error } = await supabase.from("profiles").select("*").eq("email", email).single();
         if (error) console.error("Error in profiles lookup:", error);
         if (isUser(found)) student = found;

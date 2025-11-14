@@ -8,6 +8,7 @@ import { InstructorScheduleCalendarWrapper } from "./instructor-schedule-calenda
 import { InstructorAvailabilityCalendar } from "@/components/instructor/availability/InstructorAvailabilityCalendar"
 import { TimeOffRequestForm } from "@/components/instructor/time-off/TimeOffRequestForm"
 import { TimeOffRequestList } from "@/components/instructor/time-off/TimeOffRequestList"
+import { QuickScheduleSection } from "@/components/instructor/quick-schedule-section"
 
 export default function InstructorSchedulePage() {
   const [refreshTimeOff, setRefreshTimeOff] = useState(0)
@@ -100,6 +101,9 @@ export default function InstructorSchedulePage() {
             </TabsContent>
           </Tabs>
 
+          {/* Quick Schedule Section */}
+          <QuickScheduleSection />
+
           {/* Help Section */}
           <div className="backdrop-blur-md bg-blue-50/60 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
             <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
@@ -110,6 +114,7 @@ export default function InstructorSchedulePage() {
               <li>• <strong>Green badge</strong> = POA Ready - you're all set!</li>
               <li>• Click any mission to view details or take action</li>
               <li>• Use calendar view for weekly planning, list view for daily ops</li>
+              <li>• <strong>Quick Schedule below</strong> - Schedule your students in just 2-3 clicks!</li>
             </ul>
           </div>
         </TabsContent>

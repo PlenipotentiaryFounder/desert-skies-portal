@@ -29,13 +29,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
-    const { enrollment_id, notes } = await request.json()
+    const { enrollmentId, rejectionNotes, rejectedBy } = await request.json()
 
-    if (!enrollment_id) {
+    if (!enrollmentId) {
       return NextResponse.json({ error: 'Enrollment ID is required' }, { status: 400 })
     }
 
-    if (!notes || !notes.trim()) {
+    if (!rejectionNotes || !rejectionNotes.trim()) {
       return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 })
     }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
           email
         )
       `)
-      .eq('id', enrollment_id)
+      .eq('id', enrollmentId)
       .single()
 
     if (enrollmentError || !enrollment) {
@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
       .from('student_enrollments')
       .update({
         status: 'cancelled',
-        approved_by: user.id,
+        approved_by: rejectedBy || user.id,
         approved_at: new Date().toISOString(),
-        approval_notes: notes,
+        approval_notes: rejectionNotes,
         updated_at: new Date().toISOString()
       })
-      .eq('id', enrollment_id)
+      .eq('id', enrollmentId)
 
     if (updateError) {
       console.error('Error updating enrollment:', updateError)
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
           <p>Thank you for your interest in Desert Skies Aviation. After reviewing your enrollment application, we're unable to approve it at this time.</p>
           
           <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; margin: 20px 0;">
-            <p><strong>Reason:</strong><br/>${notes}</p>
+            <p><strong>Reason:</strong><br/>${rejectionNotes}</p>
           </div>
           
           <p>If you have any questions or would like to discuss this decision, please don't hesitate to contact our administrative team at <a href="mailto:admin@desertskiesaviationaz.com">admin@desertskiesaviationaz.com</a> or call us at (480) XXX-XXXX.</p>
