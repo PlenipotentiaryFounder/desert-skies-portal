@@ -5,9 +5,15 @@ import Stripe from 'stripe'
 import { sendEmail } from '@/lib/email-service'
 import { createStudentInstructorAccount } from '@/lib/instructor-billing-service'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-})
+// Lazy-load Stripe to avoid build-time initialization errors
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-12-18.acacia',
+  })
+}
 
 /**
  * Complete Student Onboarding
@@ -69,6 +75,7 @@ export async function POST(request: NextRequest) {
     let stripeCustomerId = profile.stripe_customer_id
     if (!stripeCustomerId) {
       try {
+        const stripe = getStripeClient()
         const customer = await stripe.customers.create({
           email: profile.email,
           name: `${profile.first_name} ${profile.last_name}`,
